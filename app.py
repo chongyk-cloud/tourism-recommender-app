@@ -4,31 +4,30 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
-from duckduckgo_search import DDGS  # <--- NEW IMPORT
 
-@st.cache_data(show_spinner=False)
-def get_attraction_photo(attraction_name):
-    """Dynamically fetches a real image from the web using DuckDuckGo."""
-    try:
-        # Optimize the search query for Chinese landmarks
-        query = f"{attraction_name} attraction China"
+def get_category_image(category, attraction_name):
+    """Generates a reliable, beautiful stock photo based on the attraction's category."""
+    category = str(category).lower()
+    
+    # Determine a good search keyword based on the dataset's categories
+    if "natural" in category or "scenery" in category:
+        keyword = "nature,mountain"
+    elif "ancient" in category or "town" in category:
+        keyword = "ancient,china,town"
+    elif "religio" in category:
+        keyword = "temple,pagoda"
+    elif "historic" in category or "culture" in category:
+        keyword = "history,architecture"
+    elif "sport" in category or "leisure" in category:
+        keyword = "skiing,resort"
+    else:
+        keyword = "travel,landscape,china"
         
-        # Search the web and grab the top 1 image result
-        results = DDGS().images(query, max_results=1)
-        
-        if results:
-            return results[0]['image']  # Return the image URL
-            
-    except Exception as e:
-        print(f"Image search failed for {attraction_name}: {e}")
-        pass
-        
-    # Fallback to the gray placeholder if the search fails
-    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
-
-# ... rest of your code ...
-
-
+    # Create a unique but consistent seed number based on the attraction's name
+    # This ensures 'Wu Dang Shan' always loads the exact same picture!
+    seed = sum(ord(c) for c in attraction_name)
+    
+    return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
 
 # Set page configuration
 st.set_page_config(page_title="Tourism Recommender", layout="wide", page_icon="🗺️")
@@ -87,7 +86,6 @@ try:
         else:
             recommendations, seen = recommend_for_user(tourist_id_int, hybrid, top_n=5)
 
-            # --- UPGRADE: Clean Tabs ---
             tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⭐ Past Ratings"])
 
             with tab1:
@@ -95,21 +93,22 @@ try:
                 cols = st.columns(5)
                 for i, (name, score) in enumerate(recommendations):
                     with cols[i]:
-                        # --- UPGRADE: Image Grids ---
-                        image_url = get_attraction_photo(name)  # <--- UPDATED THIS LINE
+                        meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
+                        category = meta['attraction_category']
+                        
+                        # --- THE NEW BULLETPROOF IMAGE FUNCTION ---
+                        image_url = get_category_image(category, name)
                         st.image(image_url, use_container_width=True)
                         
                         st.markdown(f"**{name}**")
-                        meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
                         st.caption(f"Score: {score:.3f} | {meta['attraction_level']}")
+
             with tab2:
                 st.subheader("Attraction Locations")
                 st.info("Note: Using simulated coordinates for 3D visualization. Add real 'lat' and 'lon' data to your dataset to map exact locations.")
                 
-                # --- UPGRADE: 3D Spatial Mapping ---
                 map_data = []
                 for name, score in recommendations:
-                    # Simulating coordinates around central China for demonstration
                     lat = 35.0 + random.uniform(-4, 4)
                     lon = 105.0 + random.uniform(-4, 4)
                     map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
