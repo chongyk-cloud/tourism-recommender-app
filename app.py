@@ -56,7 +56,7 @@ def load_artifacts():
 try:
     pred_cf, pred_content, pred_nn, hybrid, user_ids, idx_to_item, user_to_idx, train_seen, attr_meta = load_artifacts()
 
-    # Recommendation function
+    # Recommendation functionst
     def recommend_for_user(user_id, score_matrix, top_n=5):
         if user_id not in user_to_idx:
             return None, None
