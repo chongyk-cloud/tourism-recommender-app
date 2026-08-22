@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
+import requests  # <--- ADD THIS LINE HERE!
+
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
     """Dynamically fetches a real image from Wikipedia."""
