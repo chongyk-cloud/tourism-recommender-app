@@ -1,0 +1,432 @@
+attraction_name,attraction_category,attraction_level
+Xuan Kong Si,Religious Culture,4A
+Kai Feng Fu,Historical Culture,4A
+Zhou Zhuang Gu Zhen,Ancient Town,5A
+Zhu Jia Jiao Gu Zhen,Ancient Town,4A
+Lu Shan,Natural Culture,5A
+Shang Rao Ji Zhong Ying,Revolutionary Site,4A
+Ya Lu Jiang Duan Qiao,Revolutionary Site,4A
+Bei Da Hu Hua Xue Chang,Sports & Leisure,4A
+Zhong Guo Xue Xiang,Natural Scenery,4A
+Fu Shun He Tu A La Cheng,Historical Culture,4A
+De Tian Pu Bu,Natural Scenery,5A
+Bei Jing Zhi Wu Yuan,Botanical Garden,4A
+Shen Yang Shi Bo Yuan,Theme Park,5A
+Long Yan Guan Zhi Shan,Natural Scenery,4A
+San Xing Dui Yi Zhi,Historical Site,4A
+Jin Si Xia,Natural Scenery,5A
+Ying Hu,Natural Scenery,4A
+Da Lian Xing Hai Guang Chang,Urban Landscape,4A
+Wu Song Dao,Zi Ran Qi Guan,4A
+Zha Long Zi Ran Bao Hu Qu,Natural Scenery,4A
+Lai Bin Jin Xiu Sheng Tang Shan,Natural Scenery,4A
+Zhang Zhou Dong Shan Dao,Natural Scenery,4A
+Shao Lin Si,Religious Culture,5A
+Hang Zhou Xi Xi Shi Di,Natural Scenery,5A
+Chang Chun Shi Jie Diao Su Yuan,Wen Hua Yi Shu,5A
+Fen Jie Zhou Dao,Natural Scenery,5A
+Xiang Ge Li La,Natural Culture,5A
+Hua Qing Gong,Historical Culture,5A
+Shi Jie Gong Yuan,Theme Park,4A
+Xiao Gan Shuang Feng Shan,Natural Scenery,4A
+Tong Ling Tian Jing Hu,Natural Scenery,4A
+Qu Fu San Kong,Historical Culture,5A
+Qi Tai He Bo Li Xi Da Quan,Natural Scenery,4A
+Xi An Zhong Gu Lou,Historical Architecture,4A
+Gui Lin Liang Jiang Si Hu,Natural Scenery,5A
+Lao Jun Shan,Natural Culture,5A
+Da Qing Tie Ren Ji Nian Guan,Revolutionary Site,4A
+Qu Zhou Jiang Lang Shan,Natural Scenery,5A
+E Mei Shan,Natural Culture,5A
+Chang Bai Shan,Natural Scenery,5A
+Jian Men Guan,Historical Culture,5A
+Qian Shan,Natural Scenery,5A
+Yang Shuo Xi Jie,Ancient Town,4A
+Yue Lu Shan,Natural Culture,5A
+Shen Zhen Dong Bu Hua Qiao Cheng,Theme Park,5A
+Tai Yuan Fen He Gong Yuan,Cheng Shi Gong Yuan,4A
+Sui Hua Jin Gui Shan Zhuang,Natural Scenery,4A
+He Chi Ba Ma Chang Shou Cun,Min Su Wen Hua,4A
+Tian Tang Zhai,Natural Scenery,5A
+Hei He Ai Hui Gu Cheng,Historical Culture,4A
+Da Lian Lao Hu Tan Hai Yang Gong Yuan,Theme Park,5A
+Gui Feng,Natural Scenery,5A
+Dan Xia Shan,Natural Scenery,5A
+Gong Wang Fu,Historical Architecture,5A
+Yun Gang Shi Ku,Historical Culture,5A
+Qing Dong Ling,Historical Site,5A
+Cha Ya Shan,Natural Scenery,5A
+An Yuan Lu Kuang Gong Ren Yun Dong Ji Nian Guan,Revolutionary Site,4A
+Fu Rong Zhen,Ancient Town,4A
+Lang Zhong Gu Cheng,Ancient Town,5A
+Bei Hai Gong Yuan,Cheng Shi Gong Yuan,4A
+Zi Que Jie Ti Tian,Natural Scenery,4A
+Jin Ci,Historical Culture,4A
+Yan Tai Shan,Natural Scenery,4A
+Da Li Gu Cheng,Ancient Town,4A
+Liu Ding Shan,Religious Culture,5A
+Hu Lu Dao Xing Cheng Gu Cheng,Historical Culture,4A
+Hai Luo Gou,Natural Scenery,5A
+Xi An Cheng Qiang,Historical Architecture,5A
+Wu Yi Shan,Natural Culture,5A
+Xi Bai Po,Revolutionary Site,5A
+Jiu Yi Ba Li Shi Bo Wu Guan,Revolutionary Site,4A
+Wu Dang Shan,Natural Culture,5A
+Bo Zhou Hua Xi Lou,Historical Architecture,4A
+Nan Shan Wen Hua Lv You Qu,Religious Culture,5A
+Xi Tang Gu Zhen,Ancient Town,5A
+Han Yang Ling,Historical Site,4A
+Shao Shan,Revolutionary Site,5A
+Hui Min Jie,Food Street,3A
+Huang He Lou,Historical Architecture,5A
+Hong Qi Qu,Revolutionary Site,5A
+Gu Gong Bo Wu Yuan,Historical Culture,5A
+Yi Chun Wu Ying Guo Jia Sen Lin Gong Yuan,Natural Scenery,4A
+Shang Hai Huan Le Gu,Theme Park,4A
+Qin Shi Huang Bing Ma Yong,Historical Site,5A
+Gu Lang Yu,Historical Culture,5A
+Bai Shan Chang Bai Shan Da Xia Gu,Natural Scenery,4A
+Wei Fang Qing Zhou Gu Cheng,Ancient Town,5A
+Da Lian Sen Lin Dong Wu Yuan,Zoo,4A
+Fu Jian Tu Lou,Historical Architecture,5A
+Kun Ming Shi Bo Yuan,Theme Park,5A
+Shan Xi Li Shi Bo Wu Guan,Wen Bo Yuan Guan,4A
+Zhu Hai Zhang Long Hai Yang Wang Guo,Theme Park,5A
+Fang Chuan Feng Jing Qu,Natural Scenery,4A
+Quan Zhou Kai Yuan Si,Religious Culture,4A
+Sui Zhou Yan Di Gu Li,Historical Culture,4A
+Shou Xi Hu,Natural Scenery,5A
+Yue Yang Jun Shan Dao,Natural Scenery,5A
+Yi Meng Shan,Natural Scenery,5A
+Jia Xing Nan Hu,Revolutionary Site,5A
+Dong Fang Ming Zhu,Urban Landmark,5A
+Nan Jing Bo Wu Yuan,Wen Bo Yuan Guan,4A
+Ming Huang Ling,Historical Site,4A
+Quan Zhou Qing Jing Tao Yuan,Natural Scenery,4A
+Jin Zhou Bi Jia Shan,Natural Scenery,4A
+Fu Xin Hai Tang Shan,Natural Culture,4A
+Xiang Hai Zi Ran Bao Hu Qu,Natural Scenery,4A
+Ha Er Bin Bing Xue Da Shi Jie,Theme Park,4A
+Da Xing An Ling Mo He Bei Ji Cun,Natural Scenery,4A
+Bai Shui Yang,Natural Scenery,5A
+Wang Jia Da Yuan,Historical Architecture,4A
+Fu Zhou San Shan Liang Ta,Historical Culture,4A
+Tian Zi Fang,Wen Hua Yi Shu,3A
+Cheng Du Da Xiong Mao Fan Yu Ji Di,Zoo,4A
+Shi Lin,Zi Ran Qi Guan,5A
+Gui Lin Li Jiang,Natural Scenery,5A
+Yu Yuan,Historical Architecture,4A
+Bai Se Qi Yi Ji Nian Guan,Revolutionary Site,4A
+Nan Xun Gu Zhen,Ancient Town,5A
+Shang Hai Ke Ji Guan,Ke Pu Jiao Yu,5A
+Huang Di Ling,Historical Culture,5A
+Ri Zhao Hai Bin Guo Jia Sen Lin Gong Yuan,Natural Scenery,4A
+Xian Tao Meng Li Shui Xiang,Natural Scenery,4A
+Xian Ning Jiu Gong Shan,Natural Scenery,4A
+Tian Men Lu Yu Gu Li,Historical Culture,4A
+Gui Lin Xiang Bi Shan,Natural Scenery,4A
+Du Jiang Yan,Historical Site,5A
+Wu Xi Ying Shi Ji Di,Theme Park,5A
+Guang Zhou Zhang Long Lv You Du Jia Qu,Theme Park,5A
+Shang Hai Shi Ji Gong Yuan,Cheng Shi Gong Yuan,4A
+Ben Xi Shui Dong,Zi Ran Qi Guan,5A
+Yong He Gong,Religious Culture,4A
+Wen Chang Dong Jiao Ye Lin,Natural Scenery,3A
+He Gang Luo Bei Ming Shan Dao,Natural Scenery,4A
+Gui Gang Gui Ping Xi Shan,Natural Culture,4A
+Da Jue Shan,Natural Scenery,5A
+Shang Hai Ye Sheng Dong Wu Yuan,Zoo,5A
+Bei Jing Dong Wu Yuan,Zoo,4A
+Tong Tian Yan,Natural Culture,4A
+Nan Luo Gu Xiang,Historical Culture,4A
+Nan Yue Heng Shan,Natural Culture,5A
+Hua Guo Shan,Natural Culture,5A
+Chong Sheng Si San Ta,Religious Culture,5A
+Qing Xi Ling,Historical Site,5A
+Mang Shan,Natural Scenery,4A
+Fang Cheng Gang Shi Wan Da Shan,Natural Scenery,4A
+Xian Nv Hu,Natural Scenery,4A
+Kuan Zhai Xiang Zi,Historical Culture,3A
+He Shun Gu Zhen,Ancient Town,4A
+Liu Ye Hu,Natural Scenery,4A
+Cha Gan Hu,Natural Scenery,4A
+Dan Dong Feng Huang Shan,Natural Scenery,4A
+Ming Yue Shan,Natural Scenery,5A
+Song Hua Hu,Natural Scenery,4A
+Jin Ji Hu,Urban Landscape,5A
+Po Yang Hu,Natural Scenery,4A
+Tong Li Gu Zhen,Ancient Town,5A
+Zhong Yang Da Jie,Historical Culture,4A
+San Ya Ya Long Wan,Natural Scenery,4A
+Yan Bian Chao Xian Zu Min Su Yuan,Min Su Wen Hua,4A
+Wen Zhou Nan Xi Jiang,Natural Scenery,4A
+Long Hu Shan,Natural Culture,5A
+Qian Fo Shan,Natural Culture,4A
+Qing Cheng Shan,Religious Culture,5A
+Da Tong Huo Shan Qun,Zi Ran Qi Guan,4A
+Yu Long Xue Shan,Natural Scenery,5A
+Zheng Ding Long Xing Si,Religious Culture,4A
+Tian Tai Shan,Natural Culture,5A
+Sheng Suo Fei Ya Jiao Tang,Historical Architecture,4A
+Nan Ping He Ping Gu Zhen,Ancient Town,4A
+Ji Xi Xing Kai Hu,Natural Scenery,4A
+Hui Zhou Xi Hu,Natural Scenery,4A
+Ji Gong Shan,Natural Scenery,4A
+Yun Nan Min Zu Cun,Theme Park,4A
+Dong Guan Ke Yuan,Historical Architecture,4A
+Lu Shui He Guo Jia Sen Lin Gong Yuan,Natural Scenery,4A
+Hu Nan Sheng Bo Wu Guan,Wen Bo Yuan Guan,4A
+Chen Jia Ci,Historical Architecture,4A
+Bai Ma Si,Religious Culture,4A
+Dong Lin Si,Religious Culture,4A
+Zhao Yang Feng Huang Shan,Natural Culture,4A
+San Ming Tai Ning Da Jin Hu,Natural Scenery,5A
+Lu Gu Hu ( Yun Nan Bu Fen ),Natural Scenery,4A
+Feng Huang Gu Cheng,Ancient Town,4A
+Wei Zhou Dao,Natural Scenery,5A
+Jing De Zhen Gu Yao,Historical Culture,5A
+Shou Xian Gu Cheng,Historical Culture,4A
+Wu Yuan,Natural Scenery,5A
+Fu Zhou Gu Shan,Natural Scenery,4A
+Ning Bo Tian Yi Ge,Historical Architecture,4A
+Jin Shan Ling Chang Cheng,Historical Culture,4A
+Shen Nong Jia,Natural Scenery,5A
+Jin Shi Tan,Natural Scenery,5A
+Liao Yang Guang You Si,Religious Culture,4A
+Li Shui Yun He Ti Tian,Natural Scenery,4A
+Qing Yuan Shan,Natural Culture,5A
+Qi Yun Shan,Natural Culture,4A
+Shang Hai Chen Shan Zhi Wu Yuan,Botanical Garden,4A
+Yan Cheng Dan Ding He Shi Di,Natural Scenery,4A
+Jiu Zhai Gou,Natural Scenery,5A
+Long Wan Qun Guo Jia Sen Lin Gong Yuan,Natural Scenery,4A
+Wei Hai Hua Xia Cheng,Theme Park,5A
+San Fang Qi Xiang,Historical Culture,5A
+Chang Jia Zhuang Yuan,Historical Architecture,4A
+Mao Shan,Religious Culture,5A
+Tian Tan Gong Yuan,Historical Culture,5A
+Qi Kou Gu Zhen,Ancient Town,4A
+An Qing Zhen Feng Ta,Historical Architecture,4A
+Yuan Ming Yuan Yi Zhi Gong Yuan,Historical Site,4A
+Liu Gong Dao,Revolutionary Site,5A
+San He Gu Zhen,Ancient Town,5A
+Shen Zhen Hua Qiao Cheng,Theme Park,5A
+Gao Ju Li Yi Zhi,Historical Site,5A
+Yan Di Ling,Historical Culture,5A
+Tai Xing Da Xia Gu,Natural Scenery,4A
+Ji Lin Bei Shan,Natural Culture,4A
+Kai Ping Diao Lou,Historical Architecture,5A
+Xiang Shan Gong Yuan,Natural Scenery,4A
+Jing Zhou Gu Cheng,Historical Culture,4A
+Tai Ji Dong,Zi Ran Qi Guan,4A
+Nan Chang Ba Yi Qi Yi Ji Nian Guan,Revolutionary Site,4A
+Heng Shui Hu,Natural Scenery,4A
+San Xia Ren Jia,Natural Culture,5A
+Zhong Shan Sun Zhong Shan Gu Ju,Revolutionary Site,5A
+Mu Lan Wen Hua Sheng Tai Lv You Qu,Natural Culture,5A
+Da Yan Ta,Historical Culture,5A
+Lao Shan,Natural Scenery,5A
+Qian Dao Hu,Natural Scenery,5A
+Ping Yao Gu Cheng,Ancient Town,5A
+Sha Jia Bang,Revolutionary Site,5A
+Huang Long,Natural Scenery,5A
+Wei Man Huang Gong Bo Wu Yuan,Historical Culture,5A
+Hu Kou Pu Bu,Natural Scenery,4A
+Xu Zhou Yun Long Hu,Natural Scenery,5A
+Li Jiang Gu Cheng,Ancient Town,5A
+Bai Yun Shan,Natural Scenery,5A
+Huang Shi Guo Jia Kuang Shan Gong Yuan,Gong Ye Lv You,4A
+Teng Wang Ge,Historical Architecture,5A
+Gu Hui Zhou Wen Hua Lv You Qu,Historical Culture,5A
+Su Zhou Hu Qiu,Historical Culture,5A
+Ba Li Gou,Natural Scenery,4A
+Da Tang Fu Rong Yuan,Theme Park,5A
+Hang Zhou Song Cheng,Theme Park,4A
+Su Zhou Yuan Lin,Historical Culture,5A
+Hu Tiao Xia,Natural Scenery,4A
+Jia Mu Si Tong Jiang San Jiang Kou,Natural Scenery,4A
+Wu Hou Ci,Historical Culture,4A
+Huang Cheng Xiang Fu,Historical Architecture,5A
+Ling Shan Da Fu,Religious Culture,5A
+Mang Dang Shan,Historical Culture,5A
+Dian Chi,Natural Scenery,4A
+Teng Chong Re Hai,Zi Ran Qi Guan,5A
+Shang Hai Huan Qiu Jin Rong Zhong Xin,Urban Landmark,4A
+Guang Fu Gu Cheng,Ancient Town,5A
+San Jiang Cheng Yang Ba Zhai,Min Su Wen Hua,4A
+Xi Shuang Ban Na Ye Xiang Gu,Natural Scenery,4A
+Tao Hua Yuan,Natural Culture,4A
+Chao Zhou Guang Ji Qiao,Historical Architecture,4A
+Dong Jiang Hu,Natural Scenery,5A
+Pu Tuo Shan,Religious Culture,5A
+Liu Zhou Long Tan Gong Yuan,Natural Scenery,4A
+Lang Fang Tian Xia Di Yi Cheng,Theme Park,4A
+Bao Tu Quan,Natural Scenery,4A
+Pu Da Cuo Guo Jia Gong Yuan,Natural Scenery,5A
+Fang Te Huan Le Shi Jie,Theme Park,5A
+Yu Lin Yun Tian Wen Hua Cheng,Theme Park,4A
+Shang Hai Zhang Feng Hai Yang Shi Jie,Shui Zu Guan,4A
+Hang Zhou Xi Hu,Natural Scenery,5A
+Bei Dai He,Natural Scenery,4A
+Lang Shan,Natural Scenery,5A
+Nan Ning Qing Xiu Shan,Natural Scenery,5A
+Luo Fu Shan,Natural Scenery,5A
+Nan Tong Lang Shan,Natural Culture,4A
+San Ya Da Xiao Dong Tian,Natural Culture,5A
+Shang Hai Zi Ran Bo Wu Guan,Wen Bo Yuan Guan,4A
+De Hang Da Xia Gu,Natural Scenery,4A
+Xi Di Hong Cun,Ancient Town,5A
+Qing Jiang Hua Lang,Natural Scenery,5A
+Yan Men Guan,Historical Culture,5A
+Zhong Guo Ke Ji Guan,Ke Pu Jiao Yu,4A
+Mei Zhou Dao,Natural Culture,5A
+Shu Nan Zhu Hai,Natural Scenery,4A
+Bei Jing Ye Sheng Dong Wu Yuan,Zoo,4A
+Ya Bu Li Hua Xue Chang,Sports & Leisure,4A
+Heng Dian Ying Shi Cheng,Theme Park,5A
+Fu Xian Hu,Natural Scenery,4A
+Mo Gan Shan,Natural Scenery,4A
+Zhang Jia Jie Wu Ling Yuan,Natural Scenery,5A
+Chang Chun Dian Ying Zhi Pian Chang,Gong Ye Lv You,4A
+Wu Tai Shan,Religious Culture,5A
+Hong Dong Da Huai Shu,Historical Culture,5A
+Yi He Yuan,Historical Culture,5A
+Bing Lang Gu,Min Su Wen Hua,5A
+E Zhou Liang Zi Hu,Natural Scenery,4A
+Wu Qiao Za Ji Da Shi Jie,Theme Park,4A
+Qiong Hai Bo Ao Ya Zhou Lun Tan,Theme Park,4A
+Shang Hai Hai Yang Shui Zu Guan,Shui Zu Guan,4A
+Qian Ling,Historical Site,4A
+Guo Jia Bo Wu Guan,Wen Bo Yuan Guan,4A
+Tai Hang Shan Da Xia Gu,Natural Scenery,5A
+De Zhou Tai Yang Gu,Theme Park,4A
+Xia Men Yuan Lin Zhi Wu Yuan,Botanical Garden,4A
+Shang Hai Di Shi Ni Le Yuan,Theme Park,5A
+Shang Hai Dong Wu Yuan,Zoo,4A
+Wu Da Lian Chi,Zi Ran Qi Guan,5A
+Jing Yue Tan,Natural Scenery,5A
+Tang Shan Nan Hu,Cheng Shi Gong Yuan,4A
+Ya Nuo Da Yu Lin,Natural Scenery,5A
+Huang He Feng Jing Qu,Natural Scenery,4A
+Jin Li,Historical Culture,3A
+Qin Zhou San Niang Wan,Natural Scenery,4A
+Tai Yang Dao,Natural Scenery,5A
+Zhou Shan Zhu Jia Jian,Natural Scenery,4A
+Tie Ling Long Shou Shan,Natural Scenery,4A
+Wu Zhen,Ancient Town,5A
+Long Ji Ti Tian,Natural Scenery,4A
+Hua Shan Mi Ku,Zi Ran Qi Guan,4A
+Tian Men Shan,Natural Scenery,5A
+Xi Qiao Shan,Natural Culture,5A
+Tian Zhu Shan,Natural Scenery,5A
+Shang Hai Da Guan Yuan,Theme Park,4A
+Zhong Nan Shan,Natural Culture,4A
+Tai Shan,Natural Culture,5A
+Gu Bei Shui Zhen,Ancient Town,4A
+Wu Zhi Zhou Dao,Natural Scenery,5A
+Jiu Hua Shan,Religious Culture,5A
+Jing Po Hu,Natural Scenery,5A
+Shao Xing Lu Xun Gu Li,Historical Culture,5A
+Long Men Shi Ku,Historical Culture,5A
+Yun Tai Shan,Natural Scenery,5A
+Qing Dao Pi Jiu Bo Wu Guan,Gong Ye Lv You,4A
+Bai Yang Dian,Natural Scenery,5A
+Long Ting Gong Yuan,Historical Culture,4A
+Jing Gang Shan,Revolutionary Site,5A
+Pu Tian Jiu Li Hu,Natural Scenery,4A
+Tai Er Zhuang Gu Cheng,Ancient Town,5A
+Liao Yuan Kuang Gong Mu,Revolutionary Site,4A
+Dong Hu,Natural Scenery,5A
+Tai Zhou Shen Xian Ju,Natural Scenery,5A
+Yin Xu,Historical Site,5A
+Cheng De Bi Shu Shan Zhuang,Historical Culture,5A
+Tian Ya Hai Jiao,Natural Scenery,4A
+He Zhou Huang Yao Gu Zhen,Ancient Town,4A
+Yuan Tou Zhu,Natural Scenery,5A
+Du Fu Cao Tang,Historical Culture,4A
+Zhang Jia Kou Da Jing Men,Historical Culture,4A
+Le Shan Da Fu,Religious Culture,5A
+Ning De Yuan Yang Xi,Natural Scenery,5A
+Wu Zhou Qi Lou Cheng,Historical Culture,4A
+Lang Ya Shan,Natural Culture,4A
+Xi Ling Xue Shan,Natural Scenery,4A
+Ba Li He,Natural Scenery,5A
+Xia Men Ceng Cuo An,Historical Culture,3A
+Dong Bei Hu Lin Yuan,Zoo,4A
+Peng Lai Ge,Historical Culture,5A
+Da Ming Hu,Natural Scenery,4A
+Jing De Zhen Tao Ci Bo Wu Guan,Wen Bo Yuan Guan,4A
+Tian Xia Di Yi Quan,Natural Scenery,5A
+Bai Shi Shan,Natural Scenery,4A
+Si Ping Zhan Yi Ji Nian Guan,Revolutionary Site,4A
+798 Yi Shu Qu,Wen Hua Yi Shu,4A
+Mian Shan,Natural Culture,5A
+Hua Shan,Natural Scenery,5A
+Qiao Jia Da Yuan,Historical Architecture,5A
+Shen Zhen Shi Jie Zhi Chuang,Theme Park,5A
+Hai Kou Qi Lou Lao Jie,Historical Culture,3A
+Shuang Ya Shan Qi Xing Feng,Natural Scenery,4A
+Xiao Lang Di,Shui Li Gong Cheng,4A
+Shang Hai Ying Shi Le Yuan,Theme Park,4A
+Zhao Qing Xing Hu,Natural Scenery,5A
+Fu Zi Miao Qin Huai Feng Guang Dai,Historical Culture,5A
+Yan Dang Shan,Natural Scenery,5A
+Rui Jin Gong He Guo Yao Lan,Revolutionary Site,5A
+San Qing Shan,Natural Scenery,5A
+Huang Shan,Natural Scenery,5A
+Mao Ling,Historical Site,4A
+Zhao Zhou Qiao,Historical Architecture,4A
+Zhong Du Gou,Natural Scenery,4A
+Chang Sha Shi Jie Zhi Chuang,Theme Park,4A
+Wan Nian Bing Dong,Zi Ran Qi Guan,4A
+Hai Kou Huo Shan Kou,Natural Scenery,4A
+Jing Men Ming Xian Ling,Historical Site,4A
+Fa Men Si,Religious Culture,5A
+Shan Hai Guan,Historical Culture,5A
+Lu Ya Shan,Natural Scenery,4A
+Shang Hai Bo Wu Guan,Wen Bo Yuan Guan,4A
+Si Gu Niang Shan,Natural Scenery,4A
+Bei Hai Yin Tan,Natural Scenery,4A
+Shen Yang Gu Gong,Historical Culture,4A
+Xi Shuang Ban Na Re Dai Zhi Wu Yuan,Botanical Garden,5A
+Ye San Po,Natural Scenery,5A
+Shang Hai Du Sha Fu Ren La Xiang Guan,Zhu Ti Zhan Lan,4A
+Qian Jiang Cao Yu Gong Yuan,Cheng Shi Gong Yuan,4A
+Yan An Ge Ming Ji Nian Guan,Revolutionary Site,5A
+Lu Gu Hu,Natural Scenery,4A
+Mei Zhou Ke Tian Xia,Wen Hua Lv You,4A
+Mei Li Xue Shan,Natural Scenery,4A
+Liao Cheng Dong Chang Hu,Natural Scenery,4A
+Ying Kou Ba Yu Quan,Natural Scenery,4A
+Ba Da Ling Chang Cheng,Historical Culture,5A
+Sha Mian Dao,Historical Culture,4A
+Jian Shui Gu Cheng,Ancient Town,4A
+Yun Cheng Yan Hu,Natural Scenery,4A
+Yue Yang Lou,Historical Architecture,5A
+Wu Gong Shan,Natural Scenery,5A
+Zhan Jiang Hu Guang Yan,Natural Scenery,4A
+Cai Shi Ji,Historical Culture,5A
+San Xia Da Ba,Shui Li Gong Cheng,5A
+Xiang Yang Gu Long Zhong,Historical Culture,5A
+Chao Hu,Natural Scenery,4A
+Wan Ning Xing Long Re Dai Zhi Wu Yuan,Botanical Garden,4A
+Zi Bo Zhou Cun Gu Shang Cheng,Ancient Town,4A
+Yuan Yang Ti Tian,Natural Scenery,4A
+Tai Lao Shan,Natural Scenery,5A
+Qing Dao Hai Bin Feng Jing Qu,Natural Scenery,4A
+Tai Bai Shan,Natural Scenery,5A
+Guan Lin,Historical Culture,4A
+Zhong Shan Ling,Revolutionary Site,5A
+Dao Cheng Ya Ding,Natural Scenery,5A
+Bei Jing Huan Le Gu,Theme Park,4A
+Xing Tai Da Xia Gu,Natural Scenery,4A
+Hong Hai Tan,Natural Scenery,5A
+Mu Tian Yu Chang Cheng,Historical Culture,4A
+Tian Mu Hu,Natural Scenery,5A
+Guang Zhou Ta,Urban Landmark,4A
+En Shi Da Xia Gu,Natural Scenery,5A
+Qing Ming Shang He Yuan,Theme Park,5A
+Ju Zi Zhou,Cheng Shi Gong Yuan,5A
+Wa Huang Gong,Religious Culture,5A
+Wai Tan,Urban Landscape,4A
+Chang Zhou Zhong Hua Kong Long Yuan,Theme Park,5A
