@@ -6,20 +6,20 @@ import pydeck as pdk
 import random
 from duckduckgo_search import DDGS  # <--- NEW IMPORT
 
-@st.cache_data(show_spinner=False)
+# Notice we removed the @st.cache_data line for now so it is forced to search every time!
 def get_attraction_photo(attraction_name):
     """Fetches images using a fallback chain: DuckDuckGo -> Wikipedia -> Placeholder."""
     
-    # --- ATTEMPT 1: DuckDuckGo Search ---
+    # --- ATTEMPT 1: DuckDuckGo ---
     try:
         query = f"{attraction_name} attraction China"
         results = DDGS().images(query, max_results=1)
         if results:
             return results[0]['image']
-    except Exception:
-        pass # If DuckDuckGo fails or rate-limits us, move to Attempt 2
+    except Exception as e:
+        print(f"DuckDuckGo failed for {attraction_name}: {e}")
 
-    # --- ATTEMPT 2: Wikipedia API Fallback ---
+    # --- ATTEMPT 2: Wikipedia API ---
     try:
         endpoint = "https://en.wikipedia.org/w/api.php"
         headers = {"User-Agent": "TourismRecommenderApp/2.0 (contact@example.com)"}
@@ -35,10 +35,10 @@ def get_attraction_photo(attraction_name):
             for page_id, page_info in pages.items():
                 if "thumbnail" in page_info:
                     return page_info["thumbnail"]["source"]
-    except Exception:
-        pass # If Wikipedia fails, move to Attempt 3
+    except Exception as e:
+        print(f"Wikipedia failed for {attraction_name}: {e}")
 
-    # --- ATTEMPT 3: Final Gray Placeholder Fallback ---
+    # --- ATTEMPT 3: Placeholder ---
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
 
 
