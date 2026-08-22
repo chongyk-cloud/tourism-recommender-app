@@ -4,42 +4,29 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
-import requests  # <--- ADD THIS LINE HERE!
+from duckduckgo_search import DDGS  # <--- NEW IMPORT
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Dynamically fetches a real image from Wikipedia."""
-    endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/2.0 (contact@example.com)"}
-    
-    # Try 1: Add "China" to the search. Try 2: Remove spaces (Wu Dang Shan -> WuDangShan)
-    queries = [
-        f"{attraction_name} China", 
-        attraction_name.replace(" ", "")
-    ]
-    
-    for q in queries:
-        params = {
-            "action": "query",
-            "format": "json",
-            "generator": "search",
-            "gsrsearch": q,
-            "gsrlimit": 1,
-            "prop": "pageimages",
-            "pithumbsize": 600
-        }
-        try:
-            # Added a timeout so your app doesn't freeze if Wikipedia is slow
-            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
-            pages = response.get("query", {}).get("pages", {})
-            for page_id, page_info in pages.items():
-                if "thumbnail" in page_info:
-                    return page_info["thumbnail"]["source"]
-        except Exception:
-            continue
+    """Dynamically fetches a real image from the web using DuckDuckGo."""
+    try:
+        # Optimize the search query for Chinese landmarks
+        query = f"{attraction_name} attraction China"
+        
+        # Search the web and grab the top 1 image result
+        results = DDGS().images(query, max_results=1)
+        
+        if results:
+            return results[0]['image']  # Return the image URL
             
-    # Fallback to the gray placeholder ONLY if both searches fail
+    except Exception as e:
+        print(f"Image search failed for {attraction_name}: {e}")
+        pass
+        
+    # Fallback to the gray placeholder if the search fails
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
+
+
 
 # Set page configuration
 st.set_page_config(page_title="Tourism Recommender", layout="wide", page_icon="🗺️")
