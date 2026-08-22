@@ -4,40 +4,39 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
-@st.cache_data
-def fetch_attraction_image(attraction_name):
-    """Dynamically fetches a real image from Wikipedia using its Search engine."""
+@st.cache_data(show_spinner=False)
+def get_attraction_photo(attraction_name):
+    """Dynamically fetches a real image from Wikipedia."""
     endpoint = "https://en.wikipedia.org/w/api.php"
+    headers = {"User-Agent": "TourismRecommenderApp/2.0 (contact@example.com)"}
     
-    # We use a 'generator' to search for the attraction and get the image for the top result
-    params = {
-        "action": "query",
-        "format": "json",
-        "generator": "search",
-        "gsrsearch": attraction_name,  # The search term (e.g., "Wu Dang Shan")
-        "gsrlimit": 1,                 # Only get the top 1 search result
-        "prop": "pageimages",
-        "pithumbsize": 500             # Request a 500px wide image
-    }
+    # Try 1: Add "China" to the search. Try 2: Remove spaces (Wu Dang Shan -> WuDangShan)
+    queries = [
+        f"{attraction_name} China", 
+        attraction_name.replace(" ", "")
+    ]
     
-    # Wikipedia API strictly requires a descriptive User-Agent header, otherwise it blocks the request
-    headers = {
-        "User-Agent": "TourismRecommenderApp/1.0 (contact@example.com)"
-    }
-    
-    try:
-        # Pass the headers into the request
-        response = requests.get(endpoint, params=params, headers=headers).json()
-        pages = response.get("query", {}).get("pages", {})
-        
-        # Extract the image URL from the top search result
-        for page_id, page_info in pages.items():
-            if "thumbnail" in page_info:
-                return page_info["thumbnail"]["source"]
-    except Exception:
-        pass
-    
-    # Fallback to the gray placeholder if Wikipedia doesn't have a photo or an error occurs
+    for q in queries:
+        params = {
+            "action": "query",
+            "format": "json",
+            "generator": "search",
+            "gsrsearch": q,
+            "gsrlimit": 1,
+            "prop": "pageimages",
+            "pithumbsize": 600
+        }
+        try:
+            # Added a timeout so your app doesn't freeze if Wikipedia is slow
+            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
+            pages = response.get("query", {}).get("pages", {})
+            for page_id, page_info in pages.items():
+                if "thumbnail" in page_info:
+                    return page_info["thumbnail"]["source"]
+        except Exception:
+            continue
+            
+    # Fallback to the gray placeholder ONLY if both searches fail
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
 
 # Set page configuration
@@ -101,20 +100,17 @@ try:
             tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⭐ Past Ratings"])
 
             with tab1:
-                
                 st.subheader("Your Personalized Itinerary")
                 cols = st.columns(5)
                 for i, (name, score) in enumerate(recommendations):
                     with cols[i]:
-                        # --- UPGRADE: Image Grids (Using dynamic placeholders) ---
-                        image_url = fetch_attraction_image(name)
+                        # --- UPGRADE: Image Grids ---
+                        image_url = get_attraction_photo(name)  # <--- UPDATED THIS LINE
                         st.image(image_url, use_container_width=True)
-                        
                         
                         st.markdown(f"**{name}**")
                         meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
                         st.caption(f"Score: {score:.3f} | {meta['attraction_level']}")
-
             with tab2:
                 st.subheader("Attraction Locations")
                 st.info("Note: Using simulated coordinates for 3D visualization. Add real 'lat' and 'lon' data to your dataset to map exact locations.")
