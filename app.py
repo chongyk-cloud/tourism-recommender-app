@@ -6,40 +6,27 @@ import pydeck as pdk
 import random
 from duckduckgo_search import DDGS  # <--- NEW IMPORT
 
-# Notice we removed the @st.cache_data line for now so it is forced to search every time!
+@st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Fetches images using a fallback chain: DuckDuckGo -> Wikipedia -> Placeholder."""
-    
-    # --- ATTEMPT 1: DuckDuckGo ---
+    """Dynamically fetches a real image from the web using DuckDuckGo."""
     try:
+        # Optimize the search query for Chinese landmarks
         query = f"{attraction_name} attraction China"
-        results = DDGS().images(query, max_results=1)
-        if results:
-            return results[0]['image']
-    except Exception as e:
-        print(f"DuckDuckGo failed for {attraction_name}: {e}")
-
-    # --- ATTEMPT 2: Wikipedia API ---
-    try:
-        endpoint = "https://en.wikipedia.org/w/api.php"
-        headers = {"User-Agent": "TourismRecommenderApp/2.0 (contact@example.com)"}
-        queries = [f"{attraction_name} China", attraction_name.replace(" ", "")]
         
-        for q in queries:
-            params = {
-                "action": "query", "format": "json", "generator": "search",
-                "gsrsearch": q, "gsrlimit": 1, "prop": "pageimages", "pithumbsize": 600
-            }
-            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
-            pages = response.get("query", {}).get("pages", {})
-            for page_id, page_info in pages.items():
-                if "thumbnail" in page_info:
-                    return page_info["thumbnail"]["source"]
+        # Search the web and grab the top 1 image result
+        results = DDGS().images(query, max_results=1)
+        
+        if results:
+            return results[0]['image']  # Return the image URL
+            
     except Exception as e:
-        print(f"Wikipedia failed for {attraction_name}: {e}")
-
-    # --- ATTEMPT 3: Placeholder ---
+        print(f"Image search failed for {attraction_name}: {e}")
+        pass
+        
+    # Fallback to the gray placeholder if the search fails
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
+
+# ... rest of your code ...
 
 
 
