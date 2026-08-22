@@ -4,6 +4,34 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
+import requests
+
+@st.cache_data
+def fetch_attraction_image(attraction_name):
+    """Dynamically fetches a real image from Wikipedia based on the name."""
+    endpoint = "https://en.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "format": "json",
+        "titles": attraction_name,
+        "prop": "pageimages",
+        "pithumbsize": 500, # Request a 500px wide image
+        "redirects": 1      # Automatically handle slight spelling differences
+    }
+    
+    try:
+        response = requests.get(endpoint, params=params).json()
+        pages = response.get("query", {}).get("pages", {})
+        
+        # Extract the image URL if it exists
+        for page_id, page_info in pages.items():
+            if "thumbnail" in page_info:
+                return page_info["thumbnail"]["source"]
+    except Exception:
+        pass
+    
+    # Fallback to the gray placeholder if Wikipedia doesn't have a photo
+    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
 
 # Set page configuration
 st.set_page_config(page_title="Tourism Recommender", layout="wide", page_icon="🗺️")
