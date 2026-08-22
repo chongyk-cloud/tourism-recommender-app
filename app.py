@@ -2,9 +2,11 @@ import streamlit as st
 import pickle
 import numpy as np
 import pandas as pd
+import pydeck as pdk
+import random
 
 # Set page configuration
-st.set_page_config(page_title="Tourism Recommender", layout="wide")
+st.set_page_config(page_title="Tourism Recommender", layout="wide", page_icon="🗺️")
 
 # Load all saved artifacts
 @st.cache_resource
@@ -16,8 +18,6 @@ def load_artifacts():
 
     with open('user_ids.pkl', 'rb') as f:
         user_ids = pickle.load(f)
-    with open('item_ids.pkl', 'rb') as f:
-        item_ids = pickle.load(f)
     with open('idx_to_item.pkl', 'rb') as f:
         idx_to_item = pickle.load(f)
     with open('user_to_idx.pkl', 'rb') as f:
@@ -26,11 +26,10 @@ def load_artifacts():
         train_seen = pickle.load(f)
 
     attr_meta = pd.read_csv('attraction_metadata.csv')
-    return pred_cf, pred_content, pred_nn, hybrid, user_ids, item_ids, idx_to_item, user_to_idx, train_seen, attr_meta
+    return pred_cf, pred_content, pred_nn, hybrid, user_ids, idx_to_item, user_to_idx, train_seen, attr_meta
 
-# Load data
 try:
-    pred_cf, pred_content, pred_nn, hybrid, user_ids, item_ids, idx_to_item, user_to_idx, train_seen, attr_meta = load_artifacts()
+    pred_cf, pred_content, pred_nn, hybrid, user_ids, idx_to_item, user_to_idx, train_seen, attr_meta = load_artifacts()
 
     # Recommendation function
     def recommend_for_user(user_id, score_matrix, top_n=5):
@@ -39,20 +38,16 @@ try:
         user_idx = user_to_idx[user_id]
         scores = score_matrix[user_idx].copy()
         seen = train_seen.get(user_idx, set())
-        # Mask seen items
         for i in seen:
             scores[i] = -np.inf
-        # Get top indices
         top_indices = np.argsort(scores)[::-1][:top_n]
-        # Convert indices to attraction names and scores
         recommendations = [(idx_to_item[i], scores[i]) for i in top_indices]
         return recommendations, seen
 
     # Streamlit UI
     st.title("🗺️ Personalized Tourism Recommender")
-    st.markdown("Enter a tourist ID to get top attraction recommendations based on their past ratings.")
+    st.markdown("Enter a tourist ID to generate a visual travel itinerary.")
 
-    # Input
     tourist_id = st.text_input("Tourist ID", value="605")
     if tourist_id:
         try:
@@ -61,29 +56,59 @@ try:
             st.error("Please enter a valid integer Tourist ID.")
             st.stop()
 
-        # Check if tourist exists
         if tourist_id_int not in user_to_idx:
-            st.warning(f"Tourist ID {tourist_id_int} not found in the system. Showing popular attractions instead.")
-            st.info("Displaying a sample of popular attractions (not personalised).")
+            st.warning(f"Tourist ID {tourist_id_int} not found. Showing popular attractions instead.")
             st.stop()
         else:
-            # Get recommendations using the hybrid model
             recommendations, seen = recommend_for_user(tourist_id_int, hybrid, top_n=5)
 
-            # Display past ratings
-            st.subheader("⭐ Your Previous Ratings")
-            st.info("Past ratings are shown in the notebook; for the app, you can load a CSV with user ratings.")
+            # --- UPGRADE: Clean Tabs ---
+            tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⭐ Past Ratings"])
 
-            # Display recommendations
-            st.subheader("🎯 Top 5 Recommended Attractions")
-            cols = st.columns(5)
-            for i, (name, score) in enumerate(recommendations):
-                with cols[i]:
-                    st.markdown(f"**{name}**")
-                    st.caption(f"Score: {score:.3f}")
-                    meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
-                    st.caption(f"Category: {meta['attraction_category']}")
-                    st.caption(f"Level: {meta['attraction_level']}")
+            with tab1:
+                st.subheader("Your Personalized Itinerary")
+                cols = st.columns(5)
+                for i, (name, score) in enumerate(recommendations):
+                    with cols[i]:
+                        # --- UPGRADE: Image Grids (Using dynamic placeholders) ---
+                        image_url = f"https://placehold.co/400x300/e0e0e0/000000?text={name.replace(' ', '+')}"
+                        st.image(image_url, use_container_width=True)
+                        
+                        st.markdown(f"**{name}**")
+                        meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
+                        st.caption(f"Score: {score:.3f} | {meta['attraction_level']}")
+
+            with tab2:
+                st.subheader("Attraction Locations")
+                st.info("Note: Using simulated coordinates for 3D visualization. Add real 'lat' and 'lon' data to your dataset to map exact locations.")
+                
+                # --- UPGRADE: 3D Spatial Mapping ---
+                map_data = []
+                for name, score in recommendations:
+                    # Simulating coordinates around central China for demonstration
+                    lat = 35.0 + random.uniform(-4, 4)
+                    lon = 105.0 + random.uniform(-4, 4)
+                    map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
+
+                map_df = pd.DataFrame(map_data)
+
+                view_state = pdk.ViewState(latitude=35.0, longitude=105.0, zoom=4, pitch=45)
+                layer = pdk.Layer(
+                    "ColumnLayer",
+                    data=map_df,
+                    get_position=["lon", "lat"],
+                    get_elevation="score * 20000",
+                    elevation_scale=10,
+                    radius=20000,
+                    get_fill_color=[255, 75, 75, 200],
+                    pickable=True,
+                    auto_highlight=True,
+                )
+                st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nMatch Score: {score}"}))
+
+            with tab3:
+                st.subheader("Your Previous Ratings")
+                st.info("Past ratings are tracked in the model. You can load a user history CSV here in the future.")
 
 except Exception as e:
-    st.error(f"An error occurred while loading the app data: {e}")
+    st.error(f"An error occurred: {e}")
