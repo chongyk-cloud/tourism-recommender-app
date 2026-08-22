@@ -2,33 +2,47 @@ import streamlit as st
 import pandas as pd
 import pydeck as pdk
 import random
-import requests
 from duckduckgo_search import DDGS  
 
 @st.cache_data(show_spinner=False)
-def get_attraction_photo(attraction_name):
-    """Dynamically fetches a real image from the web using DuckDuckGo."""
-    try:
-        # Optimize the search query for Chinese landmarks
-        query = f"{attraction_name} attraction China"
-        
-        # Search the web and grab the top 1 image result
-        results = DDGS().images(query, max_results=1)
-        
-        if results:
-            return results[0]['image']  # Return the image URL
+def get_attraction_photo(attraction_name, category):
+    """Tries multiple search queries on DuckDuckGo, falling back to category-matched photos if needed."""
+    
+    # Multiple search query variations to maximize finding a real web image
+    queries = [
+        f"{attraction_name} scenic spot China",
+        f"{attraction_name} tourism",
+        f"{attraction_name}"
+    ]
+    
+    for query in queries:
+        try:
+            results = DDGS().images(query, max_results=1)
+            if results and 'image' in results[0]:
+                return results[0]['image']
+        except Exception:
+            continue  # Try the next query variation if this one fails
             
-    except Exception as e:
-        print(f"Image search failed for {attraction_name}: {e}")
-        pass
+    # Ultimate Backup: Category-matched travel photo so the card is NEVER empty
+    category_str = str(category).lower()
+    if "natural" in category_str or "scenery" in category_str:
+        keyword = "nature,mountain"
+    elif "ancient" in category_str or "town" in category_str:
+        keyword = "ancient,china,town"
+    elif "religio" in category_str:
+        keyword = "temple,pagoda"
+    elif "historic" in category_str or "culture" in category_str:
+        keyword = "history,architecture"
+    else:
+        keyword = "travel,landscape,china"
         
-    # Fallback to the gray placeholder if the search fails
-    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
+    seed = sum(ord(c) for c in attraction_name)
+    return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
 
 # Set page configuration
 st.set_page_config(page_title="Tourism Recommender", layout="wide", page_icon="🗺️")
 
-# Load the raw dataset instead of ML matrices for demographic filtering
+# Load the raw dataset for demographic filtering
 @st.cache_resource
 def load_dataset():
     df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
@@ -38,25 +52,20 @@ def load_dataset():
 try:
     df_raw, attr_meta = load_dataset()
 
-    # --- NEW RECOMMENDATION LOGIC: Demographic Filtering ---
     def recommend_for_demographic(df, age_group, gender, top_n=5):
-        # 1. Filter the dataset by the selected age group
         filtered_df = df[df['age_group'] == age_group]
         
-        # 2. Filter by gender (unless 'All' is selected)
         if gender != "All":
             filtered_df = filtered_df[filtered_df['gender'] == gender]
             
         if filtered_df.empty:
             return []
             
-        # 3. Find the most highly-rated attractions for this specific demographic
         popular_spots = filtered_df.groupby('attraction_name').agg(
             avg_rating=('rating', 'mean'),
             visit_count=('rating', 'count')
         ).reset_index()
         
-        # 4. Sort by highest rating, using visit count to break ties
         popular_spots = popular_spots.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
         
         recommendations = [(row['attraction_name'], row['avg_rating']) for _, row in popular_spots.iterrows()]
@@ -66,25 +75,23 @@ try:
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("Select your demographic profile to see what travelers like you enjoyed the most!")
 
-    # --- UPGRADE: Replace Tourist ID with Demographic Dropdowns ---
+    # Demographic Dropdowns
     col1, col2 = st.columns(2)
     
     with col1:
-        # Get unique age groups dynamically from the dataset
         available_ages = sorted(df_raw['age_group'].dropna().unique().tolist())
         selected_age = st.selectbox("Select Your Age Group", options=available_ages)
         
     with col2:
         selected_gender = st.selectbox("Select Your Gender", options=["All", "Female", "Male"])
 
-    # Generate recommendations
     recommendations = recommend_for_demographic(df_raw, selected_age, selected_gender, top_n=5)
 
     if not recommendations:
         st.warning("Not enough data for this specific demographic. Please try adjusting your filters.")
         st.stop()
 
-    # --- Clean Tabs ---
+    # Tabs
     tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "📊 Demographic Insights"])
 
     with tab1:
@@ -92,24 +99,23 @@ try:
         cols = st.columns(len(recommendations))
         for i, (name, score) in enumerate(recommendations):
             with cols[i]:
-                # Fetch image
-                image_url = get_attraction_photo(name)
+                # Fetch metadata category first
+                meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
+                category = meta['attraction_category']
+                
+                # Fetch image using multi-source search + category fallback
+                image_url = get_attraction_photo(name, category)
                 st.image(image_url, use_container_width=True)
                 
                 st.markdown(f"**{name}**")
-                
-                # Fetch metadata
-                meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
-                st.caption(f"Demographic Rating: {score:.2f}⭐ | {meta['attraction_level']}")
+                st.caption(f"Rating: {score:.2f}⭐ | {meta['attraction_level']}")
 
     with tab2:
         st.subheader("Attraction Locations")
-        st.info("Note: Using simulated coordinates for 3D visualization. Add real 'lat' and 'lon' data to your dataset to map exact locations.")
+        st.info("Note: Using simulated coordinates for 3D visualization.")
         
-        # --- 3D Spatial Mapping ---
         map_data = []
         for name, score in recommendations:
-            # Simulating coordinates around central China for demonstration
             lat = 35.0 + random.uniform(-4, 4)
             lon = 105.0 + random.uniform(-4, 4)
             map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
