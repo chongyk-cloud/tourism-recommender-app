@@ -94,13 +94,15 @@ try:
             tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⭐ Past Ratings"])
 
             with tab1:
+                
                 st.subheader("Your Personalized Itinerary")
                 cols = st.columns(5)
                 for i, (name, score) in enumerate(recommendations):
                     with cols[i]:
                         # --- UPGRADE: Image Grids (Using dynamic placeholders) ---
-                        image_url = f"https://placehold.co/400x300/e0e0e0/000000?text={name.replace(' ', '+')}"
+                        image_url = fetch_attraction_image(name)
                         st.image(image_url, use_container_width=True)
+                        
                         
                         st.markdown(f"**{name}**")
                         meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
