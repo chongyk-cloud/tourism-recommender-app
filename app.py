@@ -26,37 +26,7 @@ def get_attraction_photo(attraction_name):
     # Fallback to the gray placeholder if the search fails
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
 
-@st.cache_data(show_spinner=False)
-def get_attraction_photo(attraction_name, category):
-    """Fetches images using DuckDuckGo first, then falls back to category stock photos."""
-    
-    # --- ATTEMPT 1: DuckDuckGo Search ---
-    try:
-        query = f"{attraction_name} attraction China"
-        results = DDGS().images(query, max_results=1)
-        if results:
-            return results[0]['image']
-    except Exception:
-        pass  # If DuckDuckGo fails or blocks us, move to Attempt 2
-        
-    # --- ATTEMPT 2: Category Stock Photo Fallback ---
-    category_str = str(category).lower()
-    
-    if "natural" in category_str or "scenery" in category_str:
-        keyword = "nature,mountain"
-    elif "ancient" in category_str or "town" in category_str:
-        keyword = "ancient,china,town"
-    elif "religio" in category_str:
-        keyword = "temple,pagoda"
-    elif "historic" in category_str or "culture" in category_str:
-        keyword = "history,architecture"
-    elif "sport" in category_str or "leisure" in category_str:
-        keyword = "skiing,resort"
-    else:
-        keyword = "travel,landscape,china"
-        
-    seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
+# ... rest of your code ...
 
 
 
@@ -125,14 +95,12 @@ try:
                 cols = st.columns(5)
                 for i, (name, score) in enumerate(recommendations):
                     with cols[i]:
-                        meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
-                        category = meta['attraction_category']
-                        
-                        # --- USE THE HYBRID FUNCTION ---
-                        image_url = get_attraction_photo(name, category)
+                        # --- UPGRADE: Image Grids ---
+                        image_url = get_attraction_photo(name)  # <--- UPDATED THIS LINE
                         st.image(image_url, use_container_width=True)
                         
                         st.markdown(f"**{name}**")
+                        meta = attr_meta[attr_meta['attraction_name'] == name].iloc[0]
                         st.caption(f"Score: {score:.3f} | {meta['attraction_level']}")
             with tab2:
                 st.subheader("Attraction Locations")
