@@ -4,33 +4,40 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import random
-import requests
-
 @st.cache_data
 def fetch_attraction_image(attraction_name):
-    """Dynamically fetches a real image from Wikipedia based on the name."""
+    """Dynamically fetches a real image from Wikipedia using its Search engine."""
     endpoint = "https://en.wikipedia.org/w/api.php"
+    
+    # We use a 'generator' to search for the attraction and get the image for the top result
     params = {
         "action": "query",
         "format": "json",
-        "titles": attraction_name,
+        "generator": "search",
+        "gsrsearch": attraction_name,  # The search term (e.g., "Wu Dang Shan")
+        "gsrlimit": 1,                 # Only get the top 1 search result
         "prop": "pageimages",
-        "pithumbsize": 500, # Request a 500px wide image
-        "redirects": 1      # Automatically handle slight spelling differences
+        "pithumbsize": 500             # Request a 500px wide image
+    }
+    
+    # Wikipedia API strictly requires a descriptive User-Agent header, otherwise it blocks the request
+    headers = {
+        "User-Agent": "TourismRecommenderApp/1.0 (contact@example.com)"
     }
     
     try:
-        response = requests.get(endpoint, params=params).json()
+        # Pass the headers into the request
+        response = requests.get(endpoint, params=params, headers=headers).json()
         pages = response.get("query", {}).get("pages", {})
         
-        # Extract the image URL if it exists
+        # Extract the image URL from the top search result
         for page_id, page_info in pages.items():
             if "thumbnail" in page_info:
                 return page_info["thumbnail"]["source"]
     except Exception:
         pass
     
-    # Fallback to the gray placeholder if Wikipedia doesn't have a photo
+    # Fallback to the gray placeholder if Wikipedia doesn't have a photo or an error occurs
     return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
 
 # Set page configuration
