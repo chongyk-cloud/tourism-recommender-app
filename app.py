@@ -6,14 +6,15 @@ import random
 import requests
 
 # --- 1. IMAGE DATABASE (DIRECT LINKS) ---
-# Put direct image URLs here! The code checks this list first.
+
 IMAGE_DATABASE = {
     "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
     "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
     "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
     "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
-    "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
-    "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"
+    # Replaced the fragile Wikipedia thumbnail links with permanent static URLs
+    "Tian Mu Hu": "https://images.unsplash.com/photo-1549845347-68b20980e03e?q=80&w=600&auto=format&fit=crop", # Beautiful lake scenery
+    "Lao Shan": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop" # Gorgeous mountain peak
 }
 
 @st.cache_data(show_spinner=False)
