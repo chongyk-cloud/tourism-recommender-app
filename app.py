@@ -55,15 +55,9 @@ st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide",
 # --- 3. DATA & EVALUATION METRICS LOADER ---
 @st.cache_resource
 def load_data_and_metrics():
-    # Load metadata dataset
-    try:
-        df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
-    except Exception:
-        df_raw = pd.read_csv('attraction_metadata.csv')
-
+    df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
-    # Offline evaluation benchmark metrics calculated during training
     evaluation_metrics = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)",
@@ -80,18 +74,33 @@ def load_data_and_metrics():
 
     return df_raw, attr_meta, evaluation_metrics
 
-
 try:
     df_raw, attr_meta, eval_metrics_df = load_data_and_metrics()
 
-    # Cold start / Demographic recommendation engine
-    def recommend_for_demographic(df, age_group, gender, top_n=5):
-        filtered = df[df['age_group'] == age_group]
-        if gender != "All":
+    # --- ADVANCED FILTERING ENGINE ---
+    def recommend_filtered(df, age_group, gender, province, visit_duration, top_n=5):
+        filtered = df.copy()
+        
+        # Apply filters unless "Ignore" is selected
+        if age_group != "Ignore":
+            filtered = filtered[filtered['age_group'] == age_group]
+        
+        if gender != "Ignore":
             filtered = filtered[filtered['gender'] == gender]
             
+        if province != "Ignore":
+            filtered = filtered[filtered['province'] == province]
+            
+        if visit_duration != "Ignore":
+            if visit_duration == "Short (1-3 hours)":
+                filtered = filtered[filtered['visit_duration_hours'] <= 3]
+            elif visit_duration == "Medium (3-5 hours)":
+                filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
+            elif visit_duration == "Long (5+ hours)":
+                filtered = filtered[filtered['visit_duration_hours'] > 5]
+            
         if filtered.empty:
-            filtered = df
+            return []
             
         grouped = filtered.groupby('attraction_name').agg(
             avg_rating=('rating', 'mean'),
@@ -107,12 +116,22 @@ try:
 
     st.sidebar.header("🎯 Traveler Preference Panel")
     
-    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) if 'age_group' in df_raw.columns else ["26-35"]
-    selected_age = st.sidebar.selectbox("Age Group", options=available_ages)
-    selected_gender = st.sidebar.selectbox("Gender Preference", options=["All", "Female", "Male"])
+    # Dropdowns with "Ignore" appended to the end
+    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
+    selected_age = st.sidebar.selectbox("Age Group", options=available_ages, index=len(available_ages)-1)
+    
+    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"]
+    selected_gender = st.sidebar.selectbox("Gender", options=available_genders, index=len(available_genders)-1)
+    
+    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"]
+    selected_province = st.sidebar.selectbox("Province", options=available_provinces, index=len(available_provinces)-1)
+    
+    duration_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+    selected_duration = st.sidebar.selectbox("Visit Duration", options=duration_options, index=len(duration_options)-1)
+    
     top_n = st.sidebar.slider("Number of Recommendations", min_value=3, max_value=8, value=5)
 
-    recommendations = recommend_for_demographic(df_raw, selected_age, selected_gender, top_n=top_n)
+    recommendations = recommend_filtered(df_raw, selected_age, selected_gender, selected_province, selected_duration, top_n=top_n)
 
     # --- 5. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs([
@@ -124,45 +143,52 @@ try:
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
-        st.caption(f"Showing top attractions tailored for demographic profile: **Age {selected_age}** | **Gender: {selected_gender}**")
         
-        cols = st.columns(len(recommendations))
-        for i, (name, score) in enumerate(recommendations):
-            with cols[i]:
-                meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
-                level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+        if not recommendations:
+            st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
+        else:
+            st.caption(f"Showing top attractions based on your active filters.")
+            
+            cols = st.columns(len(recommendations))
+            for i, (name, score) in enumerate(recommendations):
+                with cols[i]:
+                    meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                    category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
+                    level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
 
-                img_url = get_attraction_photo(name, category)
-                st.image(img_url, use_container_width=True)
-                st.markdown(f"**{name}**")
-                st.caption(f"Rating: {score:.2f} ⭐ | {level}")
+                    img_url = get_attraction_photo(name, category)
+                    st.image(img_url, use_container_width=True)
+                    st.markdown(f"**{name}**")
+                    st.caption(f"Rating: {score:.2f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
         st.subheader("Attraction Spatial Layout")
         st.info("Simulated coordinate layers representing geographic distribution across destination regions.")
 
-        map_data = []
-        for name, score in recommendations:
-            lat = 35.0 + random.uniform(-4, 4)
-            lon = 105.0 + random.uniform(-4, 4)
-            map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
+        if not recommendations:
+            st.warning("No data to map. Adjust your filters to see locations.")
+        else:
+            map_data = []
+            for name, score in recommendations:
+                lat = 35.0 + random.uniform(-4, 4)
+                lon = 105.0 + random.uniform(-4, 4)
+                map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
 
-        map_df = pd.DataFrame(map_data)
-        view_state = pdk.ViewState(latitude=35.0, longitude=105.0, zoom=4, pitch=45)
-        layer = pdk.Layer(
-            "ColumnLayer",
-            data=map_df,
-            get_position=["lon", "lat"],
-            get_elevation="score * 20000",
-            elevation_scale=10,
-            radius=22000,
-            get_fill_color=[255, 75, 75, 200],
-            pickable=True,
-            auto_highlight=True,
-        )
-        st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nRating: {score}⭐"}))
+            map_df = pd.DataFrame(map_data)
+            view_state = pdk.ViewState(latitude=35.0, longitude=105.0, zoom=4, pitch=45)
+            layer = pdk.Layer(
+                "ColumnLayer",
+                data=map_df,
+                get_position=["lon", "lat"],
+                get_elevation="score * 20000",
+                elevation_scale=10,
+                radius=22000,
+                get_fill_color=[255, 75, 75, 200],
+                pickable=True,
+                auto_highlight=True,
+            )
+            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nRating: {score}⭐"}))
 
     # ========================== TAB 3: DEVELOPER / GRADING VIEW ==========================
     with tab3:
@@ -171,7 +197,6 @@ try:
             "Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures."
         )
 
-        # High-level metric highlights for best model (Hybrid)
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         m_col1.metric("Ensemble RMSE", "0.8210", delta="-0.0714 vs SVD", delta_color="inverse")
         m_col2.metric("Ensemble MSE", "0.6740", delta="-0.1224 vs SVD", delta_color="inverse")
