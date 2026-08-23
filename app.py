@@ -234,7 +234,17 @@ try:
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
 
                         img_url = get_attraction_photo(name)
-                        st.image(img_url, use_container_width=True)
+                        
+                        # Use HTML/CSS to force a standard uniform size (200px height) and crop cleanly
+                        st.markdown(
+                            f"""
+                            <div style="height: 200px; width: 100%; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
+                                <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+                        
                         st.markdown(f"**{name}**")
                         st.caption(f"Rating: {score:.2f} ⭐ | {level}")
 
