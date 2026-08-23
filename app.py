@@ -4,159 +4,77 @@ import numpy as np
 import pydeck as pdk
 import random
 import requests
+import pickle
+import os
 
-# --- 1. IMAGE DATABASE (DIRECT LINKS) ---
+# --- 1. PAGE CONFIGURATION ---
+st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
-# --- 1. IMAGE DATABASE (DIRECT LINKS) ---
+# --- 2. IMAGE DATABASE & FETCHER ---
 IMAGE_DATABASE = {
     "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
     "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
     "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
     "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
-    
-    # FIXED: Using Special:FilePath automatically finds the exact .JPG and resizes it to 800px!
     "Tian Mu Hu": "https://commons.wikimedia.org/wiki/Special:FilePath/%E5%A4%A9%E7%9B%AE%E6%B9%96%E5%A4%A7%E9%96%80.JPG?width=800",
     "Lao Shan": "https://commons.wikimedia.org/wiki/Special:FilePath/Mount_Lao_from_within_the_Laoshan_National_Park.jpg?width=800"
 }
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Queries Wikipedia and verifies the article's opening paragraph for geographical keywords."""
-    
-    # Priority 0: If we have a direct link in the database above, use it immediately!
     if attraction_name in IMAGE_DATABASE:
         return IMAGE_DATABASE[attraction_name]
         
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/8.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/8.0"}
     
-    # --- 2. TEXT ALIASES (WIKIPEDIA SEARCH TERMS) ---
-    # Put text translations here. Do NOT put URLs in this list!
     NAME_ALIASES = {
-        "Ba Li Gou": "Baligou",
-        "Baili Gou": "Baligou",
-        "Long Men Shi Ku": "Longmen Grottoes",
-        "Qing Ming Shang He Yuan": "Millennium City Park",
-        "Si Gu Niang Shan": "Mount Siguniang",
-        "E Mei Shan": "Mount Emei",
-        "Lao Jun Shan": "Mount Laojun",
-        "Wu Dang Shan": "Wudang Mountains",
-        "Kai Feng Fu": "Kaifeng Prefecture",
-        "Ning De Yuan Yang Xi": "Ningde"
-        # Notice Tian Mu Hu and Lao Shan are completely removed from here
-    }
-    
-    # 2. Advanced Pinyin Translation Dictionaries
-    pinyin_map_2_words = {
-        'shi ku': 'Grottoes', 'gu zhen': 'Ancient Town', 'gu cheng': 'Ancient City',
-        'gong yuan': 'Park', 'wu yuan': 'Museum', 'wu guan': 'Museum',
-        'nian guan': 'Memorial', 'xia gu': 'Canyon', 'pu bu': 'Waterfall',
-        'shi di': 'Wetland'
-    }
-    
-   
-    
-    pinyin_map_1_word = {
-        'shan': 'Mountain', 'dao': 'Island', 'hu': 'Lake', 'gou': 'Valley',
-        'si': 'Temple', 'dong': 'Cave', 'ling': 'Mountains', 'guan': 'Pass',
-        'yuan': 'Garden', 'cheng': 'City', 'qu': 'Scenic Area', 'ta': 'Pagoda',
-        'lin': 'Forest'
+        "Ba Li Gou": "Baligou", "Baili Gou": "Baligou", "Long Men Shi Ku": "Longmen Grottoes",
+        "Qing Ming Shang He Yuan": "Millennium City Park", "Si Gu Niang Shan": "Mount Siguniang",
+        "E Mei Shan": "Mount Emei", "Lao Jun Shan": "Mount Laojun", "Wu Dang Shan": "Wudang Mountains",
+        "Kai Feng Fu": "Kaifeng Prefecture", "Ning De Yuan Yang Xi": "Ningde"
     }
     
     queries = []
-    
     if attraction_name in NAME_ALIASES:
         alias = NAME_ALIASES[attraction_name]
         queries.extend([f"{alias} China", alias, f"{alias} scenic area", f"{alias} Valley"])
     
     words = attraction_name.strip().split()
     joined_name = "".join(words)
-    last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
-    last_1_word = words[-1].lower() if len(words) >= 1 else ""
-    
-    if last_2_words in pinyin_map_2_words:
-        stem = "".join(words[:-2])
-        translated_suffix = pinyin_map_2_words[last_2_words]
-        queries.extend([f"{stem} {translated_suffix} China", f"{stem} {translated_suffix}"])
-    elif last_1_word in pinyin_map_1_word:
-        stem = "".join(words[:-1])
-        translated_suffix = pinyin_map_1_word[last_1_word]
-        queries.append(f"{stem} {translated_suffix} China")
-        if last_1_word == 'shan':
-            queries.extend([f"Mount {stem} China", f"Mount {stem}"])
-        queries.append(f"{stem} {translated_suffix}")
-        
     queries.extend([f"{joined_name} China", joined_name, f"{attraction_name} China", attraction_name])
     
-    # NEW SPATIAL RULE: Words that definitively prove it is a physical geographic location
-    spatial_keywords = [
-        'located', 'situated', 'border', 'borders', 'prefecture', 'province', 
-        'municipality', 'county', 'city in', 'mountain in', 'river in', 'scenic area'
-    ]
-    
-    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol', 'relie']
+    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol']
     
     for q in queries:
         params = {
-            "action": "query", 
-            "format": "json", 
-            "generator": "search",
-            "gsrsearch": q, 
-            "gsrlimit": 3, 
-            # UPGRADE: Requesting "extracts" pulls the actual opening paragraph of the article!
-            "prop": "pageimages|description|extracts", 
-            "exintro": 1,       # Only get the intro paragraph
-            "explaintext": 1,   # Plain text (no HTML)
-            "exchars": 300,     # Limit to the first 300 characters to save memory
-            "pithumbsize": 600
+            "action": "query", "format": "json", "generator": "search",
+            "gsrsearch": q, "gsrlimit": 2, "prop": "pageimages", "pithumbsize": 600
         }
         try:
-            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
+            response = requests.get(endpoint, params=params, headers=headers, timeout=3).json()
             pages = response.get("query", {}).get("pages", {})
-            
             for page_id, page_info in pages.items():
-                title = page_info.get("title", "").lower()
-                desc = page_info.get("description", "").lower()
-                extract = page_info.get("extract", "").lower() # The opening paragraph!
-                
-                # Merge them all together to scan for your spatial rule
-                full_text = f"{title} {desc} {extract}"
-                
                 if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
                     img_url = page_info["thumbnail"]["source"]
-                    
-                    if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
-                        continue
-                        
-                    # SPATIAL FILTER: Does the opening paragraph say "located", "borders", or name a province?
-                    if any(spatial_word in full_text for spatial_word in spatial_keywords):
+                    if not any(bad in img_url.lower() for bad in invalid_image_terms):
                         return img_url
-                        
         except Exception:
             continue
             
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/landscape,chinese?lock={seed}"
-    
-   
-    
-# --- 2. PAGE CONFIGURATION ---
-st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
-
-# --- 3. DATA & EVALUATION METRICS LOADER ---
+# --- 3. ML MODEL & DATA LOADER ---
 @st.cache_resource
-def load_data_and_metrics():
+def load_all_data():
+    # Load primary dataset
     df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
-    evaluation_metrics = pd.DataFrame({
-        "Algorithm": [
-            "Collaborative Filtering (SVD)",
-            "Content-Based Filtering",
-            "Neural Collaborative Filtering",
-            "Hybrid Recommender (Ensemble)"
-        ],
+    # Hardcoded evaluation metrics for Tab 3
+    eval_metrics_df = pd.DataFrame({
+        "Algorithm": ["Collaborative Filtering (SVD)", "Content-Based Filtering", "Neural Collaborative Filtering", "Hybrid Recommender (Ensemble)"],
         "RMSE": [0.8924, 0.9412, 0.8651, 0.8210],
         "MSE": [0.7964, 0.8859, 0.7484, 0.6740],
         "MAE": [0.6811, 0.7320, 0.6540, 0.6125],
@@ -164,117 +82,127 @@ def load_data_and_metrics():
         "Recall@5": [0.6820, 0.6350, 0.7210, 0.7780]
     })
 
-    return df_raw, attr_meta, evaluation_metrics
+    # Load ML artifacts
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        hybrid_matrix = np.load(os.path.join(script_dir, 'hybrid_matrix.npy'), allow_pickle=True)
+        with open(os.path.join(script_dir, 'idx_to_item.pkl'), 'rb') as f:
+            idx_to_item = pickle.load(f)
+        with open(os.path.join(script_dir, 'user_to_idx.pkl'), 'rb') as f:
+            user_to_idx = pickle.load(f)
+        with open(os.path.join(script_dir, 'train_seen.pkl'), 'rb') as f:
+            train_seen = pickle.load(f)
+            
+        ml_ready = True
+    except FileNotFoundError:
+        hybrid_matrix, idx_to_item, user_to_idx, train_seen = None, None, None, None
+        ml_ready = False
+
+    return df_raw, attr_meta, eval_metrics_df, hybrid_matrix, idx_to_item, user_to_idx, train_seen, ml_ready
 
 try:
-    df_raw, attr_meta, eval_metrics_df = load_data_and_metrics()
+    df_raw, attr_meta, eval_metrics_df, hybrid, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data()
 
-    # --- ADVANCED FILTERING ENGINE ---
-    def recommend_filtered(df, age_group, gender, province, visit_duration, top_n=5):
-        filtered = df.copy()
+    # --- 4. HYBRID RECOMMENDATION ENGINE ---
+    def generate_recommendations(tourist_id, age, gender, province, duration, top_n=8):
+        # 1. First, apply user's explicit sidebar filters to get valid candidate attractions
+        filtered = df_raw.copy()
+        if age != "Ignore": filtered = filtered[filtered['age_group'] == age]
+        if gender != "Ignore": filtered = filtered[filtered['gender'] == gender]
+        if province != "Ignore": filtered = filtered[filtered['province'] == province]
         
-        # Apply filters unless "Ignore" is selected
-        if age_group != "Ignore":
-            filtered = filtered[filtered['age_group'] == age_group]
+        if duration != "Ignore":
+            if duration == "Short (1-3 hours)": filtered = filtered[filtered['visit_duration_hours'] <= 3]
+            elif duration == "Medium (3-5 hours)": filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
+            elif duration == "Long (5+ hours)": filtered = filtered[filtered['visit_duration_hours'] > 5]
+            
+        valid_candidates = set(filtered['attraction_name'].unique())
         
-        if gender != "Ignore":
-            filtered = filtered[filtered['gender'] == gender]
+        if not valid_candidates:
+            return [], False # No items match filters
+
+        # 2. If valid ML Tourist ID provided, use Hybrid Model predictions
+        if ml_ready and tourist_id in user_to_idx:
+            user_idx = user_to_idx[tourist_id]
+            scores = hybrid[user_idx].copy()
+            seen_indices = train_seen.get(user_idx, set())
             
-        if province != "Ignore":
-            filtered = filtered[filtered['province'] == province]
+            recs = []
+            for item_idx, item_name in idx_to_item.items():
+                if item_idx in seen_indices:
+                    continue # Skip places already visited
+                if item_name in valid_candidates:
+                    recs.append((item_name, scores[item_idx]))
+                    
+            # Sort by highest Hybrid Model Score
+            recs.sort(key=lambda x: x[1], reverse=True)
+            return recs[:top_n], True # True indicates it is ML personalized
             
-        if visit_duration != "Ignore":
-            if visit_duration == "Short (1-3 hours)":
-                filtered = filtered[filtered['visit_duration_hours'] <= 3]
-            elif visit_duration == "Medium (3-5 hours)":
-                filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
-            elif visit_duration == "Long (5+ hours)":
-                filtered = filtered[filtered['visit_duration_hours'] > 5]
-            
-        if filtered.empty:
-            return []
-            
+        # 3. Fallback: Rule-Based Popularity (if no ID, invalid ID, or missing ML files)
         grouped = filtered.groupby('attraction_name').agg(
             avg_rating=('rating', 'mean'),
             visit_count=('rating', 'count')
         ).reset_index()
         
         top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
-        return [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
+        recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
+        return recs, False # False indicates it is Fallback Popularity
 
-  # --- 4. HEADER & SIDEBAR CONTROLS ---
+    # --- 5. SIDEBAR & UI CONTROLS ---
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
-    st.sidebar.header("🎯 Traveler Preference Panel")
+    st.sidebar.header("🎯 Traveler Profile & Filters")
+    
+    # NEW: Tourist ID Input for ML Model
+    t_id_input = st.sidebar.text_input("🔑 Tourist ID (e.g., 605)", value="605", help="Enter ID for AI predictions. Leave blank for general popularity.")
+    try:
+        active_tourist_id = int(t_id_input) if t_id_input.strip() else None
+    except ValueError:
+        active_tourist_id = None
+        st.sidebar.error("Tourist ID must be a number.")
 
-    # Helper function to safely find the index of a default value
-    def get_default_index(options_list, target_value):
-        if target_value in options_list:
-            return options_list.index(target_value)
-        return len(options_list) - 1 # Fallback to "Ignore" if not found
+    st.sidebar.divider()
 
-    # Age Group Dropdown (Default: 18-25)
-    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if 'age_group' in df_raw.columns else ["Ignore"]
-    selected_age = st.sidebar.selectbox(
-        "Age Group", 
-        options=available_ages, 
-        index=get_default_index(available_ages, "18-25")
+    # Dropdowns
+    def get_default_index(opts, target): return opts.index(target) if target in opts else len(opts) - 1
+    
+    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
+    selected_age = st.sidebar.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages, "Ignore"))
+
+    avail_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"]
+    selected_gender = st.sidebar.selectbox("Gender", avail_genders, index=get_default_index(avail_genders, "Ignore"))
+
+    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"]
+    selected_province = st.sidebar.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces, "Ignore"))
+
+    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+    selected_duration = st.sidebar.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options, "Ignore"))
+
+    top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
+
+    # Fetch Recommendations
+    recommendations, is_personalized = generate_recommendations(
+        active_tourist_id, selected_age, selected_gender, selected_province, selected_duration, top_n
     )
 
-    # Gender Dropdown (Default: Male)
-    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if 'gender' in df_raw.columns else ["Ignore"]
-    selected_gender = st.sidebar.selectbox(
-        "Gender", 
-        options=available_genders, 
-        index=get_default_index(available_genders, "Male")
-    )
-
-    # Province Dropdown (Default: Anhui)
-    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if 'province' in df_raw.columns else ["Ignore"]
-    selected_province = st.sidebar.selectbox(
-        "Province", 
-        options=available_provinces, 
-        index=get_default_index(available_provinces, "Anhui")
-    )
-
-    # Duration Dropdown (Default: Long 5+ hours)
-    duration_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-    selected_duration = st.sidebar.selectbox(
-        "Visit Duration", 
-        options=duration_options, 
-        index=get_default_index(duration_options, "Long (5+ hours)")
-    )
-
-    # Number of Results Slider
-    top_n = st.sidebar.slider("Number of Recommendations", min_value=1, max_value=12, value=8)
-
-    recommendations = recommend_filtered(
-        df_raw,
-        selected_age,
-        selected_gender,
-        selected_province,
-        selected_duration,
-        top_n=top_n
-    )
-
-    # --- 5. TABS STRUCTURE ---
-    tab1, tab2, tab3 = st.tabs([
-        "🎯 Top Recommendations", 
-        "📍 3D Spatial Map", 
-        "⚙️ Model Evaluation & Diagnostics"
-    ])
+    # --- 6. TABS STRUCTURE ---
+    tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
 
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
         
+        if not ml_ready:
+            st.warning("⚠️ ML Model files (.npy, .pkl) not found. Running in Fallback Popularity Mode.")
+        elif is_personalized:
+            st.success(f"🤖 Showing Hybrid ML Predictions for Tourist {active_tourist_id}")
+        else:
+            st.info("📊 Showing General Popularity Recommendations (Cold Start / Invalid ID)")
+            
         if not recommendations:
             st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         else:
-            st.caption("Showing top attractions based on your active filters.")
-            
-            # Display items in rows of 4
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
                 row_items = recommendations[row_idx : row_idx + num_cols]
@@ -283,59 +211,46 @@ try:
                 for i, (name, score) in enumerate(row_items):
                     with cols[i]:
                         meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                        category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
-
                         img_url = get_attraction_photo(name)
                         
-                        # Use HTML/CSS to force a standard uniform size (200px height) and crop cleanly
                         st.markdown(
                             f"""
                             <div style="height: 200px; width: 100%; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
                                 <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
-                            """, 
-                            unsafe_allow_html=True
+                            """, unsafe_allow_html=True
                         )
-                        
                         st.markdown(f"**{name}**")
-                        st.caption(f"Rating: {score:.2f} ⭐ | {level}")
+                        
+                        # Dynamically change the label based on the source of the recommendation
+                        score_label = "Model Score" if is_personalized else "Avg Rating"
+                        st.caption(f"{score_label}: {score:.3f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
         st.subheader("Attraction Spatial Layout")
         st.info("Simulated coordinate layers representing geographic distribution across destination regions.")
 
-        if not recommendations:
-            st.warning("No data to map. Adjust your filters to see locations.")
-        else:
+        if recommendations:
             map_data = []
             for name, score in recommendations:
-                lat = 35.0 + random.uniform(-4, 4)
-                lon = 105.0 + random.uniform(-4, 4)
+                lat, lon = 35.0 + random.uniform(-4, 4), 105.0 + random.uniform(-4, 4)
                 map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
 
             map_df = pd.DataFrame(map_data)
             view_state = pdk.ViewState(latitude=35.0, longitude=105.0, zoom=4, pitch=45)
             layer = pdk.Layer(
-                "ColumnLayer",
-                data=map_df,
-                get_position=["lon", "lat"],
-                get_elevation="score * 20000",
-                elevation_scale=10,
-                radius=22000,
-                get_fill_color=[255, 75, 75, 200],
-                pickable=True,
-                auto_highlight=True,
+                "ColumnLayer", data=map_df, get_position=["lon", "lat"],
+                get_elevation="score * 20000", elevation_scale=10, radius=22000,
+                get_fill_color=[255, 75, 75, 200], pickable=True, auto_highlight=True,
             )
-            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nRating: {score}⭐"}))
+            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nScore: {score}"}))
 
-    # ========================== TAB 3: DEVELOPER / GRADING VIEW ==========================
+    # ========================== TAB 3: DIAGNOSTICS ==========================
     with tab3:
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
-        st.markdown(
-            "Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures."
-        )
+        st.markdown("Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures.")
 
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         m_col1.metric("Ensemble RMSE", "0.8210", delta="-0.0714 vs SVD", delta_color="inverse")
@@ -344,24 +259,12 @@ try:
         m_col4.metric("Recall@5", "77.80%", delta="+9.60%")
 
         st.divider()
-
         st.markdown("### Comparative Performance Matrix")
         st.dataframe(
             eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
                                  .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
             use_container_width=True
         )
-
-        st.divider()
-
-        with st.expander("📝 Architectural & Cold-Start Strategy Notes"):
-            st.markdown(
-                """
-                * **Cold-Start Handling:** For unindexed visitors, the system uses demographic aggregation across user subsets ($Age \\times Gender$) combined with rating frequencies.
-                * **Offline vs. Online Inference:** Complex factorizations (SVD, Neural Embeddings) generate latent similarity scores offline; the web layer applies dynamic filtering to optimize latency.
-                * **Optimization Metric:** Minimum Root Mean Squared Error (RMSE) serves as the primary optimization target to penalize large prediction variances.
-                """
-            )
 
 except Exception as e:
     st.error(f"An error occurred while loading the application: {e}")
