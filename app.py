@@ -22,7 +22,7 @@ def get_attraction_photo(attraction_name):
     endpoint = "https://en.wikipedia.org/w/api.php"
     headers = {"User-Agent": "TourismRecommenderApp/7.1 (student.project@example.com)"}
     
-    # 1. Custom Name Direct Overrides
+    
    # 1. Custom Name Direct Overrides
     NAME_ALIASES = {
         "Ba Li Gou": "Baligou",
