@@ -202,28 +202,61 @@ try:
         top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
         return [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
 
-    # --- 4. HEADER & SIDEBAR CONTROLS ---
+  # --- 4. HEADER & SIDEBAR CONTROLS ---
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
     st.sidebar.header("🎯 Traveler Preference Panel")
-    
-    # Dropdowns with "Ignore" appended to the end
-    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
-    selected_age = st.sidebar.selectbox("Age Group", options=available_ages, index=len(available_ages)-1)
-    
-    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"]
-    selected_gender = st.sidebar.selectbox("Gender", options=available_genders, index=len(available_genders)-1)
-    
-    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"]
-    selected_province = st.sidebar.selectbox("Province", options=available_provinces, index=len(available_provinces)-1)
-    
-    duration_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-    selected_duration = st.sidebar.selectbox("Visit Duration", options=duration_options, index=len(duration_options)-1)
-    
-    top_n = st.sidebar.slider("Number of Recommendations", min_value=3, max_value=8, value=5)
 
-    recommendations = recommend_filtered(df_raw, selected_age, selected_gender, selected_province, selected_duration, top_n=top_n)
+    # Helper function to safely find the index of a default value
+    def get_default_index(options_list, target_value):
+        if target_value in options_list:
+            return options_list.index(target_value)
+        return len(options_list) - 1 # Fallback to "Ignore" if not found
+
+    # Age Group Dropdown (Default: 18-25)
+    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if 'age_group' in df_raw.columns else ["Ignore"]
+    selected_age = st.sidebar.selectbox(
+        "Age Group", 
+        options=available_ages, 
+        index=get_default_index(available_ages, "18-25")
+    )
+
+    # Gender Dropdown (Default: Male)
+    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if 'gender' in df_raw.columns else ["Ignore"]
+    selected_gender = st.sidebar.selectbox(
+        "Gender", 
+        options=available_genders, 
+        index=get_default_index(available_genders, "Male")
+    )
+
+    # Province Dropdown (Default: Anhui)
+    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if 'province' in df_raw.columns else ["Ignore"]
+    selected_province = st.sidebar.selectbox(
+        "Province", 
+        options=available_provinces, 
+        index=get_default_index(available_provinces, "Anhui")
+    )
+
+    # Duration Dropdown (Default: Long 5+ hours)
+    duration_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+    selected_duration = st.sidebar.selectbox(
+        "Visit Duration", 
+        options=duration_options, 
+        index=get_default_index(duration_options, "Long (5+ hours)")
+    )
+
+    # Number of Results Slider
+    top_n = st.sidebar.slider("Number of Recommendations", min_value=1, max_value=12, value=8)
+
+    recommendations = recommend_filtered(
+        df_raw,
+        selected_age,
+        selected_gender,
+        selected_province,
+        selected_duration,
+        top_n=top_n
+    )
 
     # --- 5. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs([
