@@ -8,11 +8,23 @@ import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Queries Wikipedia with Pinyin translation and filters out maps, logos, and flags."""
+    """Queries Wikipedia with custom aliases, multi-word Pinyin translation, and negative image filtering."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/4.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/5.0 (student.project@example.com)"}
     
-    # 1. Advanced Pinyin Translation Dictionaries
+    # 1. Custom Name Direct Overrides
+    NAME_ALIASES = {
+        "Ba Li Gou": "Baligou",
+        "Baili Gou": "Baligou",
+        "Long Men Shi Ku": "Longmen Grottoes",
+        "Qing Ming Shang He Yuan": "Millennium City Park",
+        "Si Gu Niang Shan": "Mount Siguniang",
+        "E Mei Shan": "Mount Emei",
+        "Lao Jun Shan": "Mount Laojun",
+        "Wu Dang Shan": "Wudang Mountains"
+    }
+    
+    # 2. Advanced Pinyin Translation Dictionaries
     pinyin_map_2_words = {
         'shi ku': 'Grottoes',
         'gu zhen': 'Ancient Town',
@@ -42,20 +54,29 @@ def get_attraction_photo(attraction_name):
         'lin': 'Forest'
     }
     
+    queries = []
+    
+    # Priority 1: Check if custom alias exists
+    if attraction_name in NAME_ALIASES:
+        alias = NAME_ALIASES[attraction_name]
+        queries.extend([
+            f"{alias} China",
+            alias,
+            f"{alias} scenic area",
+            f"{alias} Valley"
+        ])
+    
     words = attraction_name.strip().split()
+    joined_name = "".join(words)
     last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
     last_1_word = words[-1].lower() if len(words) >= 1 else ""
     
-    queries = []
-    
-    # Check for 2-word matches first
+    # Priority 2: Multi-word & Single-word Pinyin translation
     if last_2_words in pinyin_map_2_words:
         stem = "".join(words[:-2])
         translated_suffix = pinyin_map_2_words[last_2_words]
         queries.append(f"{stem} {translated_suffix} China")
         queries.append(f"{stem} {translated_suffix}")
-        
-    # Check for 1-word matches
     elif last_1_word in pinyin_map_1_word:
         stem = "".join(words[:-1])
         translated_suffix = pinyin_map_1_word[last_1_word]
@@ -65,10 +86,11 @@ def get_attraction_photo(attraction_name):
             queries.append(f"Mount {stem}")
         queries.append(f"{stem} {translated_suffix}")
         
-    # Standard fallbacks
+    # Priority 3: Fully concatenated forms & raw queries
     queries.extend([
+        f"{joined_name} China",
+        f"{joined_name}",
         f"{attraction_name} China",
-        "".join(words) + " China",
         attraction_name
     ])
     
@@ -80,8 +102,7 @@ def get_attraction_photo(attraction_name):
         'waterfall', 'wetland', 'memorial', 'town'
     ]
     
-    # NEW: Terms that indicate the image is NOT a real location photo
-    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol']
+    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol', 'relie']
     
     for q in queries:
         params = {
@@ -103,7 +124,7 @@ def get_attraction_photo(attraction_name):
                 if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
                     img_url = page_info["thumbnail"]["source"]
                     
-                    # NEGATIVE FILTER: If the image link contains "map" or ".svg", skip it entirely!
+                    # Discard maps, flags, emblems, SVGs
                     if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
                         continue
                         
@@ -115,7 +136,7 @@ def get_attraction_photo(attraction_name):
         except Exception:
             continue
             
-    # RESTORED: Back to the China landscape fallback to prevent teacups
+    # Landscape fallback
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/landscape,china?lock={seed}"
     
