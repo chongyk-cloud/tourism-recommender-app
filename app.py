@@ -6,78 +6,46 @@ import random
 import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
-def get_attraction_photo(attraction_name):
-    """Strictly queries Wikipedia API with Pinyin translation & location filtering."""
-    endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderTestApp/1.0 (contact@example.com)"}
+@st.cache_data(show_spinner=False)
+def get_attraction_photo(attraction_name, category=""):
+    """Fetches images by strictly targeting Trip.com and travel sites via DuckDuckGo."""
     
-    # 1. Pinyin Suffix Translation Dictionary
-    pinyin_map = {
-        'shan': 'Mountains',
-        'dao': 'Island',
-        'hu': 'Lake',
-        'gou': 'Valley',
-        'si': 'Temple',
-        'dong': 'Cave',
-        'ling': 'Mountains',
-        'guan': 'Pass',
-        'yuan': 'Garden',
-        'cheng': 'City'
-    }
-    
-    words = attraction_name.strip().split()
-    if len(words) > 1 and words[-1].lower() in pinyin_map:
-        stem = "".join(words[:-1])
-        translated_suffix = pinyin_map[words[-1].lower()]
-        smart_query = f"{stem} {translated_suffix}"  # e.g., "Wu Dang Shan" -> "WuDang Mountains"
-    else:
-        smart_query = "".join(words)
+    # --- 1. STATIC DATABASE FALLBACK ---
+    if attraction_name in IMAGE_DATABASE:
+        return IMAGE_DATABASE[attraction_name]
         
-    # 2. Sequential Wikipedia Search Variations
+    # --- 2. TARGETED TRIP.COM SEARCH ---
+    # By adding "site:trip.com", we force the search engine to pull from the travel site, 
+    # ignoring Wikipedia paintings and maps!
     queries = [
-        f"{smart_query} China",
-        f"{attraction_name} China",
-        f"{smart_query}",
-        f"{attraction_name}"
+        f"site:trip.com {attraction_name} China",
+        f"site:tripadvisor.com {attraction_name} China",
+        f"{attraction_name} scenic area attraction China"
     ]
     
-    # Keywords to verify the page is a place/landmark (filters out martial arts/movies)
-    valid_keywords = [
-        'mountain', 'lake', 'temple', 'park', 'island', 'city', 
-        'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
-        'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 'china'
-    ]
-    
-    for q in queries:
-        params = {
-            "action": "query",
-            "format": "json",
-            "generator": "search",
-            "gsrsearch": q,
-            "gsrlimit": 3,
-            "prop": "pageimages|description",
-            "pithumbsize": 600
-        }
+    for query in queries:
         try:
-            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
-            pages = response.get("query", {}).get("pages", {})
-            
-            for page_id, page_info in pages.items():
-                desc = page_info.get("description", "").lower()
-                
-                # Check for thumbnail
-                if "thumbnail" in page_info:
-                    # Verify location relevance if a description exists
-                    if desc:
-                        if any(kw in desc for kw in valid_keywords):
-                            return page_info["thumbnail"]["source"]
-                    else:
-                        return page_info["thumbnail"]["source"]
+            results = DDGS().images(query, max_results=1)
+            if results and 'image' in results[0]:
+                return results[0]['image']
         except Exception:
             continue
             
-    # Plain placeholder if Wikipedia has no image
-    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
+    # --- 3. CATEGORY STOCK PHOTO FALLBACK ---
+    category_str = str(category).lower()
+    if "natural" in category_str or "scenery" in category_str:
+        keyword = "nature,mountain"
+    elif "ancient" in category_str or "town" in category_str:
+        keyword = "ancient,china,town"
+    elif "religio" in category_str:
+        keyword = "temple,pagoda"
+    elif "historic" in category_str or "culture" in category_str:
+        keyword = "history,architecture"
+    else:
+        keyword = "travel,landscape,china"
+        
+    seed = sum(ord(c) for c in attraction_name)
+    return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
