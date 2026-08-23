@@ -8,12 +8,25 @@ import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Strictly queries Wikipedia API with Pinyin translation & location filtering."""
+    """Strictly queries Wikipedia API with advanced multi-word Pinyin translation."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/2.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/3.0 (student.project@example.com)"}
     
-    # 1. Pinyin translation dictionary
-    pinyin_map = {
+    # 1. Advanced Pinyin Translation Dictionaries
+    pinyin_map_2_words = {
+        'shi ku': 'Grottoes',
+        'gu zhen': 'Ancient Town',
+        'gu cheng': 'Ancient City',
+        'gong yuan': 'Park',
+        'wu yuan': 'Museum',
+        'wu guan': 'Museum',
+        'nian guan': 'Memorial',
+        'xia gu': 'Canyon',
+        'pu bu': 'Waterfall',
+        'shi di': 'Wetland'
+    }
+    
+    pinyin_map_1_word = {
         'shan': 'Mountain',
         'dao': 'Island',
         'hu': 'Lake',
@@ -24,34 +37,53 @@ def get_attraction_photo(attraction_name):
         'guan': 'Pass',
         'yuan': 'Garden',
         'cheng': 'City',
-        'qu': 'Scenic Area'
+        'qu': 'Scenic Area',
+        'ta': 'Pagoda',
+        'lin': 'Forest'
     }
     
     words = attraction_name.strip().split()
-    stem = "".join(words[:-1]) if len(words) > 1 else attraction_name
-    last_word = words[-1].lower() if words else ""
     
-    # Generate search query variations
+    # Safely extract the last 2 words and last 1 word
+    last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
+    last_1_word = words[-1].lower() if len(words) >= 1 else ""
+    
     queries = []
-    if last_word in pinyin_map:
-        suffix = pinyin_map[last_word]
-        queries.append(f"{stem} {suffix} China")
-        if last_word == 'shan':
+    
+    # Check for 2-word matches first (e.g., "Shi Ku" -> "Grottoes")
+    if last_2_words in pinyin_map_2_words:
+        stem = "".join(words[:-2])
+        translated_suffix = pinyin_map_2_words[last_2_words]
+        queries.append(f"{stem} {translated_suffix} China") # e.g., "LongMen Grottoes China"
+        queries.append(f"{stem} {translated_suffix}")
+        
+    # Check for 1-word matches (e.g., "Shan" -> "Mountain")
+    elif last_1_word in pinyin_map_1_word:
+        stem = "".join(words[:-1])
+        translated_suffix = pinyin_map_1_word[last_1_word]
+        queries.append(f"{stem} {translated_suffix} China")
+        
+        # Special rule for Mount prefixes
+        if last_1_word == 'shan':
             queries.append(f"Mount {stem} China")
             queries.append(f"Mount {stem}")
-        queries.append(f"{stem} {suffix}")
-    
+            
+        queries.append(f"{stem} {translated_suffix}")
+        
+    # Always include standard fallbacks
     queries.extend([
         f"{attraction_name} China",
         "".join(words) + " China",
         attraction_name
     ])
     
+    # Expanded validation keywords to ensure we grab physical locations
     valid_keywords = [
         'mountain', 'lake', 'temple', 'park', 'island', 'city', 
         'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
         'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 
-        'china', 'pagoda', 'monastery', 'river', 'grotto'
+        'china', 'pagoda', 'monastery', 'river', 'grotto', 'museum',
+        'waterfall', 'wetland', 'memorial', 'town'
     ]
     
     for q in queries:
@@ -79,9 +111,10 @@ def get_attraction_photo(attraction_name):
         except Exception:
             continue
             
-    # Fallback to a reliable high-quality landscape placeholder if Wikipedia has no page
+    # TEACUP BUG FIX: Removed the word 'china' from the stock photo tags! 
+    # Used 'asia,landmark' instead to ensure it pulls mountains/buildings.
     seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/landscape,china?lock={seed}"
+    return f"https://loremflickr.com/400/300/landscape,asia,landmark?lock={seed}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
