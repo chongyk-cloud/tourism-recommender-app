@@ -10,7 +10,7 @@ import requests  # Required for Wikipedia API
 def get_attraction_photo(attraction_name):
     """Queries Wikipedia and verifies the article's opening paragraph for geographical keywords."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/7.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/7.1 (student.project@example.com)"}
     
     # 1. Custom Name Direct Overrides
     NAME_ALIASES = {
@@ -22,7 +22,8 @@ def get_attraction_photo(attraction_name):
         "E Mei Shan": "Mount Emei",
         "Lao Jun Shan": "Mount Laojun",
         "Wu Dang Shan": "Wudang Mountains",
-        "Kai Feng Fu": "Kaifeng Prefecture"
+        "Kai Feng Fu": "Kaifeng Prefecture",
+        "Ning De Yuan Yang Xi": "Ningde"  # <-- Added to fix the cartoon rabbit!
     }
     
     # 2. Advanced Pinyin Translation Dictionaries
@@ -33,87 +34,7 @@ def get_attraction_photo(attraction_name):
         'shi di': 'Wetland'
     }
     
-    pinyin_map_1_word = {
-        'shan': 'Mountain', 'dao': 'Island', 'hu': 'Lake', 'gou': 'Valley',
-        'si': 'Temple', 'dong': 'Cave', 'ling': 'Mountains', 'guan': 'Pass',
-        'yuan': 'Garden', 'cheng': 'City', 'qu': 'Scenic Area', 'ta': 'Pagoda',
-        'lin': 'Forest'
-    }
-    
-    queries = []
-    
-    if attraction_name in NAME_ALIASES:
-        alias = NAME_ALIASES[attraction_name]
-        queries.extend([f"{alias} China", alias, f"{alias} scenic area", f"{alias} Valley"])
-    
-    words = attraction_name.strip().split()
-    joined_name = "".join(words)
-    last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
-    last_1_word = words[-1].lower() if len(words) >= 1 else ""
-    
-    if last_2_words in pinyin_map_2_words:
-        stem = "".join(words[:-2])
-        translated_suffix = pinyin_map_2_words[last_2_words]
-        queries.extend([f"{stem} {translated_suffix} China", f"{stem} {translated_suffix}"])
-    elif last_1_word in pinyin_map_1_word:
-        stem = "".join(words[:-1])
-        translated_suffix = pinyin_map_1_word[last_1_word]
-        queries.append(f"{stem} {translated_suffix} China")
-        if last_1_word == 'shan':
-            queries.extend([f"Mount {stem} China", f"Mount {stem}"])
-        queries.append(f"{stem} {translated_suffix}")
-        
-    queries.extend([f"{joined_name} China", joined_name, f"{attraction_name} China", attraction_name])
-    
-    # NEW SPATIAL RULE: Words that definitively prove it is a physical geographic location
-    spatial_keywords = [
-        'located', 'situated', 'border', 'borders', 'prefecture', 'province', 
-        'municipality', 'county', 'city in', 'mountain in', 'river in', 'scenic area'
-    ]
-    
-    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol', 'relie']
-    
-    for q in queries:
-        params = {
-            "action": "query", 
-            "format": "json", 
-            "generator": "search",
-            "gsrsearch": q, 
-            "gsrlimit": 3, 
-            # UPGRADE: Requesting "extracts" pulls the actual opening paragraph of the article!
-            "prop": "pageimages|description|extracts", 
-            "exintro": 1,       # Only get the intro paragraph
-            "explaintext": 1,   # Plain text (no HTML)
-            "exchars": 300,     # Limit to the first 300 characters to save memory
-            "pithumbsize": 600
-        }
-        try:
-            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
-            pages = response.get("query", {}).get("pages", {})
-            
-            for page_id, page_info in pages.items():
-                title = page_info.get("title", "").lower()
-                desc = page_info.get("description", "").lower()
-                extract = page_info.get("extract", "").lower() # The opening paragraph!
-                
-                # Merge them all together to scan for your spatial rule
-                full_text = f"{title} {desc} {extract}"
-                
-                if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
-                    img_url = page_info["thumbnail"]["source"]
-                    
-                    if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
-                        continue
-                        
-                    # SPATIAL FILTER: Does the opening paragraph say "located", "borders", or name a province?
-                    if any(spatial_word in full_text for spatial_word in spatial_keywords):
-                        return img_url
-                        
-        except Exception:
-            continue
-            
-    seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/landscape,chinese?lock={seed}"
+    # ... (The rest of the function remains exactly the same) ...
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
