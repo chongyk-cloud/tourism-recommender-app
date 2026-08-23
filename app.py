@@ -36,7 +36,6 @@ def get_attraction_photo(attraction_name):
         "Kai Feng Fu": "Kaifeng Prefecture",
         "Ning De Yuan Yang Xi": "Ningde", 
         # Keep these as text so Wikipedia can read them
-        "Tian Mu Hu": "Tianmu Lake",
         "Lao Shan": "Mount Lao" 
     }
 
