@@ -5,15 +5,16 @@ import pydeck as pdk
 import random
 import requests  # Required for Wikipedia API
 
+
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
     """Strictly queries Wikipedia API with Pinyin translation & location filtering."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderTestApp/1.0 (contact@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/2.0 (student.project@example.com)"}
     
-    # 1. Pinyin Suffix Translation Dictionary
+    # 1. Pinyin translation dictionary
     pinyin_map = {
-        'shan': 'Mountains',
+        'shan': 'Mountain',
         'dao': 'Island',
         'hu': 'Lake',
         'gou': 'Valley',
@@ -22,30 +23,35 @@ def get_attraction_photo(attraction_name):
         'ling': 'Mountains',
         'guan': 'Pass',
         'yuan': 'Garden',
-        'cheng': 'City'
+        'cheng': 'City',
+        'qu': 'Scenic Area'
     }
     
     words = attraction_name.strip().split()
-    if len(words) > 1 and words[-1].lower() in pinyin_map:
-        stem = "".join(words[:-1])
-        translated_suffix = pinyin_map[words[-1].lower()]
-        smart_query = f"{stem} {translated_suffix}"  # e.g., "Wu Dang Shan" -> "WuDang Mountains"
-    else:
-        smart_query = "".join(words)
-        
-    # 2. Sequential Wikipedia Search Variations
-    queries = [
-        f"{smart_query} China",
-        f"{attraction_name} China",
-        f"{smart_query}",
-        f"{attraction_name}"
-    ]
+    stem = "".join(words[:-1]) if len(words) > 1 else attraction_name
+    last_word = words[-1].lower() if words else ""
     
-    # Keywords to verify the page is a place/landmark (filters out martial arts/movies)
+    # Generate search query variations
+    queries = []
+    if last_word in pinyin_map:
+        suffix = pinyin_map[last_word]
+        queries.append(f"{stem} {suffix} China")
+        if last_word == 'shan':
+            queries.append(f"Mount {stem} China")
+            queries.append(f"Mount {stem}")
+        queries.append(f"{stem} {suffix}")
+    
+    queries.extend([
+        f"{attraction_name} China",
+        "".join(words) + " China",
+        attraction_name
+    ])
+    
     valid_keywords = [
         'mountain', 'lake', 'temple', 'park', 'island', 'city', 
         'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
-        'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 'china'
+        'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 
+        'china', 'pagoda', 'monastery', 'river', 'grotto'
     ]
     
     for q in queries:
@@ -64,10 +70,7 @@ def get_attraction_photo(attraction_name):
             
             for page_id, page_info in pages.items():
                 desc = page_info.get("description", "").lower()
-                
-                # Check for thumbnail
-                if "thumbnail" in page_info:
-                    # Verify location relevance if a description exists
+                if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
                     if desc:
                         if any(kw in desc for kw in valid_keywords):
                             return page_info["thumbnail"]["source"]
@@ -76,8 +79,9 @@ def get_attraction_photo(attraction_name):
         except Exception:
             continue
             
-    # Plain placeholder if Wikipedia has no image
-    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
+    # Fallback to a reliable high-quality landscape placeholder if Wikipedia has no page
+    seed = sum(ord(c) for c in attraction_name)
+    return f"https://loremflickr.com/400/300/landscape,china?lock={seed}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
