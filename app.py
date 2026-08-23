@@ -23,7 +23,7 @@ def get_attraction_photo(attraction_name):
         "Lao Jun Shan": "Mount Laojun",
         "Wu Dang Shan": "Wudang Mountains",
         "Kai Feng Fu": "Kaifeng Prefecture",
-        "Ning De Yuan Yang Xi": "Ningde"  # <-- Added to fix the cartoon rabbit!
+        "Ning De Yuan Yang Xi": "Ningde",  # <-- Added to fix the cartoon rabbit!
         "Tian Mu Hu": "Tianmu Lake"
     }
     
