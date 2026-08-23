@@ -8,9 +8,9 @@ import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Queries Wikipedia with custom aliases, multi-word Pinyin translation, and negative image filtering."""
+    """Queries Wikipedia with strict paragraph verification and negative image filtering."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/5.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/6.0 (student.project@example.com)"}
     
     # 1. Custom Name Direct Overrides
     NAME_ALIASES = {
@@ -21,36 +21,22 @@ def get_attraction_photo(attraction_name):
         "Si Gu Niang Shan": "Mount Siguniang",
         "E Mei Shan": "Mount Emei",
         "Lao Jun Shan": "Mount Laojun",
-        "Wu Dang Shan": "Wudang Mountains"
+        "Wu Dang Shan": "Wudang Mountains",
+        "Kai Feng Fu": "Kaifeng Prefecture"  # <-- Added to fix the church image
     }
     
     # 2. Advanced Pinyin Translation Dictionaries
     pinyin_map_2_words = {
-        'shi ku': 'Grottoes',
-        'gu zhen': 'Ancient Town',
-        'gu cheng': 'Ancient City',
-        'gong yuan': 'Park',
-        'wu yuan': 'Museum',
-        'wu guan': 'Museum',
-        'nian guan': 'Memorial',
-        'xia gu': 'Canyon',
-        'pu bu': 'Waterfall',
+        'shi ku': 'Grottoes', 'gu zhen': 'Ancient Town', 'gu cheng': 'Ancient City',
+        'gong yuan': 'Park', 'wu yuan': 'Museum', 'wu guan': 'Museum',
+        'nian guan': 'Memorial', 'xia gu': 'Canyon', 'pu bu': 'Waterfall',
         'shi di': 'Wetland'
     }
     
     pinyin_map_1_word = {
-        'shan': 'Mountain',
-        'dao': 'Island',
-        'hu': 'Lake',
-        'gou': 'Valley',
-        'si': 'Temple',
-        'dong': 'Cave',
-        'ling': 'Mountains',
-        'guan': 'Pass',
-        'yuan': 'Garden',
-        'cheng': 'City',
-        'qu': 'Scenic Area',
-        'ta': 'Pagoda',
+        'shan': 'Mountain', 'dao': 'Island', 'hu': 'Lake', 'gou': 'Valley',
+        'si': 'Temple', 'dong': 'Cave', 'ling': 'Mountains', 'guan': 'Pass',
+        'yuan': 'Garden', 'cheng': 'City', 'qu': 'Scenic Area', 'ta': 'Pagoda',
         'lin': 'Forest'
     }
     
@@ -59,12 +45,7 @@ def get_attraction_photo(attraction_name):
     # Priority 1: Check if custom alias exists
     if attraction_name in NAME_ALIASES:
         alias = NAME_ALIASES[attraction_name]
-        queries.extend([
-            f"{alias} China",
-            alias,
-            f"{alias} scenic area",
-            f"{alias} Valley"
-        ])
+        queries.extend([f"{alias} China", alias, f"{alias} scenic area", f"{alias} Valley"])
     
     words = attraction_name.strip().split()
     joined_name = "".join(words)
@@ -75,44 +56,33 @@ def get_attraction_photo(attraction_name):
     if last_2_words in pinyin_map_2_words:
         stem = "".join(words[:-2])
         translated_suffix = pinyin_map_2_words[last_2_words]
-        queries.append(f"{stem} {translated_suffix} China")
-        queries.append(f"{stem} {translated_suffix}")
+        queries.extend([f"{stem} {translated_suffix} China", f"{stem} {translated_suffix}"])
     elif last_1_word in pinyin_map_1_word:
         stem = "".join(words[:-1])
         translated_suffix = pinyin_map_1_word[last_1_word]
         queries.append(f"{stem} {translated_suffix} China")
         if last_1_word == 'shan':
-            queries.append(f"Mount {stem} China")
-            queries.append(f"Mount {stem}")
+            queries.extend([f"Mount {stem} China", f"Mount {stem}"])
         queries.append(f"{stem} {translated_suffix}")
         
     # Priority 3: Fully concatenated forms & raw queries
-    queries.extend([
-        f"{joined_name} China",
-        f"{joined_name}",
-        f"{attraction_name} China",
-        attraction_name
-    ])
+    queries.extend([f"{joined_name} China", joined_name, f"{attraction_name} China", attraction_name])
     
-    valid_keywords = [
-        'mountain', 'lake', 'temple', 'park', 'island', 'city', 
-        'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
-        'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 
-        'china', 'pagoda', 'monastery', 'river', 'grotto', 'museum',
-        'waterfall', 'wetland', 'memorial', 'town'
+    # NEW STRICT VERIFICATION RULES:
+    location_keywords = [
+        'mountain', 'lake', 'temple', 'park', 'island', 'city', 'county', 'scenic', 
+        'tourist', 'site', 'landmark', 'nature', 'valley', 'cave', 'pass', 'garden', 
+        'resort', 'attraction', 'pagoda', 'monastery', 'river', 'grotto', 'museum',
+        'waterfall', 'wetland', 'memorial', 'town', 'prefecture'
     ]
     
+    regional_keywords = ['china', 'chinese', 'province', 'dynasty']
     invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol', 'relie']
     
     for q in queries:
         params = {
-            "action": "query",
-            "format": "json",
-            "generator": "search",
-            "gsrsearch": q,
-            "gsrlimit": 3,
-            "prop": "pageimages|description",
-            "pithumbsize": 600
+            "action": "query", "format": "json", "generator": "search",
+            "gsrsearch": q, "gsrlimit": 3, "prop": "pageimages|description", "pithumbsize": 600
         }
         try:
             response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
@@ -120,6 +90,10 @@ def get_attraction_photo(attraction_name):
             
             for page_id, page_info in pages.items():
                 desc = page_info.get("description", "").lower()
+                title = page_info.get("title", "").lower()
+                
+                # Combine title and description to search for keywords
+                full_text = desc + " " + title
                 
                 if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
                     img_url = page_info["thumbnail"]["source"]
@@ -128,17 +102,20 @@ def get_attraction_photo(attraction_name):
                     if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
                         continue
                         
-                    if desc:
-                        if any(kw in desc for kw in valid_keywords):
-                            return img_url
-                    else:
+                    # STRICT FILTER: Must contain a location word AND a regional word
+                    has_location = any(loc in full_text for loc in location_keywords)
+                    has_region = any(reg in full_text for reg in regional_keywords)
+                    
+                    if has_location and has_region:
+                        return img_url
+                    elif not desc: # If Wikipedia provides no description, we cautiously accept it
                         return img_url
         except Exception:
             continue
             
-    # Landscape fallback
+    # FIXED: Replaced "china" with "chinese" so stock photos don't return teacups!
     seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/landscape,china?lock={seed}"
+    return f"https://loremflickr.com/400/300/landscape,chinese?lock={seed}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
