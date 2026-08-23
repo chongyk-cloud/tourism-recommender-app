@@ -3,18 +3,32 @@ import pandas as pd
 import numpy as np
 import pydeck as pdk
 import random
-import requests  # Required for Wikipedia API
+import requests
 
-
+# --- 1. IMAGE DATABASE (DIRECT LINKS) ---
+# Put direct image URLs here! The code checks this list first.
+IMAGE_DATABASE = {
+    "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
+    "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
+    "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
+    "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
+    "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
+    "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"
+}
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
     """Queries Wikipedia and verifies the article's opening paragraph for geographical keywords."""
+    
+    # Priority 0: If we have a direct link in the database above, use it immediately!
+    if attraction_name in IMAGE_DATABASE:
+        return IMAGE_DATABASE[attraction_name]
+        
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/7.1 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/8.0 (student.project@example.com)"}
     
-    
-   # 1. Custom Name Direct Overrides
+    # --- 2. TEXT ALIASES (WIKIPEDIA SEARCH TERMS) ---
+    # Put text translations here. Do NOT put URLs in this list!
     NAME_ALIASES = {
         "Ba Li Gou": "Baligou",
         "Baili Gou": "Baligou",
@@ -25,11 +39,9 @@ def get_attraction_photo(attraction_name):
         "Lao Jun Shan": "Mount Laojun",
         "Wu Dang Shan": "Wudang Mountains",
         "Kai Feng Fu": "Kaifeng Prefecture",
-        "Ning De Yuan Yang Xi": "Ningde", 
-        "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG" # <-- Added the exact Wikipedia gate image here!
-
+        "Ning De Yuan Yang Xi": "Ningde"
+        # Notice Tian Mu Hu and Lao Shan are completely removed from here
     }
-
     
     # 2. Advanced Pinyin Translation Dictionaries
     pinyin_map_2_words = {
