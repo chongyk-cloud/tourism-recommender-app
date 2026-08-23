@@ -8,9 +8,9 @@ import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Strictly queries Wikipedia API with advanced multi-word Pinyin translation."""
+    """Queries Wikipedia with Pinyin translation and filters out maps, logos, and flags."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/3.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/4.0 (student.project@example.com)"}
     
     # 1. Advanced Pinyin Translation Dictionaries
     pinyin_map_2_words = {
@@ -43,41 +43,35 @@ def get_attraction_photo(attraction_name):
     }
     
     words = attraction_name.strip().split()
-    
-    # Safely extract the last 2 words and last 1 word
     last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
     last_1_word = words[-1].lower() if len(words) >= 1 else ""
     
     queries = []
     
-    # Check for 2-word matches first (e.g., "Shi Ku" -> "Grottoes")
+    # Check for 2-word matches first
     if last_2_words in pinyin_map_2_words:
         stem = "".join(words[:-2])
         translated_suffix = pinyin_map_2_words[last_2_words]
-        queries.append(f"{stem} {translated_suffix} China") # e.g., "LongMen Grottoes China"
+        queries.append(f"{stem} {translated_suffix} China")
         queries.append(f"{stem} {translated_suffix}")
         
-    # Check for 1-word matches (e.g., "Shan" -> "Mountain")
+    # Check for 1-word matches
     elif last_1_word in pinyin_map_1_word:
         stem = "".join(words[:-1])
         translated_suffix = pinyin_map_1_word[last_1_word]
         queries.append(f"{stem} {translated_suffix} China")
-        
-        # Special rule for Mount prefixes
         if last_1_word == 'shan':
             queries.append(f"Mount {stem} China")
             queries.append(f"Mount {stem}")
-            
         queries.append(f"{stem} {translated_suffix}")
         
-    # Always include standard fallbacks
+    # Standard fallbacks
     queries.extend([
         f"{attraction_name} China",
         "".join(words) + " China",
         attraction_name
     ])
     
-    # Expanded validation keywords to ensure we grab physical locations
     valid_keywords = [
         'mountain', 'lake', 'temple', 'park', 'island', 'city', 
         'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
@@ -85,6 +79,9 @@ def get_attraction_photo(attraction_name):
         'china', 'pagoda', 'monastery', 'river', 'grotto', 'museum',
         'waterfall', 'wetland', 'memorial', 'town'
     ]
+    
+    # NEW: Terms that indicate the image is NOT a real location photo
+    invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol']
     
     for q in queries:
         params = {
@@ -102,19 +99,25 @@ def get_attraction_photo(attraction_name):
             
             for page_id, page_info in pages.items():
                 desc = page_info.get("description", "").lower()
+                
                 if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
+                    img_url = page_info["thumbnail"]["source"]
+                    
+                    # NEGATIVE FILTER: If the image link contains "map" or ".svg", skip it entirely!
+                    if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
+                        continue
+                        
                     if desc:
                         if any(kw in desc for kw in valid_keywords):
-                            return page_info["thumbnail"]["source"]
+                            return img_url
                     else:
-                        return page_info["thumbnail"]["source"]
+                        return img_url
         except Exception:
             continue
             
-    # TEACUP BUG FIX: Removed the word 'china' from the stock photo tags! 
-    # Used 'asia,landmark' instead to ensure it pulls mountains/buildings.
+    # RESTORED: Back to the China landscape fallback to prevent teacups
     seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/landscape,asia,landmark?lock={seed}"
+    return f"https://loremflickr.com/400/300/landscape,china?lock={seed}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
