@@ -5,16 +5,7 @@ import pydeck as pdk
 import random
 import requests  # Required for Wikipedia API
 
-# --- 1. IMAGE CONFIGURATION & TRIP.COM TARGETED SEARCH ---
-IMAGE_DATABASE = {
-    "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
-    "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
-    "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
-    "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
-    # Direct image links go here!
-    "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
-    "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"  
-}
+
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
@@ -35,8 +26,8 @@ def get_attraction_photo(attraction_name):
         "Wu Dang Shan": "Wudang Mountains",
         "Kai Feng Fu": "Kaifeng Prefecture",
         "Ning De Yuan Yang Xi": "Ningde", 
-        # Keep these as text so Wikipedia can read them
-        "Lao Shan": "Mount Lao" 
+        "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG" # <-- Added the exact Wikipedia gate image here!
+}
     }
 
     
