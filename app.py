@@ -5,6 +5,16 @@ import pydeck as pdk
 import random
 import requests  # Required for Wikipedia API
 
+# --- 1. IMAGE CONFIGURATION & TRIP.COM TARGETED SEARCH ---
+IMAGE_DATABASE = {
+    "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
+    "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
+    "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
+    "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
+    # Direct image links go here!
+    "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
+    "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"  
+}
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
@@ -13,6 +23,7 @@ def get_attraction_photo(attraction_name):
     headers = {"User-Agent": "TourismRecommenderApp/7.1 (student.project@example.com)"}
     
     # 1. Custom Name Direct Overrides
+   # 1. Custom Name Direct Overrides
     NAME_ALIASES = {
         "Ba Li Gou": "Baligou",
         "Baili Gou": "Baligou",
@@ -23,10 +34,11 @@ def get_attraction_photo(attraction_name):
         "Lao Jun Shan": "Mount Laojun",
         "Wu Dang Shan": "Wudang Mountains",
         "Kai Feng Fu": "Kaifeng Prefecture",
-        "Ning De Yuan Yang Xi": "Ningde",  # <-- Added to fix the cartoon rabbit!
-        "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
-        "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"  # <-- Added Mount Lao here!
-}
+        "Ning De Yuan Yang Xi": "Ningde", 
+        # Keep these as text so Wikipedia can read them
+        "Tian Mu Hu": "Tianmu Lake",
+        "Lao Shan": "Mount Lao" 
+    }
 
     
     # 2. Advanced Pinyin Translation Dictionaries
