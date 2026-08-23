@@ -3,35 +3,45 @@ import pandas as pd
 import numpy as np
 import pydeck as pdk
 import random
-import requests  # Required for Wikipedia API
+import requests
+from duckduckgo_search import DDGS
+
+# --- 1. IMAGE CONFIGURATION & TRIP.COM TARGETED SEARCH ---
+IMAGE_DATABASE = {
+    "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
+    "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
+    "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
+    "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
+}
 
 @st.cache_data(show_spinner=False)
-@st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name, category=""):
-    """Fetches images by strictly targeting Trip.com and travel sites via DuckDuckGo."""
-    
-    # --- 1. STATIC DATABASE FALLBACK ---
+    """
+    Fetches destination images using a 3-tier fallback strategy:
+    1. Static verified dictionary
+    2. Targeted Trip.com & travel directory search via DuckDuckGo
+    3. Category-matched high-resolution stock fallback
+    """
+    # Tier 1: Static Dictionary Check
     if attraction_name in IMAGE_DATABASE:
         return IMAGE_DATABASE[attraction_name]
-        
-    # --- 2. TARGETED TRIP.COM SEARCH ---
-    # By adding "site:trip.com", we force the search engine to pull from the travel site, 
-    # ignoring Wikipedia paintings and maps!
+
+    # Tier 2: Search queries prioritized toward actual travel listings
     queries = [
         f"site:trip.com {attraction_name} China",
         f"site:tripadvisor.com {attraction_name} China",
         f"{attraction_name} scenic area attraction China"
     ]
-    
-    for query in queries:
+
+    for q in queries:
         try:
-            results = DDGS().images(query, max_results=1)
+            results = DDGS().images(q, max_results=1)
             if results and 'image' in results[0]:
                 return results[0]['image']
         except Exception:
             continue
-            
-    # --- 3. CATEGORY STOCK PHOTO FALLBACK ---
+
+    # Tier 3: Category-based photography fallback
     category_str = str(category).lower()
     if "natural" in category_str or "scenery" in category_str:
         keyword = "nature,mountain"
@@ -41,20 +51,31 @@ def get_attraction_photo(attraction_name, category=""):
         keyword = "temple,pagoda"
     elif "historic" in category_str or "culture" in category_str:
         keyword = "history,architecture"
+    elif "sport" in category_str or "leisure" in category_str:
+        keyword = "skiing,resort"
     else:
         keyword = "travel,landscape,china"
-        
+
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
-    
+
+
 # --- 2. PAGE CONFIGURATION ---
-st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
+st.set_page_config(
+    page_title="Personalized Tourism Recommender",
+    layout="wide",
+    page_icon="🗺️"
+)
 
 
 # --- 3. DATA & EVALUATION METRICS LOADER ---
 @st.cache_resource
 def load_data_and_metrics():
-    df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
+    try:
+        df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
+    except Exception:
+        df_raw = pd.read_csv('attraction_metadata.csv')
+
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
     evaluation_metrics = pd.DataFrame({
@@ -73,40 +94,44 @@ def load_data_and_metrics():
 
     return df_raw, attr_meta, evaluation_metrics
 
+
 try:
     df_raw, attr_meta, eval_metrics_df = load_data_and_metrics()
 
-    # --- ADVANCED FILTERING ENGINE ---
+    # --- FILTERING & COLD-START ENGINE ---
     def recommend_filtered(df, age_group, gender, province, visit_duration, top_n=5):
         filtered = df.copy()
-        
-        # Apply filters unless "Ignore" is selected
-        if age_group != "Ignore":
+
+        if age_group != "Ignore" and 'age_group' in filtered.columns:
             filtered = filtered[filtered['age_group'] == age_group]
-        
-        if gender != "Ignore":
+
+        if gender != "Ignore" and 'gender' in filtered.columns:
             filtered = filtered[filtered['gender'] == gender]
-            
-        if province != "Ignore":
+
+        if province != "Ignore" and 'province' in filtered.columns:
             filtered = filtered[filtered['province'] == province]
-            
-        if visit_duration != "Ignore":
+
+        if visit_duration != "Ignore" and 'visit_duration_hours' in filtered.columns:
             if visit_duration == "Short (1-3 hours)":
                 filtered = filtered[filtered['visit_duration_hours'] <= 3]
             elif visit_duration == "Medium (3-5 hours)":
                 filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
             elif visit_duration == "Long (5+ hours)":
                 filtered = filtered[filtered['visit_duration_hours'] > 5]
-            
+
         if filtered.empty:
             return []
-            
+
         grouped = filtered.groupby('attraction_name').agg(
             avg_rating=('rating', 'mean'),
             visit_count=('rating', 'count')
         ).reset_index()
-        
-        top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
+
+        top_spots = grouped.sort_values(
+            by=['avg_rating', 'visit_count'],
+            ascending=[False, False]
+        ).head(top_n)
+
         return [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
 
     # --- 4. HEADER & SIDEBAR CONTROLS ---
@@ -114,23 +139,34 @@ try:
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
     st.sidebar.header("🎯 Traveler Preference Panel")
-    
-    # Dropdowns with "Ignore" appended to the end
-    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
+
+    # Age Group Dropdown
+    available_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if 'age_group' in df_raw.columns else ["Ignore"]
     selected_age = st.sidebar.selectbox("Age Group", options=available_ages, index=len(available_ages)-1)
-    
-    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"]
+
+    # Gender Dropdown
+    available_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if 'gender' in df_raw.columns else ["Ignore"]
     selected_gender = st.sidebar.selectbox("Gender", options=available_genders, index=len(available_genders)-1)
-    
-    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"]
+
+    # Province Dropdown
+    available_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if 'province' in df_raw.columns else ["Ignore"]
     selected_province = st.sidebar.selectbox("Province", options=available_provinces, index=len(available_provinces)-1)
-    
+
+    # Duration Dropdown
     duration_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
     selected_duration = st.sidebar.selectbox("Visit Duration", options=duration_options, index=len(duration_options)-1)
-    
-    top_n = st.sidebar.slider("Number of Recommendations", min_value=3, max_value=8, value=5)
 
-    recommendations = recommend_filtered(df_raw, selected_age, selected_gender, selected_province, selected_duration, top_n=top_n)
+    # Number of Results Slider
+    top_n = st.sidebar.slider("Number of Recommendations", min_value=1, max_value=12, value=8)
+
+    recommendations = recommend_filtered(
+        df_raw,
+        selected_age,
+        selected_gender,
+        selected_province,
+        selected_duration,
+        top_n=top_n
+    )
 
     # --- 5. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs([
@@ -142,25 +178,25 @@ try:
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
-        
+
         if not recommendations:
-            st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
+            st.warning("No attractions found matching all selected criteria. Try adjusting one or more filters to 'Ignore'.")
         else:
-            st.caption("Showing top attractions based on your active filters.")
-            
-            # Display items in rows of 4
+            st.caption("Showing top-rated attractions matching your active travel profile.")
+
+            # Chunk into rows of 4 cards
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
                 row_items = recommendations[row_idx : row_idx + num_cols]
                 cols = st.columns(num_cols)
-                
+
                 for i, (name, score) in enumerate(row_items):
                     with cols[i]:
                         meta_row = attr_meta[attr_meta['attraction_name'] == name]
                         category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
 
-                        img_url = get_attraction_photo(name)
+                        img_url = get_attraction_photo(name, category)
                         st.image(img_url, use_container_width=True)
                         st.markdown(f"**{name}**")
                         st.caption(f"Rating: {score:.2f} ⭐ | {level}")
@@ -171,7 +207,7 @@ try:
         st.info("Simulated coordinate layers representing geographic distribution across destination regions.")
 
         if not recommendations:
-            st.warning("No data to map. Adjust your filters to see locations.")
+            st.warning("No location coordinates to display. Adjust sidebar filters to view the map.")
         else:
             map_data = []
             for name, score in recommendations:
@@ -192,7 +228,13 @@ try:
                 pickable=True,
                 auto_highlight=True,
             )
-            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nRating: {score}⭐"}))
+            st.pydeck_chart(
+                pdk.Deck(
+                    layers=[layer],
+                    initial_view_state=view_state,
+                    tooltip={"text": "{name}\nRating: {score}⭐"}
+                )
+            )
 
     # ========================== TAB 3: DEVELOPER / GRADING VIEW ==========================
     with tab3:
@@ -221,9 +263,9 @@ try:
         with st.expander("📝 Architectural & Cold-Start Strategy Notes"):
             st.markdown(
                 """
-                * **Cold-Start Handling:** For unindexed visitors, the system uses demographic aggregation across user subsets ($Age \\times Gender$) combined with rating frequencies.
-                * **Offline vs. Online Inference:** Complex factorizations (SVD, Neural Embeddings) generate latent similarity scores offline; the web layer applies dynamic filtering to optimize latency.
-                * **Optimization Metric:** Minimum Root Mean Squared Error (RMSE) serves as the primary optimization target to penalize large prediction variances.
+                * **Cold-Start Handling:** For unindexed visitors, the system aggregates ratings across subset intersections ($Age \\times Gender \\times Region \\times Duration$) weighted by interaction volume.
+                * **Image Acquisition Pipeline:** Queries travel-specific search operators (`site:trip.com`) before falling back to stock imagery to avoid historical painting/map mismatches.
+                * **Optimization Metric:** Root Mean Squared Error (RMSE) serves as the primary optimization target to penalize large rating variance.
                 """
             )
 
