@@ -15,7 +15,7 @@ IMAGE_DATABASE = {
     "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
     
     # FIXED: Using Special:FilePath automatically finds the exact .JPG and resizes it to 800px!
-    "Tian Mu Hu": "https://commons.wikimedia.org/wiki/Special:FilePath/Tianmu_Lake_gate.JPG?width=800",
+    "Tian Mu Hu": https://en.wikipedia.org/wiki/Tianmu_Lake#/media/File:%E5%A4%A9%E7%9B%AE%E6%B9%96%E5%A4%A7%E9%96%80.JPG?width=800",
     "Lao Shan": "https://commons.wikimedia.org/wiki/Special:FilePath/Mount_Lao_from_within_the_Laoshan_National_Park.jpg?width=800"
 }
 
