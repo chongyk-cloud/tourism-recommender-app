@@ -3,26 +3,15 @@ import pandas as pd
 import numpy as np
 import pydeck as pdk
 import random
-from duckduckgo_search import DDGS
-
-# --- 1. IMAGE CONFIGURATION & FALLBACKS ---
-IMAGE_DATABASE = {
-    "Wu Dang Shan": "https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg",
-    "Lao Jun Shan": "https://www.travelchinaguide.com/images/photogallery/2018/0822161406.jpg",
-    "Wu Yi Shan": "https://www.travelchinaguide.com/images/photogallery/2012/0517112028.jpg",
-    "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
-}
-
+import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
-def get_attraction_photo(attraction_name, category):
-    """Translates Pinyin to English keywords and searches Wikipedia for locations."""
+def get_attraction_photo(attraction_name):
+    """Strictly queries Wikipedia API with Pinyin translation & location filtering."""
+    endpoint = "https://en.wikipedia.org/w/api.php"
+    headers = {"User-Agent": "TourismRecommenderTestApp/1.0 (contact@example.com)"}
     
-    # --- 1. STATIC DATABASE FALLBACK ---
-    if attraction_name in IMAGE_DATABASE:
-        return IMAGE_DATABASE[attraction_name]
-        
-    # --- 2. PINYIN TO ENGLISH TRANSLATION ALGORITHM ---
+    # 1. Pinyin Suffix Translation Dictionary
     pinyin_map = {
         'shan': 'Mountains',
         'dao': 'Island',
@@ -36,25 +25,28 @@ def get_attraction_photo(attraction_name, category):
         'cheng': 'City'
     }
     
-    # Split "Wu Dang Shan" into ["Wu", "Dang", "Shan"]
     words = attraction_name.strip().split()
-    
-    # If the last word is in our dictionary (e.g., "Shan")
     if len(words) > 1 and words[-1].lower() in pinyin_map:
-        # Combine the prefix ("WuDang") and add the translation ("Mountains")
-        stem = "".join(words[:-1]) 
+        stem = "".join(words[:-1])
         translated_suffix = pinyin_map[words[-1].lower()]
-        smart_query = f"{stem} {translated_suffix}" # Results in: "WuDang Mountains"
+        smart_query = f"{stem} {translated_suffix}"  # e.g., "Wu Dang Shan" -> "WuDang Mountains"
     else:
-        # If no recognized suffix, just squish the words together (e.g., "Wudangshan")
-        smart_query = "".join(words) 
-
-    # --- 3. WIKIPEDIA API SEARCH ---
-    endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/3.0 (contact@example.com)"}
+        smart_query = "".join(words)
+        
+    # 2. Sequential Wikipedia Search Variations
+    queries = [
+        f"{smart_query} China",
+        f"{attraction_name} China",
+        f"{smart_query}",
+        f"{attraction_name}"
+    ]
     
-    # We will try the translated query first, then fall back to the original Pinyin
-    queries = [f"{smart_query} China", f"{attraction_name} China"]
+    # Keywords to verify the page is a place/landmark (filters out martial arts/movies)
+    valid_keywords = [
+        'mountain', 'lake', 'temple', 'park', 'island', 'city', 
+        'county', 'scenic', 'tourist', 'site', 'landmark', 'nature', 
+        'valley', 'cave', 'pass', 'garden', 'resort', 'attraction', 'china'
+    ]
     
     for q in queries:
         params = {
@@ -62,7 +54,7 @@ def get_attraction_photo(attraction_name, category):
             "format": "json",
             "generator": "search",
             "gsrsearch": q,
-            "gsrlimit": 3, # Grab top 3 results to filter through
+            "gsrlimit": 3,
             "prop": "pageimages|description",
             "pithumbsize": 600
         }
@@ -71,31 +63,21 @@ def get_attraction_photo(attraction_name, category):
             pages = response.get("query", {}).get("pages", {})
             
             for page_id, page_info in pages.items():
-                # Location Verification: Make sure it's a place, not a martial art or movie!
                 desc = page_info.get("description", "").lower()
-                valid_keywords = ['mountain', 'lake', 'temple', 'park', 'island', 'city', 'county', 'scenic', 'tourist', 'site', 'landmark']
                 
-                # If it has a thumbnail AND the description mentions a location keyword
-                if "thumbnail" in page_info and any(kw in desc for kw in valid_keywords):
-                    return page_info["thumbnail"]["source"]
+                # Check for thumbnail
+                if "thumbnail" in page_info:
+                    # Verify location relevance if a description exists
+                    if desc:
+                        if any(kw in desc for kw in valid_keywords):
+                            return page_info["thumbnail"]["source"]
+                    else:
+                        return page_info["thumbnail"]["source"]
         except Exception:
-            pass
-
-    # --- 4. CATEGORY STOCK PHOTO FALLBACK (If Wikipedia fails completely) ---
-    category_str = str(category).lower()
-    if "natural" in category_str or "scenery" in category_str:
-        keyword = "nature,mountain"
-    elif "ancient" in category_str or "town" in category_str:
-        keyword = "ancient,china,town"
-    elif "religio" in category_str:
-        keyword = "temple,pagoda"
-    elif "historic" in category_str or "culture" in category_str:
-        keyword = "history,architecture"
-    else:
-        keyword = "travel,landscape,china"
-        
-    seed = sum(ord(c) for c in attraction_name)
-    return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
+            continue
+            
+    # Plain placeholder if Wikipedia has no image
+    return f"https://placehold.co/400x300/e0e0e0/000000?text={attraction_name.replace(' ', '+')}"
     
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
@@ -210,7 +192,7 @@ try:
                         category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
 
-                        img_url = get_attraction_photo(name, category)
+                        img_url = get_attraction_photo(name)
                         st.image(img_url, use_container_width=True)
                         st.markdown(f"**{name}**")
                         st.caption(f"Rating: {score:.2f} ⭐ | {level}")
