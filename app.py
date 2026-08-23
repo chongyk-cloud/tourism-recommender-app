@@ -8,9 +8,9 @@ import requests  # Required for Wikipedia API
 
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name):
-    """Queries Wikipedia with strict paragraph verification and negative image filtering."""
+    """Queries Wikipedia and verifies the article's opening paragraph for geographical keywords."""
     endpoint = "https://en.wikipedia.org/w/api.php"
-    headers = {"User-Agent": "TourismRecommenderApp/6.0 (student.project@example.com)"}
+    headers = {"User-Agent": "TourismRecommenderApp/7.0 (student.project@example.com)"}
     
     # 1. Custom Name Direct Overrides
     NAME_ALIASES = {
@@ -22,7 +22,7 @@ def get_attraction_photo(attraction_name):
         "E Mei Shan": "Mount Emei",
         "Lao Jun Shan": "Mount Laojun",
         "Wu Dang Shan": "Wudang Mountains",
-        "Kai Feng Fu": "Kaifeng Prefecture"  # <-- Added to fix the church image
+        "Kai Feng Fu": "Kaifeng Prefecture"
     }
     
     # 2. Advanced Pinyin Translation Dictionaries
@@ -42,7 +42,6 @@ def get_attraction_photo(attraction_name):
     
     queries = []
     
-    # Priority 1: Check if custom alias exists
     if attraction_name in NAME_ALIASES:
         alias = NAME_ALIASES[attraction_name]
         queries.extend([f"{alias} China", alias, f"{alias} scenic area", f"{alias} Valley"])
@@ -52,7 +51,6 @@ def get_attraction_photo(attraction_name):
     last_2_words = " ".join(words[-2:]).lower() if len(words) >= 2 else ""
     last_1_word = words[-1].lower() if len(words) >= 1 else ""
     
-    # Priority 2: Multi-word & Single-word Pinyin translation
     if last_2_words in pinyin_map_2_words:
         stem = "".join(words[:-2])
         translated_suffix = pinyin_map_2_words[last_2_words]
@@ -65,55 +63,55 @@ def get_attraction_photo(attraction_name):
             queries.extend([f"Mount {stem} China", f"Mount {stem}"])
         queries.append(f"{stem} {translated_suffix}")
         
-    # Priority 3: Fully concatenated forms & raw queries
     queries.extend([f"{joined_name} China", joined_name, f"{attraction_name} China", attraction_name])
     
-    # NEW STRICT VERIFICATION RULES:
-    location_keywords = [
-        'mountain', 'lake', 'temple', 'park', 'island', 'city', 'county', 'scenic', 
-        'tourist', 'site', 'landmark', 'nature', 'valley', 'cave', 'pass', 'garden', 
-        'resort', 'attraction', 'pagoda', 'monastery', 'river', 'grotto', 'museum',
-        'waterfall', 'wetland', 'memorial', 'town', 'prefecture'
+    # NEW SPATIAL RULE: Words that definitively prove it is a physical geographic location
+    spatial_keywords = [
+        'located', 'situated', 'border', 'borders', 'prefecture', 'province', 
+        'municipality', 'county', 'city in', 'mountain in', 'river in', 'scenic area'
     ]
     
-    regional_keywords = ['china', 'chinese', 'province', 'dynasty']
     invalid_image_terms = ['map', 'logo', 'flag', 'emblem', 'icon', '.svg', 'symbol', 'relie']
     
     for q in queries:
         params = {
-            "action": "query", "format": "json", "generator": "search",
-            "gsrsearch": q, "gsrlimit": 3, "prop": "pageimages|description", "pithumbsize": 600
+            "action": "query", 
+            "format": "json", 
+            "generator": "search",
+            "gsrsearch": q, 
+            "gsrlimit": 3, 
+            # UPGRADE: Requesting "extracts" pulls the actual opening paragraph of the article!
+            "prop": "pageimages|description|extracts", 
+            "exintro": 1,       # Only get the intro paragraph
+            "explaintext": 1,   # Plain text (no HTML)
+            "exchars": 300,     # Limit to the first 300 characters to save memory
+            "pithumbsize": 600
         }
         try:
             response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
             pages = response.get("query", {}).get("pages", {})
             
             for page_id, page_info in pages.items():
-                desc = page_info.get("description", "").lower()
                 title = page_info.get("title", "").lower()
+                desc = page_info.get("description", "").lower()
+                extract = page_info.get("extract", "").lower() # The opening paragraph!
                 
-                # Combine title and description to search for keywords
-                full_text = desc + " " + title
+                # Merge them all together to scan for your spatial rule
+                full_text = f"{title} {desc} {extract}"
                 
                 if "thumbnail" in page_info and "source" in page_info["thumbnail"]:
                     img_url = page_info["thumbnail"]["source"]
                     
-                    # Discard maps, flags, emblems, SVGs
                     if any(bad_word in img_url.lower() for bad_word in invalid_image_terms):
                         continue
                         
-                    # STRICT FILTER: Must contain a location word AND a regional word
-                    has_location = any(loc in full_text for loc in location_keywords)
-                    has_region = any(reg in full_text for reg in regional_keywords)
-                    
-                    if has_location and has_region:
+                    # SPATIAL FILTER: Does the opening paragraph say "located", "borders", or name a province?
+                    if any(spatial_word in full_text for spatial_word in spatial_keywords):
                         return img_url
-                    elif not desc: # If Wikipedia provides no description, we cautiously accept it
-                        return img_url
+                        
         except Exception:
             continue
             
-    # FIXED: Replaced "china" with "chinese" so stock photos don't return teacups!
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/landscape,chinese?lock={seed}"
     
