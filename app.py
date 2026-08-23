@@ -24,7 +24,7 @@ def get_attraction_photo(attraction_name):
         "Wu Dang Shan": "Wudang Mountains",
         "Kai Feng Fu": "Kaifeng Prefecture",
         "Ning De Yuan Yang Xi": "Ningde",  # <-- Added to fix the cartoon rabbit!
-        "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG"
+        "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
         "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"  # <-- Added Mount Lao here!
 }
     
