@@ -13,25 +13,75 @@ IMAGE_DATABASE = {
     "Long Hu Shan": "https://www.travelchinaguide.com/images/photogallery/2015/1022153215.jpg",
 }
 
+
 @st.cache_data(show_spinner=False)
 def get_attraction_photo(attraction_name, category):
-    """Fetches images using: Static Dictionary -> DuckDuckGo -> Category Stock Fallback."""
+    """Translates Pinyin to English keywords and searches Wikipedia for locations."""
+    
+    # --- 1. STATIC DATABASE FALLBACK ---
     if attraction_name in IMAGE_DATABASE:
         return IMAGE_DATABASE[attraction_name]
         
-    queries = [
-        f"{attraction_name} scenic spot China",
-        f"{attraction_name} tourism China",
-        f"{attraction_name}"
-    ]
-    for query in queries:
+    # --- 2. PINYIN TO ENGLISH TRANSLATION ALGORITHM ---
+    pinyin_map = {
+        'shan': 'Mountains',
+        'dao': 'Island',
+        'hu': 'Lake',
+        'gou': 'Valley',
+        'si': 'Temple',
+        'dong': 'Cave',
+        'ling': 'Mountains',
+        'guan': 'Pass',
+        'yuan': 'Garden',
+        'cheng': 'City'
+    }
+    
+    # Split "Wu Dang Shan" into ["Wu", "Dang", "Shan"]
+    words = attraction_name.strip().split()
+    
+    # If the last word is in our dictionary (e.g., "Shan")
+    if len(words) > 1 and words[-1].lower() in pinyin_map:
+        # Combine the prefix ("WuDang") and add the translation ("Mountains")
+        stem = "".join(words[:-1]) 
+        translated_suffix = pinyin_map[words[-1].lower()]
+        smart_query = f"{stem} {translated_suffix}" # Results in: "WuDang Mountains"
+    else:
+        # If no recognized suffix, just squish the words together (e.g., "Wudangshan")
+        smart_query = "".join(words) 
+
+    # --- 3. WIKIPEDIA API SEARCH ---
+    endpoint = "https://en.wikipedia.org/w/api.php"
+    headers = {"User-Agent": "TourismRecommenderApp/3.0 (contact@example.com)"}
+    
+    # We will try the translated query first, then fall back to the original Pinyin
+    queries = [f"{smart_query} China", f"{attraction_name} China"]
+    
+    for q in queries:
+        params = {
+            "action": "query",
+            "format": "json",
+            "generator": "search",
+            "gsrsearch": q,
+            "gsrlimit": 3, # Grab top 3 results to filter through
+            "prop": "pageimages|description",
+            "pithumbsize": 600
+        }
         try:
-            results = DDGS().images(query, max_results=1)
-            if results and 'image' in results[0]:
-                return results[0]['image']
-        except Exception:
-            continue
+            response = requests.get(endpoint, params=params, headers=headers, timeout=5).json()
+            pages = response.get("query", {}).get("pages", {})
             
+            for page_id, page_info in pages.items():
+                # Location Verification: Make sure it's a place, not a martial art or movie!
+                desc = page_info.get("description", "").lower()
+                valid_keywords = ['mountain', 'lake', 'temple', 'park', 'island', 'city', 'county', 'scenic', 'tourist', 'site', 'landmark']
+                
+                # If it has a thumbnail AND the description mentions a location keyword
+                if "thumbnail" in page_info and any(kw in desc for kw in valid_keywords):
+                    return page_info["thumbnail"]["source"]
+        except Exception:
+            pass
+
+    # --- 4. CATEGORY STOCK PHOTO FALLBACK (If Wikipedia fails completely) ---
     category_str = str(category).lower()
     if "natural" in category_str or "scenery" in category_str:
         keyword = "nature,mountain"
@@ -46,8 +96,7 @@ def get_attraction_photo(attraction_name, category):
         
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/{keyword}?lock={seed}"
-
-
+    
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
