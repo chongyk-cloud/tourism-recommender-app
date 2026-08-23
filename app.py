@@ -27,6 +27,7 @@ def get_attraction_photo(attraction_name):
         "Tian Mu Hu": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Tianmu_Lake_gate.JPG/600px-Tianmu_Lake_gate.JPG",
         "Lao Shan": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Laoshan-mountain-with-rocks.jpg/600px-Laoshan-mountain-with-rocks.jpg"  # <-- Added Mount Lao here!
 }
+
     
     # 2. Advanced Pinyin Translation Dictionaries
     pinyin_map_2_words = {
