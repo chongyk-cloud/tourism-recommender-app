@@ -147,19 +147,24 @@ try:
         if not recommendations:
             st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         else:
-            st.caption(f"Showing top attractions based on your active filters.")
+            st.caption("Showing top attractions based on your active filters.")
             
-            cols = st.columns(len(recommendations))
-            for i, (name, score) in enumerate(recommendations):
-                with cols[i]:
-                    meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                    category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
-                    level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+            # Display items in rows of 4
+            num_cols = 4
+            for row_idx in range(0, len(recommendations), num_cols):
+                row_items = recommendations[row_idx : row_idx + num_cols]
+                cols = st.columns(num_cols)
+                
+                for i, (name, score) in enumerate(row_items):
+                    with cols[i]:
+                        meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                        category = meta_row['attraction_category'].iloc[0] if not meta_row.empty else "Scenic Spot"
+                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
 
-                    img_url = get_attraction_photo(name, category)
-                    st.image(img_url, use_container_width=True)
-                    st.markdown(f"**{name}**")
-                    st.caption(f"Rating: {score:.2f} ⭐ | {level}")
+                        img_url = get_attraction_photo(name, category)
+                        st.image(img_url, use_container_width=True)
+                        st.markdown(f"**{name}**")
+                        st.caption(f"Rating: {score:.2f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
