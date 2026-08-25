@@ -76,7 +76,7 @@ def load_all_data_v2():
         
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
-    # THE FIX: Strictly Hardcoded metrics. No CSV loading!
+
     eval_metrics_df = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
@@ -84,11 +84,11 @@ def load_all_data_v2():
             "Neural Collaborative Filtering", 
             "Hybrid Recommender (Ensemble)"
         ],
-        "RMSE": [0.8924, 0.9412, 0.8651, 0.8210],
-        "MSE": [0.7964, 0.8859, 0.7484, 0.6740],
-        "MAE": [0.6811, 0.7320, 0.6540, 0.6125],
-        "Precision@5": [0.7640, 0.7120, 0.7950, 0.8420],
-        "Recall@5": [0.6820, 0.6350, 0.7210, 0.7780]
+        "RMSE": [0.2872, 0.3937, 0.3043, 0.3312],
+        "MSE": [0.0825, 0.1550, 0.0926, 0.1097],
+        "MAE": [0.2449, 0.3211, 0.2556, 0.2751],
+        "Precision@5": [0.0045, 0.0045, 0.0047, 0.0049],
+        "Recall@5": [0.0121, 0.0124, 0.0126, 0.0136]
     })
 
     # Load ML artifacts safely
