@@ -172,12 +172,12 @@ try:
         top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
-
-    # --- 5. SIDEBAR & UI CONTROLS ---
+# --- 5. SIDEBAR & UI CONTROLS ---
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
     st.sidebar.header("🎯 Traveler Profile & Filters")
+    
     st.sidebar.subheader("🧠 Algorithm Selection")
     
     if ml_ready:
@@ -193,16 +193,10 @@ try:
         options=model_options,
         help="Select the underlying AI model used to generate your recommendations."
     )
-    
-    t_id_input = st.sidebar.text_input("🔑 Tourist ID (e.g., 605)", value="605", help="Enter ID for AI predictions. Leave blank for general popularity.")
-    try:
-        active_tourist_id = int(t_id_input) if t_id_input.strip() else None
-    except ValueError:
-        active_tourist_id = None
-        st.sidebar.error("Tourist ID must be a number.")
 
     st.sidebar.divider()
 
+    # Dropdowns for Criteria
     def get_default_index(opts, target): return opts.index(target) if target in opts else len(opts) - 1
     
     avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
@@ -219,10 +213,28 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
+    # --- NEW: AUTOMATIC PERSONA MATCHING (Replacing the ID Bar) ---
+    persona_df = df_raw.copy()
+    
+    # Filter the dataset to find a user matching the selected demographics
+    if selected_age != "Ignore":
+        persona_df = persona_df[persona_df['age_group'] == selected_age]
+    if selected_gender != "Ignore":
+        persona_df = persona_df[persona_df['gender'] == selected_gender]
+        
+    # If we found a match based on the selected criteria, pick the most frequent traveler in that demographic
+    if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
+        active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+        st.sidebar.success(f"👤 Persona Matched! (Proxy ID: {active_tourist_id})")
+    else:
+        # If everything is set to "Ignore" or no match is found, fallback to a default highly-active user
+        active_tourist_id = 605 
+        st.sidebar.info("👤 Using Default Visitor Profile")
+
+    # Fetch Recommendations
     recommendations, is_personalized = generate_recommendations(
         active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_duration, top_n
     )
-
     # --- 6. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
 
