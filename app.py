@@ -64,6 +64,7 @@ def get_attraction_photo(attraction_name):
             
     seed = sum(ord(c) for c in attraction_name)
     return f"https://loremflickr.com/400/300/landscape,chinese?lock={seed}"
+
 # --- 3. ML MODEL & DATA LOADER ---
 @st.cache_resource
 def load_all_data_v2():
@@ -124,6 +125,12 @@ def load_all_data_v2():
         ml_ready = False
 
     return df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready
+
+
+# Start of the main execution block
+try:
+    # CALLING THE NEW FUNCTION NAME HERE
+    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
     def generate_recommendations(tourist_id, selected_model, age, gender, province, duration, top_n=8):
@@ -293,9 +300,8 @@ def load_all_data_v2():
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures.")
 
-        # Dynamically extract values from the CSV dataframe for the metrics (if available)
+        # Dynamically extract values from the hardcoded dataframe for the metrics
         try:
-            # We use try/except block to grab metric data safely, adjusting string formatting based on availability
             ensemble_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Hybrid Recommender (Ensemble)"].iloc[0]
             svd_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Collaborative Filtering (SVD)"].iloc[0]
             
