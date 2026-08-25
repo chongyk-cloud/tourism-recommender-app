@@ -84,7 +84,7 @@ def load_all_data_v2():
             "Neural Collaborative Filtering", 
             "Hybrid Recommender (Ensemble)"
         ],
-        "RMSE": [0.8922, 0.9412, 0.8651, 0.8210],
+        "RMSE": [0.892, 0.9412, 0.8651, 0.8210],
         "MSE": [0.7964, 0.8859, 0.7484, 0.6740],
         "MAE": [0.6811, 0.7320, 0.6540, 0.6125],
         "Precision@5": [0.7640, 0.7120, 0.7950, 0.8420],
