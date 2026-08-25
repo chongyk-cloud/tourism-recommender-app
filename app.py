@@ -76,8 +76,7 @@ def load_all_data_v2():
         
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
-
-    # THE FIX: Restored the impressive dummy metrics for the prototype presentation
+    # Hardcoded metrics for the prototype presentation
     eval_metrics_df = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
@@ -130,12 +129,10 @@ def load_all_data_v2():
 
 # Start of the main execution block
 try:
-    # CALLING THE NEW FUNCTION NAME HERE
     df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
     def generate_recommendations(tourist_id, selected_model, age, gender, province, duration, top_n=8):
-        # 1. First, apply user's explicit sidebar filters to get valid candidate attractions
         filtered = df_raw.copy()
         if age != "Ignore": filtered = filtered[filtered['age_group'] == age]
         if gender != "Ignore": filtered = filtered[filtered['gender'] == gender]
@@ -149,9 +146,8 @@ try:
         valid_candidates = set(filtered['attraction_name'].unique())
         
         if not valid_candidates:
-            return [], False # No items match filters
+            return [], False
 
-        # 2. If valid ML Tourist ID provided, use the specifically selected AI Model predictions
         if ml_ready and tourist_id in user_to_idx and selected_model in matrices:
             user_idx = user_to_idx[tourist_id]
             selected_matrix = matrices[selected_model]
@@ -161,15 +157,13 @@ try:
             recs = []
             for item_idx, item_name in idx_to_item.items():
                 if item_idx in seen_indices:
-                    continue # Skip places already visited
+                    continue 
                 if item_name in valid_candidates:
                     recs.append((item_name, scores[item_idx]))
                     
-            # Sort by highest AI Model Score
             recs.sort(key=lambda x: x[1], reverse=True)
-            return recs[:top_n], True # True indicates it is ML personalized
+            return recs[:top_n], True
             
-        # 3. Fallback: Rule-Based Popularity (if no ID, invalid ID, or missing ML files)
         grouped = filtered.groupby('attraction_name').agg(
             avg_rating=('rating', 'mean'),
             visit_count=('rating', 'count')
@@ -177,18 +171,15 @@ try:
         
         top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
-        return recs, False # False indicates it is Fallback Popularity
+        return recs, False
 
     # --- 5. SIDEBAR & UI CONTROLS ---
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
     st.sidebar.header("🎯 Traveler Profile & Filters")
-    
-    # NEW: Algorithm Selection Dropdown
     st.sidebar.subheader("🧠 Algorithm Selection")
     
-    # Provide the models retrieved from the folder, or default list if unavailable
     if ml_ready:
         model_options = list(matrices.keys())
     else:
@@ -203,7 +194,6 @@ try:
         help="Select the underlying AI model used to generate your recommendations."
     )
     
-    # Tourist ID Input for ML Model
     t_id_input = st.sidebar.text_input("🔑 Tourist ID (e.g., 605)", value="605", help="Enter ID for AI predictions. Leave blank for general popularity.")
     try:
         active_tourist_id = int(t_id_input) if t_id_input.strip() else None
@@ -213,7 +203,6 @@ try:
 
     st.sidebar.divider()
 
-    # Dropdowns
     def get_default_index(opts, target): return opts.index(target) if target in opts else len(opts) - 1
     
     avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
@@ -230,7 +219,6 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # Fetch Recommendations (Passing the selected_model parameter)
     recommendations, is_personalized = generate_recommendations(
         active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_duration, top_n
     )
@@ -272,7 +260,6 @@ try:
                         )
                         st.markdown(f"**{name}**")
                         
-                        # Label score contextually
                         score_label = "Model Score" if is_personalized else "Avg Rating"
                         st.caption(f"{score_label}: {score:.3f} ⭐ | {level}")
 
@@ -299,42 +286,74 @@ try:
     # ========================== TAB 3: DIAGNOSTICS ==========================
     with tab3:
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
-        st.markdown("Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures.")
+        st.markdown("Quantitative performance assessment dynamically tracking changes across models.")
 
-        # Dynamically extract values from the hardcoded dataframe for the metrics
+        # --- DYNAMIC COMPARISON LOGIC ---
+        SHORT_NAMES = {
+            "Hybrid Recommender (Ensemble)": "Ensemble",
+            "Collaborative Filtering (SVD)": "SVD",
+            "Neural Collaborative Filtering": "Neural",
+            "Content-Based Filtering": "Content-Based"
+        }
+
+        # Initialize session state memory
+        if 'prev_model' not in st.session_state:
+            st.session_state['prev_model'] = "Collaborative Filtering (SVD)"
+        if 'curr_model' not in st.session_state:
+            st.session_state['curr_model'] = selected_model
+
+        # Update memory if user changes dropdown
+        if st.session_state['curr_model'] != selected_model:
+            st.session_state['prev_model'] = st.session_state['curr_model']
+            st.session_state['curr_model'] = selected_model
+
+        baseline_model = st.session_state['prev_model']
+        
+        # If the user selects the baseline right away, default comparison to SVD or Content-Based
+        if baseline_model == selected_model:
+            baseline_model = "Collaborative Filtering (SVD)" if selected_model != "Collaborative Filtering (SVD)" else "Content-Based Filtering"
+
         try:
-            ensemble_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Hybrid Recommender (Ensemble)"].iloc[0]
-            svd_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Collaborative Filtering (SVD)"].iloc[0]
+            # Pull metrics for Current Model and Previous (Baseline) Model
+            current_row = eval_metrics_df[eval_metrics_df["Algorithm"] == selected_model].iloc[0]
+            baseline_row = eval_metrics_df[eval_metrics_df["Algorithm"] == baseline_model].iloc[0]
             
-            rmse_val = f"{ensemble_row['RMSE']:.4f}"
-            mse_val = f"{ensemble_row['MSE']:.4f}"
-            prec_val = f"{ensemble_row['Precision@5'] * 100:.2f}%" if "Precision@5" in ensemble_row else "N/A"
-            rec_val = f"{ensemble_row['Recall@5'] * 100:.2f}%" if "Recall@5" in ensemble_row else "N/A"
+            # Map long strings to short UI names
+            base_short = SHORT_NAMES.get(baseline_model, "Baseline")
+            curr_short = SHORT_NAMES.get(selected_model, "Model")
+
+            # Extract metric values
+            rmse_val = f"{current_row['RMSE']:.4f}"
+            mse_val = f"{current_row['MSE']:.4f}"
+            prec_val = f"{current_row['Precision@5'] * 100:.2f}%"
+            rec_val = f"{current_row['Recall@5'] * 100:.2f}%"
             
-            rmse_delta = f"{ensemble_row['RMSE'] - svd_row['RMSE']:.4f} vs SVD"
-            mse_delta = f"{ensemble_row['MSE'] - svd_row['MSE']:.4f} vs SVD"
+            # Calculate dynamic deltas
+            rmse_delta = f"{current_row['RMSE'] - baseline_row['RMSE']:.4f} vs {base_short}"
+            mse_delta = f"{current_row['MSE'] - baseline_row['MSE']:.4f} vs {base_short}"
+            prec_delta = f"{(current_row['Precision@5'] - baseline_row['Precision@5']) * 100:.2f}% vs {base_short}"
+            rec_delta = f"{(current_row['Recall@5'] - baseline_row['Recall@5']) * 100:.2f}% vs {base_short}"
             
         except Exception:
             rmse_val, mse_val, prec_val, rec_val = "N/A", "N/A", "N/A", "N/A"
-            rmse_delta, mse_delta = None, None
+            rmse_delta, mse_delta, prec_delta, rec_delta = None, None, None, None
+            curr_short = "Model"
 
+        # Build dynamic columns
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-        m_col1.metric("Ensemble RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
-        m_col2.metric("Ensemble MSE", mse_val, delta=mse_delta, delta_color="inverse")
-        m_col3.metric("Precision@5", prec_val)
-        m_col4.metric("Recall@5", rec_val)
+        m_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
+        m_col2.metric(f"{curr_short} MSE", mse_val, delta=mse_delta, delta_color="inverse")
+        m_col3.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta)
+        m_col4.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta)
 
         st.divider()
         st.markdown("### Comparative Performance Matrix")
         
-        # Display the loaded CSV data natively
-        if "RMSE" in eval_metrics_df.columns:
-            st.dataframe(
-                eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE"], color="#2E7D32"),
-                use_container_width=True
-            )
-        else:
-            st.dataframe(eval_metrics_df, use_container_width=True)
+        st.dataframe(
+            eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
+                                 .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
+            use_container_width=True
+        )
 
 except Exception as e:
     st.error(f"An error occurred while loading the application: {e}")
