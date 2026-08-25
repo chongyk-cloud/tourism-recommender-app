@@ -69,7 +69,11 @@ def get_attraction_photo(attraction_name):
 @st.cache_resource
 def load_all_data():
     # Load primary dataset
-    df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
+    try:
+        df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
+    except Exception:
+        df_raw = pd.read_csv('attraction_metadata.csv')
+        
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
     # Hardcoded evaluation metrics for Tab 3
@@ -82,10 +86,12 @@ def load_all_data():
         "Recall@5": [0.6820, 0.6350, 0.7210, 0.7780]
     })
 
-    # Load ML artifacts
+    # Load ML artifacts safely
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    matrices = {}
+    ml_ready = False
+    
     try:
-        hybrid_matrix = np.load(os.path.join(script_dir, 'hybrid_matrix.npy'), allow_pickle=True)
         with open(os.path.join(script_dir, 'idx_to_item.pkl'), 'rb') as f:
             idx_to_item = pickle.load(f)
         with open(os.path.join(script_dir, 'user_to_idx.pkl'), 'rb') as f:
@@ -93,18 +99,33 @@ def load_all_data():
         with open(os.path.join(script_dir, 'train_seen.pkl'), 'rb') as f:
             train_seen = pickle.load(f)
             
-        ml_ready = True
-    except FileNotFoundError:
-        hybrid_matrix, idx_to_item, user_to_idx, train_seen = None, None, None, None
+        # Dynamically load whichever ML matrices are present in the folder
+        model_files = {
+            "Content-Based Filtering": 'pred_content_matrix.npy',
+            "Collaborative Filtering (SVD)": 'pred_cf_matrix.npy',
+            "Neural Collaborative Filtering": 'pred_nn_matrix.npy',
+            "Hybrid Recommender (Ensemble)": 'hybrid_matrix.npy'
+        }
+        
+        for model_name, filename in model_files.items():
+            filepath = os.path.join(script_dir, filename)
+            if os.path.exists(filepath):
+                matrices[model_name] = np.load(filepath, allow_pickle=True)
+                
+        if matrices:
+            ml_ready = True
+            
+    except Exception:
+        idx_to_item, user_to_idx, train_seen = None, None, None
         ml_ready = False
 
-    return df_raw, attr_meta, eval_metrics_df, hybrid_matrix, idx_to_item, user_to_idx, train_seen, ml_ready
+    return df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready
 
 try:
-    df_raw, attr_meta, eval_metrics_df, hybrid, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data()
+    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data()
 
-    # --- 4. HYBRID RECOMMENDATION ENGINE ---
-    def generate_recommendations(tourist_id, age, gender, province, duration, top_n=8):
+    # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
+    def generate_recommendations(tourist_id, selected_model, age, gender, province, duration, top_n=8):
         # 1. First, apply user's explicit sidebar filters to get valid candidate attractions
         filtered = df_raw.copy()
         if age != "Ignore": filtered = filtered[filtered['age_group'] == age]
@@ -121,10 +142,11 @@ try:
         if not valid_candidates:
             return [], False # No items match filters
 
-        # 2. If valid ML Tourist ID provided, use Hybrid Model predictions
-        if ml_ready and tourist_id in user_to_idx:
+        # 2. If valid ML Tourist ID provided, use the specifically selected AI Model predictions
+        if ml_ready and tourist_id in user_to_idx and selected_model in matrices:
             user_idx = user_to_idx[tourist_id]
-            scores = hybrid[user_idx].copy()
+            selected_matrix = matrices[selected_model]
+            scores = selected_matrix[user_idx].copy()
             seen_indices = train_seen.get(user_idx, set())
             
             recs = []
@@ -134,7 +156,7 @@ try:
                 if item_name in valid_candidates:
                     recs.append((item_name, scores[item_idx]))
                     
-            # Sort by highest Hybrid Model Score
+            # Sort by highest AI Model Score
             recs.sort(key=lambda x: x[1], reverse=True)
             return recs[:top_n], True # True indicates it is ML personalized
             
@@ -154,7 +176,25 @@ try:
 
     st.sidebar.header("🎯 Traveler Profile & Filters")
     
-    # NEW: Tourist ID Input for ML Model
+    # NEW: Algorithm Selection Dropdown
+    st.sidebar.subheader("🧠 Algorithm Selection")
+    
+    # Provide the models retrieved from the folder, or default list if unavailable
+    if ml_ready:
+        model_options = list(matrices.keys())
+    else:
+        model_options = [
+            "Hybrid Recommender (Ensemble)", "Collaborative Filtering (SVD)", 
+            "Neural Collaborative Filtering", "Content-Based Filtering"
+        ]
+        
+    selected_model = st.sidebar.selectbox(
+        "Choose Recommendation Engine", 
+        options=model_options,
+        help="Select the underlying AI model used to generate your recommendations."
+    )
+    
+    # Tourist ID Input for ML Model
     t_id_input = st.sidebar.text_input("🔑 Tourist ID (e.g., 605)", value="605", help="Enter ID for AI predictions. Leave blank for general popularity.")
     try:
         active_tourist_id = int(t_id_input) if t_id_input.strip() else None
@@ -181,9 +221,9 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # Fetch Recommendations
+    # Fetch Recommendations (Passing the selected_model parameter)
     recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_age, selected_gender, selected_province, selected_duration, top_n
+        active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_duration, top_n
     )
 
     # --- 6. TABS STRUCTURE ---
@@ -196,7 +236,8 @@ try:
         if not ml_ready:
             st.warning("⚠️ ML Model files (.npy, .pkl) not found. Running in Fallback Popularity Mode.")
         elif is_personalized:
-            st.success(f"🤖 Showing Hybrid ML Predictions for Tourist {active_tourist_id}")
+            # Dynamically update the success message to show which model is active
+            st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
         else:
             st.info("📊 Showing General Popularity Recommendations (Cold Start / Invalid ID)")
             
@@ -223,7 +264,7 @@ try:
                         )
                         st.markdown(f"**{name}**")
                         
-                        # Dynamically change the label based on the source of the recommendation
+                        # Label score contextually
                         score_label = "Model Score" if is_personalized else "Avg Rating"
                         st.caption(f"{score_label}: {score:.3f} ⭐ | {level}")
 
