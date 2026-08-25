@@ -67,7 +67,7 @@ def get_attraction_photo(attraction_name):
 
 # --- 3. ML MODEL & DATA LOADER ---
 @st.cache_resource
-def load_all_data():
+def load_all_data_v2():
     # Load primary dataset
     try:
         df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
@@ -78,9 +78,9 @@ def load_all_data():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # STEP B: Load evaluation metrics dynamically from Jupyter Notebook export
+    # Load evaluation metrics dynamically from your Jupyter Notebook export
     try:
-        eval_metrics_df = pd.read_csv('eval_metrics.csv')
+        eval_metrics_df = pd.read_csv(os.path.join(script_dir, 'eval_metrics.csv'))
     except Exception:
         # Fallback if the CSV hasn't been generated yet or is in the wrong folder
         eval_metrics_df = pd.DataFrame({
@@ -123,7 +123,8 @@ def load_all_data():
     return df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready
 
 try:
-    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data()
+    # CALLING THE NEW FUNCTION NAME HERE
+    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
     def generate_recommendations(tourist_id, selected_model, age, gender, province, duration, top_n=8):
@@ -237,7 +238,6 @@ try:
         if not ml_ready:
             st.warning("⚠️ ML Model files (.npy, .pkl) not found. Running in Fallback Popularity Mode.")
         elif is_personalized:
-            # Dynamically update the success message to show which model is active
             st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
         else:
             st.info("📊 Showing General Popularity Recommendations (Cold Start / Invalid ID)")
@@ -296,19 +296,19 @@ try:
 
         # Dynamically extract values from the CSV dataframe for the metrics (if available)
         try:
+            # We use try/except block to grab metric data safely, adjusting string formatting based on availability
             ensemble_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Hybrid Recommender (Ensemble)"].iloc[0]
             svd_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Collaborative Filtering (SVD)"].iloc[0]
             
             rmse_val = f"{ensemble_row['RMSE']:.4f}"
             mse_val = f"{ensemble_row['MSE']:.4f}"
-            prec_val = f"{ensemble_row['Precision@5'] * 100:.2f}%"
-            rec_val = f"{ensemble_row['Recall@5'] * 100:.2f}%"
+            prec_val = f"{ensemble_row['Precision@5'] * 100:.2f}%" if "Precision@5" in ensemble_row else "N/A"
+            rec_val = f"{ensemble_row['Recall@5'] * 100:.2f}%" if "Recall@5" in ensemble_row else "N/A"
             
             rmse_delta = f"{ensemble_row['RMSE'] - svd_row['RMSE']:.4f} vs SVD"
             mse_delta = f"{ensemble_row['MSE'] - svd_row['MSE']:.4f} vs SVD"
             
         except Exception:
-            # Fallback if the CSV structure doesn't match perfectly yet
             rmse_val, mse_val, prec_val, rec_val = "N/A", "N/A", "N/A", "N/A"
             rmse_delta, mse_delta = None, None
 
@@ -321,11 +321,10 @@ try:
         st.divider()
         st.markdown("### Comparative Performance Matrix")
         
-        # Display the loaded CSV data
+        # Display the loaded CSV data natively
         if "RMSE" in eval_metrics_df.columns:
             st.dataframe(
-                eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
-                                     .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
+                eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE"], color="#2E7D32"),
                 use_container_width=True
             )
         else:
