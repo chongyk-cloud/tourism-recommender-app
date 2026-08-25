@@ -78,17 +78,15 @@ def load_all_data():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # STEP B: Load evaluation metrics dynamically from Jupyter Notebook export
-    metrics_path = os.path.join(script_dir, "eval_metrics.csv")
-    if os.path.exists(metrics_path):
-        eval_metrics_df = pd.read_csv(metrics_path)
-    else:
-        # Fallback if the CSV hasn't been generated yet
+   # STEP B: Load evaluation metrics dynamically from Jupyter Notebook export
+    try:
+        eval_metrics_df = pd.read_csv('eval_metrics.csv')
+    except Exception:
+        # Fallback if the CSV hasn't been generated yet or is in the wrong folder
         eval_metrics_df = pd.DataFrame({
             "Algorithm": ["Waiting for Jupyter Notebook Export..."],
             "RMSE": [0.0], "MSE": [0.0], "MAE": [0.0], "Precision@5": [0.0], "Recall@5": [0.0]
         })
-
     # Load ML artifacts safely
     matrices = {}
     ml_ready = False
