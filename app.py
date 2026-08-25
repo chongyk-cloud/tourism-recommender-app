@@ -76,18 +76,20 @@ def load_all_data():
         
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
-    # Hardcoded evaluation metrics for Tab 3
-    eval_metrics_df = pd.DataFrame({
-        "Algorithm": ["Collaborative Filtering (SVD)", "Content-Based Filtering", "Neural Collaborative Filtering", "Hybrid Recommender (Ensemble)"],
-        "RMSE": [0.8924, 0.9412, 0.8651, 0.8210],
-        "MSE": [0.7964, 0.8859, 0.7484, 0.6740],
-        "MAE": [0.6811, 0.7320, 0.6540, 0.6125],
-        "Precision@5": [0.7640, 0.7120, 0.7950, 0.8420],
-        "Recall@5": [0.6820, 0.6350, 0.7210, 0.7780]
-    })
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # STEP B: Load evaluation metrics dynamically from Jupyter Notebook export
+    metrics_path = os.path.join(script_dir, "eval_metrics.csv")
+    if os.path.exists(metrics_path):
+        eval_metrics_df = pd.read_csv(metrics_path)
+    else:
+        # Fallback if the CSV hasn't been generated yet
+        eval_metrics_df = pd.DataFrame({
+            "Algorithm": ["Waiting for Jupyter Notebook Export..."],
+            "RMSE": [0.0], "MSE": [0.0], "MAE": [0.0], "Precision@5": [0.0], "Recall@5": [0.0]
+        })
 
     # Load ML artifacts safely
-    script_dir = os.path.dirname(os.path.abspath(__file__))
     matrices = {}
     ml_ready = False
     
@@ -293,19 +295,42 @@ try:
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment across collaborative, content-based, neural, and ensemble architectures.")
 
+        # Dynamically extract values from the CSV dataframe for the metrics (if available)
+        try:
+            ensemble_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Hybrid Recommender (Ensemble)"].iloc[0]
+            svd_row = eval_metrics_df[eval_metrics_df["Algorithm"] == "Collaborative Filtering (SVD)"].iloc[0]
+            
+            rmse_val = f"{ensemble_row['RMSE']:.4f}"
+            mse_val = f"{ensemble_row['MSE']:.4f}"
+            prec_val = f"{ensemble_row['Precision@5'] * 100:.2f}%"
+            rec_val = f"{ensemble_row['Recall@5'] * 100:.2f}%"
+            
+            rmse_delta = f"{ensemble_row['RMSE'] - svd_row['RMSE']:.4f} vs SVD"
+            mse_delta = f"{ensemble_row['MSE'] - svd_row['MSE']:.4f} vs SVD"
+            
+        except Exception:
+            # Fallback if the CSV structure doesn't match perfectly yet
+            rmse_val, mse_val, prec_val, rec_val = "N/A", "N/A", "N/A", "N/A"
+            rmse_delta, mse_delta = None, None
+
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-        m_col1.metric("Ensemble RMSE", "0.8210", delta="-0.0714 vs SVD", delta_color="inverse")
-        m_col2.metric("Ensemble MSE", "0.6740", delta="-0.1224 vs SVD", delta_color="inverse")
-        m_col3.metric("Precision@5", "84.20%", delta="+7.80%")
-        m_col4.metric("Recall@5", "77.80%", delta="+9.60%")
+        m_col1.metric("Ensemble RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
+        m_col2.metric("Ensemble MSE", mse_val, delta=mse_delta, delta_color="inverse")
+        m_col3.metric("Precision@5", prec_val)
+        m_col4.metric("Recall@5", rec_val)
 
         st.divider()
         st.markdown("### Comparative Performance Matrix")
-        st.dataframe(
-            eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
-                                 .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
-            use_container_width=True
-        )
+        
+        # Display the loaded CSV data
+        if "RMSE" in eval_metrics_df.columns:
+            st.dataframe(
+                eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
+                                     .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
+                use_container_width=True
+            )
+        else:
+            st.dataframe(eval_metrics_df, use_container_width=True)
 
 except Exception as e:
     st.error(f"An error occurred while loading the application: {e}")
