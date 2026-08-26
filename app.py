@@ -435,5 +435,6 @@ try:
                                  .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
             use_container_width=True
         )
-    except Exception as e:
-        st.error(f"Application error: {e}")
+
+except Exception as e:
+    st.error(f"Application error: {e}")
