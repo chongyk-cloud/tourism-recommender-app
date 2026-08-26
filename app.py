@@ -132,12 +132,12 @@ try:
     df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
-    def generate_recommendations(tourist_id, selected_model, age, gender, province, duration, top_n=8):
+    def generate_recommendations(tourist_id, selected_model, age, gender, province, category, duration, top_n=8):
         filtered = df_raw.copy()
         if age != "Ignore": filtered = filtered[filtered['age_group'] == age]
         if gender != "Ignore": filtered = filtered[filtered['gender'] == gender]
         if province != "Ignore": filtered = filtered[filtered['province'] == province]
-        
+        if category != "Ignore": filtered = filtered[filtered['attraction_category'] == category]
         if duration != "Ignore":
             if duration == "Short (1-3 hours)": filtered = filtered[filtered['visit_duration_hours'] <= 3]
             elif duration == "Medium (3-5 hours)": filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
@@ -205,6 +205,9 @@ try:
     avail_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"]
     selected_gender = st.sidebar.selectbox("Gender", avail_genders, index=get_default_index(avail_genders, "Ignore"))
 
+    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"]
+    selected_category = st.sidebar.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories, "Ignore"))
+    
     avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"]
     selected_province = st.sidebar.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces, "Ignore"))
 
@@ -233,7 +236,7 @@ try:
 
     # Fetch Recommendations
     recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_duration, top_n
+        active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
     )
 
     with st.expander(f"💡 How the {selected_model} generated this itinerary"):
