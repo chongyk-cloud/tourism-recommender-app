@@ -294,16 +294,18 @@ try:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
         
-        if not ml_ready:
+        if not recommendations:
+            # SCENARIO 1: Over-filtered (Empty list)
+            st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
+        elif not ml_ready:
+            # SCENARIO 2: Missing matrix files
             st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
         elif is_personalized:
+            # SCENARIO 3: AI is working perfectly
             st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
         else:
-            # Make it look like a deliberate "Trending" feature
+            # SCENARIO 4: Cold Start (Showing Trending)
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
-            
-        if not recommendations:
-            st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         else:
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
@@ -340,7 +342,7 @@ try:
                         item_data = df_raw[df_raw['attraction_name'] == name]
                         real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
                         
-                        st.caption(f"Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
+                        st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
