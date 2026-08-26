@@ -213,7 +213,7 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # --- NEW: AUTOMATIC PERSONA MATCHING (Replacing the ID Bar) ---
+   # --- AUTOMATIC PERSONA MATCHING ---
     persona_df = df_raw.copy()
     
     # Filter the dataset to find a user matching the selected demographics
@@ -225,16 +225,27 @@ try:
     # If we found a match based on the selected criteria, pick the most frequent traveler in that demographic
     if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
         active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-        st.sidebar.success(f"👤 Persona Matched! (Proxy ID: {active_tourist_id})")
+        st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching your inputs to historical Tourist ID: {active_tourist_id}")
     else:
         # If everything is set to "Ignore" or no match is found, fallback to a default highly-active user
         active_tourist_id = 605 
-        st.sidebar.info("👤 Using Default Visitor Profile")
+        st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
 
     # Fetch Recommendations
     recommendations, is_personalized = generate_recommendations(
         active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_duration, top_n
     )
+
+    with st.expander(f"💡 How the {selected_model} generated this itinerary"):
+        if "Collaborative" in selected_model:
+            st.write("This model looks at the visiting patterns of Tourist {} and finds similarities with other users. It recommends places loved by people with similar travel tastes!".format(active_tourist_id))
+        elif "Content" in selected_model:
+            st.write("This model analyzes the categories (e.g., Nature, History) and ratings of places Tourist {} previously enjoyed, and finds new attractions with matching metadata.".format(active_tourist_id))
+        elif "Neural" in selected_model:
+            st.write("A Deep Learning approach that captures complex, non-linear interactions between Tourist {}'s demographics and attraction features using a Multi-Layer Perceptron.".format(active_tourist_id))
+        elif "Hybrid" in selected_model:
+            st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
+            
     # --- 6. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
 
@@ -243,11 +254,12 @@ try:
         st.subheader("Your Personalized Itinerary")
         
         if not ml_ready:
-            st.warning("⚠️ ML Model files (.npy, .pkl) not found. Running in Fallback Popularity Mode.")
+            st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
         elif is_personalized:
             st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
         else:
-            st.info("📊 Showing General Popularity Recommendations (Cold Start / Invalid ID)")
+            # Make it look like a deliberate "Trending" feature
+            st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
             
         if not recommendations:
             st.warning("No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
