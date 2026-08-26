@@ -81,7 +81,7 @@ def load_all_data_v2():
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
             "Content-Based Filtering", 
-            "Neural Collaborative Filtering", 
+            "Neural Network", 
             "Hybrid Recommender (Ensemble)"
         ],
         "RMSE": [0.892, 0.9412, 0.8651, 0.8210],
@@ -212,7 +212,7 @@ try:
     else:
         model_options = [
             "Hybrid Recommender (Ensemble)", "Collaborative Filtering (SVD)", 
-            "Neural Collaborative Filtering", "Content-Based Filtering"
+            "Neural Network", "Content-Based Filtering"
         ]
         
     selected_model = st.sidebar.selectbox(
