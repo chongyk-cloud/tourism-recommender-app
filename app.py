@@ -280,8 +280,7 @@ try:
     tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
 
     # ========================== TAB 1: TRAVELER VIEW ==========================
-    with tab1:
-            st.subheader("Your Personalized Itinerary")
+    
             
             if is_personalized:
                 # Find what this user previously liked in the dataset
@@ -292,6 +291,13 @@ try:
                     
     with tab1:
         st.subheader("Your Personalized Itinerary")
+
+         if is_personalized:
+                # Find what this user previously liked in the dataset
+                user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
+                if not user_history.empty:
+                    top_past = user_history['attraction_name'].iloc[0]
+                    st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
         
         if not ml_ready:
             st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
