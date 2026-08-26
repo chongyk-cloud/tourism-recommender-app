@@ -367,7 +367,7 @@ try:
             )
             st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nScore: {score}"}))
 
-  # ========================== TAB 3: DIAGNOSTICS ==========================
+    # ========================== TAB 3: DIAGNOSTICS ==========================
     with tab3:
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment dynamically tracking changes across models.")
