@@ -284,9 +284,11 @@ try:
             
 
                     
+    # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
 
+        # 1. Traveler Context
         if is_personalized:
             # Find what this user previously liked in the dataset
             user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
@@ -294,19 +296,18 @@ try:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
         
+        # 2. Status Messages
         if not recommendations:
-            # SCENARIO 1: Over-filtered (Empty list)
             st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         elif not ml_ready:
-            # SCENARIO 2: Missing matrix files
             st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
         elif is_personalized:
-            # SCENARIO 3: AI is working perfectly
             st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
-       
         else:
-             # SCENARIO 4: Cold Start (Showing Trending)
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
+            
+        # 3. Image Rendering (Now safely outside the else block!)
+        if recommendations:
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
                 row_items = recommendations[row_idx : row_idx + num_cols]
