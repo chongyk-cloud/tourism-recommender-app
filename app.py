@@ -299,8 +299,11 @@ try:
                         )
                         st.markdown(f"**{name}**")
                         
-                        score_label = "Model Score" if is_personalized else "Avg Rating"
-                        st.caption(f"{score_label}: {score:.3f} ⭐ | {level}")
+                        # Fetch the actual average rating from the dataset for this specific attraction
+                        item_data = df_raw[df_raw['attraction_name'] == name]
+                        real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
+                        
+                        st.caption(f"Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
