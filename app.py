@@ -282,12 +282,7 @@ try:
     # ========================== TAB 1: TRAVELER VIEW ==========================
     
             
-            if is_personalized:
-                # Find what this user previously liked in the dataset
-                user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
-                if not user_history.empty:
-                    top_past = user_history['attraction_name'].iloc[0]
-                    st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
+
                     
     with tab1:
         st.subheader("Your Personalized Itinerary")
