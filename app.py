@@ -303,10 +303,10 @@ try:
         elif is_personalized:
             # SCENARIO 3: AI is working perfectly
             st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
+       
         else:
-            # SCENARIO 4: Cold Start (Showing Trending)
+             # SCENARIO 4: Cold Start (Showing Trending)
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
-        else:
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
                 row_items = recommendations[row_idx : row_idx + num_cols]
