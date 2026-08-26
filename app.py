@@ -148,7 +148,7 @@ try:
         if not valid_candidates:
             return [], False
 
-       if tourist_id is not None and ml_ready and tourist_id in user_to_idx and selected_model in matrices:
+        if tourist_id is not None and ml_ready and tourist_id in user_to_idx and selected_model in matrices:
             user_idx = user_to_idx[tourist_id]
             selected_matrix = matrices[selected_model]
             scores = selected_matrix[user_idx].copy()
