@@ -246,20 +246,27 @@ try:
    # --- AUTOMATIC PERSONA MATCHING ---
     persona_df = df_raw.copy()
     
-    # Filter the dataset to find a user matching the selected demographics
-    if selected_age != "Ignore":
-        persona_df = persona_df[persona_df['age_group'] == selected_age]
-    if selected_gender != "Ignore":
-        persona_df = persona_df[persona_df['gender'] == selected_gender]
-        
-    # If we found a match based on the selected criteria, pick the most frequent traveler in that demographic
-    if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
-        active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-        st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching your inputs to historical Tourist ID: {active_tourist_id}")
+    # Check if literally every filter is set to "Ignore"
+    all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
+                           selected_province == "Ignore" and selected_category == "Ignore" and 
+                           selected_duration == "Ignore")
+
+    if all_filters_ignored:
+        active_tourist_id = None  # None tells the system to use Popularity Baseline
+        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
     else:
-        # If everything is set to "Ignore" or no match is found, fallback to a default highly-active user
-        active_tourist_id = 605 
-        st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
+        # Filter the dataset to find a user matching the selected demographics
+        if selected_age != "Ignore":
+            persona_df = persona_df[persona_df['age_group'] == selected_age]
+        if selected_gender != "Ignore":
+            persona_df = persona_df[persona_df['gender'] == selected_gender]
+            
+        if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
+            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching your inputs to historical Tourist ID: {active_tourist_id}")
+        else:
+            active_tourist_id = 605 
+            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
 
     # Fetch Recommendations
     recommendations, is_personalized = generate_recommendations(
