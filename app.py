@@ -152,6 +152,18 @@ try:
             user_idx = user_to_idx[tourist_id]
             selected_matrix = matrices[selected_model]
             scores = selected_matrix[user_idx].copy()
+            # Squeeze crazy high/low scores into a standard 1.0 - 5.0 rating scale
+            min_score = scores.min()
+            max_score = scores.max()
+            
+            if max_score > 5.0 or min_score < 0.0:
+                if max_score > min_score: # If scores are different, scale them proportionally
+                    scores = 1.0 + 4.0 * ((scores - min_score) / (max_score - min_score))
+                else: # If model collapsed (all scores identical), cap at 5.0
+                    scores = np.full_like(scores, 5.0)
+            else:
+                # If they are already in a normal range, just clip them to be safe
+                scores = np.clip(scores, 1.0, 5.0)
             seen_indices = train_seen.get(user_idx, set())
             
             recs = []
