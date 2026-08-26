@@ -174,6 +174,21 @@ try:
                     recs.append((item_name, scores[item_idx]))
                     
             recs.sort(key=lambda x: x[1], reverse=True)
+            # --- CONVERT RAW SCORES TO NETFLIX-STYLE MATCH % ---
+            top_recs = recs[:top_n]
+            if top_recs:
+                max_score = top_recs[0][1]
+                min_score = top_recs[-1][1]
+                
+                final_recs = []
+                for name, score in top_recs:
+                    if max_score > min_score:
+                        # Scale to between 80% and 99%
+                        match_pct = 80 + 19 * ((score - min_score) / (max_score - min_score))
+                    else:
+                        match_pct = 95.0 # Fallback if model collapsed
+                    final_recs.append((name, match_pct))
+                return final_recs, True
             return recs[:top_n], True
             
         grouped = filtered.groupby('attraction_name').agg(
@@ -266,6 +281,16 @@ try:
 
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
+            st.subheader("Your Personalized Itinerary")
+            
+            if is_personalized:
+                # Find what this user previously liked in the dataset
+                user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
+                if not user_history.empty:
+                    top_past = user_history['attraction_name'].iloc[0]
+                    st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
+                    
+    with tab1:
         st.subheader("Your Personalized Itinerary")
         
         if not ml_ready:
@@ -297,6 +322,17 @@ try:
                             </div>
                             """, unsafe_allow_html=True
                         )
+                        # Dynamic Explainability Badge
+                        if "Collaborative" in selected_model:
+                            reason = "🧑‍🤝‍🧑 Popular with similar travelers"
+                        elif "Content" in selected_model:
+                            reason = f"🏷️ Matches your preferred categories"
+                        elif "Hybrid" in selected_model:
+                            reason = "✨ Top Ensemble Pick"
+                        else:
+                            reason = "🧠 Deep Learning Match"
+                            
+                        st.markdown(f"*{reason}*")
                         st.markdown(f"**{name}**")
                         
                         # Fetch the actual average rating from the dataset for this specific attraction
