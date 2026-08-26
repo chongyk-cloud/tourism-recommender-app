@@ -108,7 +108,7 @@ def load_all_data_v2():
         model_files = {
             "Content-Based Filtering": 'pred_content_matrix.npy',
             "Collaborative Filtering (SVD)": 'pred_cf_matrix.npy',
-            "Neural Collaborative Filtering": 'pred_nn_matrix.npy',
+            "Neural Network": 'pred_nn_matrix.npy',
             "Hybrid Recommender (Ensemble)": 'hybrid_matrix.npy'
         }
         
@@ -285,12 +285,7 @@ try:
             
     # --- 6. TABS STRUCTURE ---
     tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
-
-    # ========================== TAB 1: TRAVELER VIEW ==========================
-    
-            
-
-                    
+  
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
