@@ -287,7 +287,7 @@ try:
 
     logo_col, nav_col1, nav_col2, nav_col3, nav_col4, spacer_col = st.columns([2, 1, 1.4, 1.2, 1.2, 1.2])
     with logo_col:
-        st.markdown('<div class="topnav-logo">🗺️ TourExplorer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="topnav-logo">🗺️ Personalized Tourism Recommender</div>', unsafe_allow_html=True)
 
     nav_cols = [nav_col1, nav_col2, nav_col3, nav_col4]
     for col, page_key in zip(nav_cols, PAGES):
