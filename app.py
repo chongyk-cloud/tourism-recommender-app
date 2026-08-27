@@ -72,7 +72,9 @@ def load_all_data_v2():
     try:
         df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
     except Exception:
-        df_raw = pd.read_csv('attraction_metadata.csv')
+        pass
+
+    attr_meta = pd.read_csv('attraction_metadata_filled.csv')
         
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
@@ -355,23 +357,72 @@ try:
 
     # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
-        st.subheader("Attraction Spatial Layout")
-        st.info("Simulated coordinate layers representing geographic distribution across destination regions.")
+        st.subheader("📍 Attraction Spatial Layout")
+        st.info("Geographic distribution of your recommended destinations based on exact coordinates.")
 
         if recommendations:
             map_data = []
+            
+            # Extract real coordinates for the recommended items
             for name, score in recommendations:
-                lat, lon = 35.0 + random.uniform(-4, 4), 105.0 + random.uniform(-4, 4)
-                map_data.append({"name": name, "lat": lat, "lon": lon, "score": float(score)})
+                meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                if not meta_row.empty:
+                    lat = float(meta_row['latitude'].iloc[0])
+                    lon = float(meta_row['longitude'].iloc[0])
+                    map_data.append({
+                        "name": name, 
+                        "lat": lat, 
+                        "lon": lon, 
+                        "score": float(score)
+                    })
 
-            map_df = pd.DataFrame(map_data)
-            view_state = pdk.ViewState(latitude=35.0, longitude=105.0, zoom=4, pitch=45)
-            layer = pdk.Layer(
-                "ColumnLayer", data=map_df, get_position=["lon", "lat"],
-                get_elevation="score * 20000", elevation_scale=10, radius=22000,
-                get_fill_color=[255, 75, 75, 200], pickable=True, auto_highlight=True,
-            )
-            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{name}\nScore: {score}"}))
+            if map_data:
+                map_df = pd.DataFrame(map_data)
+                
+                # Dynamically center the map on the average coordinates of the recommendations
+                avg_lat = map_df["lat"].mean()
+                avg_lon = map_df["lon"].mean()
+                
+                view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=5, pitch=45)
+                
+                # Draw the actual locations
+                layer = pdk.Layer(
+                    "ScatterplotLayer", 
+                    data=map_df, 
+                    get_position=["lon", "lat"],
+                    get_radius=15000,
+                    get_fill_color=[255, 75, 75, 200], 
+                    pickable=True, 
+                    auto_highlight=True,
+                )
+                
+                # Draw columns to represent the score height
+                column_layer = pdk.Layer(
+                    "ColumnLayer", 
+                    data=map_df, 
+                    get_position=["lon", "lat"],
+                    get_elevation="score * 15000", 
+                    elevation_scale=4, 
+                    radius=10000,
+                    get_fill_color=[33, 150, 243, 200], 
+                    pickable=True, 
+                    auto_highlight=True,
+                )
+                
+                st.pydeck_chart(pdk.Deck(layers=[layer, column_layer], initial_view_state=view_state, tooltip={"text": "{name}\nMatch: {score}%"}))
+                
+                # --- NEW: ADD NAVIGATION LINKS ---
+                st.markdown("### 🚗 Ready to go?")
+                st.markdown("Click any destination below to open your device's native GPS for real-time routing:")
+                
+                nav_cols = st.columns(4)
+                for i, row in enumerate(map_data):
+                    with nav_cols[i % 4]:
+                        # Generate a Google Maps routing link
+                        nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
+                        st.markdown(f"**[{row['name']}]({nav_link})**")
+            else:
+                st.warning("Coordinate data not found for these specific recommendations.")
             
 
     # ========================== TAB 3: DIAGNOSTICS ==========================
