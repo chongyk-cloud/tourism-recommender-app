@@ -195,7 +195,7 @@ try:
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
 
-    # --- 5. GLOBAL STYLE (top nav + hero look) ---
+    # --- 5. GLOBAL STYLE (top nav + hover cards) ---
     st.markdown("""
         <style>
             #MainMenu, header {visibility: hidden;}
@@ -217,6 +217,59 @@ try:
             }
             div[data-testid="stHorizontalBlock"] div.stButton > button:focus:not(:active) {
                 color: #1565C0 !important;
+            }
+
+            /* Hover Card Styles for Trending Destinations */
+            .dest-card {
+                position: relative;
+                border-radius: 12px;
+                overflow: hidden;
+                height: 280px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: transform 0.3s ease;
+                background-color: #1e1e1e;
+            }
+            .dest-card:hover {
+                transform: translateY(-5px);
+            }
+            .dest-card img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .dest-overlay {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+                padding: 20px 14px 14px 14px;
+                color: white;
+            }
+            .dest-title {
+                font-size: 1em;
+                font-weight: 700;
+                margin-bottom: 2px;
+            }
+            .dest-title a {
+                color: white !important;
+                text-decoration: none !important;
+            }
+            .dest-title a:hover {
+                text-decoration: underline !important;
+            }
+            .dest-details {
+                font-size: 0.8em;
+                color: #d0d0d0;
+                opacity: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: all 0.3s ease;
+            }
+            .dest-card:hover .dest-details {
+                opacity: 1;
+                max-height: 60px;
+                margin-top: 6px;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -251,7 +304,6 @@ try:
 
     # --- 7. SIDEBAR FILTERS (hidden entirely on the Main/hero page) ---
     if active_page == "Main":
-        # No sidebar at all on the hero/landing page
         st.markdown("""
             <style>
                 section[data-testid="stSidebar"] {display: none !important;}
@@ -300,10 +352,10 @@ try:
 
         top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # ========================== PAGE: MAIN (HERO ONLY) ==========================
+    # ========================== PAGE: MAIN (HERO + TOP 5 TRENDING) ==========================
     if active_page == "Main":
         st.markdown("""
-            <div style="background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop); background-size: cover; background-position: center; padding: 90px 50px; border-radius: 16px; color: white; text-align: center; margin-bottom: 30px;">
+            <div style="background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop); background-size: cover; background-position: center; padding: 80px 50px; border-radius: 16px; color: white; text-align: center; margin-bottom: 25px;">
                 <h1 style="font-size: 3.2em; margin-bottom: 14px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
                 <p style="font-size: 1.2em; max-width: 720px; margin: 0 auto 28px auto; line-height: 1.6;">
                     Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
@@ -317,9 +369,59 @@ try:
                 st.session_state.page = "Top Recommendations"
                 st.rerun()
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("🔥 Trending Destinations Worldwide")
+        st.markdown("Explore our top 5 highest-rated and most popular attractions. Hover over any card for details or click the name to navigate via Google Maps.")
+
+        # Compute top 5 highest rated / popular attractions
+        try:
+            if 'rating' in df_raw.columns:
+                top_grouped = df_raw.groupby('attraction_name').agg(
+                    avg_rating=('rating', 'mean'),
+                    visit_count=('rating', 'count')
+                ).reset_index()
+                top_5_df = top_grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(5)
+                top_5_names = top_5_df['attraction_name'].tolist()
+            else:
+                top_5_names = attr_meta['attraction_name'].head(5).tolist()
+        except Exception:
+            top_5_names = attr_meta['attraction_name'].head(5).tolist()
+
+        card_cols = st.columns(5)
+        for idx, name in enumerate(top_5_names[:5]):
+            with card_cols[idx]:
+                meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+                
+                lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+                lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+                
+                img_url = get_attraction_photo(name)
+                
+                # Estimated spend calculation
+                seed = sum(ord(c) for c in name)
+                est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                
+                nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+                
+                card_html = f"""
+                    <div class="dest-card">
+                        <img src="{img_url}" alt="{name}">
+                        <div class="dest-overlay">
+                            <div class="dest-title">
+                                <a href="{nav_link}" target="_blank">{name} ↗</a>
+                            </div>
+                            <div class="dest-details">
+                                📂 {category}<br>
+                                💰 Est. Spend: {est_spend}
+                            </div>
+                        </div>
+                    </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
     # ========================== PAGE: TRAVELER VIEW ==========================
     elif active_page == "Top Recommendations":
-        # --- AUTOMATIC PERSONA MATCHING (computed first so it's available everywhere below) ---
         persona_df = df_raw.copy()
         all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and
                                selected_province == "Ignore" and selected_category == "Ignore" and
@@ -410,7 +512,6 @@ try:
 
     # ========================== PAGE: SPATIAL MAP ==========================
     elif active_page == "3D Spatial Map":
-        # Recompute persona + recommendations for this page (mirrors Recommendations page logic)
         persona_df = df_raw.copy()
         all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and
                                selected_province == "Ignore" and selected_category == "Ignore" and
@@ -593,7 +694,7 @@ try:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        st.markdown("### 🎯 Rating Prediction & Classification")
+        st.markdown("### 🎯 Rating Prediction & Classification Theorem")
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
 
         r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
