@@ -208,89 +208,67 @@ try:
 
     active_page = st.session_state.page
 
-    # --- 6. CONDITIONAL SIDEBAR HIDING & LIGHT MODE STYLING ---
-    if active_page == "Main":
-        st.markdown("""
-            <style>
-                .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-                    background-color: #FFFFFF !important;
-                    color: #262626 !important;
-                }
-                section[data-testid="stSidebar"] {display: none !important;}
-                div[data-testid="collapsedControl"] {display: none !important;}
-
-                #MainMenu, header {visibility: hidden;}
-                .block-container {padding-top: 1rem; max-width: 2000px;}
-                .topnav-logo {font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}
-
-                /* Force navigation buttons to have a clean light theme styling */
-                div[data-testid="stHorizontalBlock"] div.stButton > button {
-                    background-color: #F8F9FA !important;
-                    border: 1px solid #E0E0E0 !important;
-                    color: #262626 !important;
-                    font-weight: 600;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    transition: all 0.15s ease;
-                    box-shadow: none !important;
-                }
-                div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
-                    background-color: #E3F2FD !important;
-                    color: #1565C0 !important;
-                    border-color: #90CAF9 !important;
-                }
-
-                .dest-card {
-                    position: relative; border-radius: 12px; overflow: hidden; height: 280px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; background-color: #1e1e1e;
-                }
-                .dest-card:hover { transform: translateY(-5px); }
-                .dest-card img { width: 100%; height: 100%; object-fit: cover; }
-                .dest-overlay {
-                    position: absolute; bottom: 0; left: 0; right: 0;
-                    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-                    padding: 20px 14px 14px 14px; color: white;
-                }
-                .dest-title { font-size: 1em; font-weight: 700; margin-bottom: 2px; }
-                .dest-title a { color: white !important; text-decoration: none !important; }
-                .dest-title a:hover { text-decoration: underline !important; }
-                .dest-details { font-size: 0.8em; color: #d0d0d0; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.3s ease; }
-                .dest-card:hover .dest-details { opacity: 1; max-height: 60px; margin-top: 6px; }
-            </style>
-        """, unsafe_allow_html=True)
+    # --- 6. DYNAMIC SIDEBAR VISIBILITY & GLOBAL STYLING ---
+    # Hide sidebar on all pages EXCEPT "Top Recommendations"
+    sidebar_css_rule = ""
+    if active_page != "Top Recommendations":
+        sidebar_css_rule = """
+            section[data-testid="stSidebar"] {display: none !important;}
+            div[data-testid="collapsedControl"] {display: none !important;}
+        """
     else:
-        st.markdown("""
-            <style>
-                .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-                    background-color: #FFFFFF !important;
-                    color: #262626 !important;
-                }
-                [data-testid="stSidebar"] {
-                    background-color: #F8F9FA !important;
-                    color: #262626 !important;
-                }
-                #MainMenu, header {visibility: hidden;}
-                .block-container {padding-top: 1rem; max-width: 2000px;}
-                .topnav-logo {font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}
+        sidebar_css_rule = """
+            section[data-testid="stSidebar"] {display: block !important;}
+            [data-testid="stSidebar"] { background-color: #F8F9FA !important; color: #262626 !important; }
+        """
 
-                /* Force navigation buttons to have a clean light theme styling */
-                div[data-testid="stHorizontalBlock"] div.stButton > button {
-                    background-color: #F8F9FA !important;
-                    border: 1px solid #E0E0E0 !important;
-                    color: #262626 !important;
-                    font-weight: 600;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    transition: all 0.15s ease;
-                    box-shadow: none !important;
-                }
-                div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
-                    background-color: #E3F2FD !important;
-                    color: #1565C0 !important;
-                    border-color: #90CAF9 !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+        <style>
+            .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+                background-color: #FFFFFF !important;
+                color: #262626 !important;
+            }}
+            {sidebar_css_rule}
+
+            #MainMenu, header {{visibility: hidden;}}
+            .block-container {{padding-top: 1rem; max-width: 2000px;}}
+            .topnav-logo {{font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}}
+
+            /* Force navigation buttons to have clean light theme styling */
+            div[data-testid="stHorizontalBlock"] div.stButton > button {{
+                background-color: #F8F9FA !important;
+                border: 1px solid #E0E0E0 !important;
+                color: #262626 !important;
+                font-weight: 600;
+                padding: 8px 16px;
+                border-radius: 20px;
+                transition: all 0.15s ease;
+                box-shadow: none !important;
+            }}
+            div[data-testid="stHorizontalBlock"] div.stButton > button:hover {{
+                background-color: #E3F2FD !important;
+                color: #1565C0 !important;
+                border-color: #90CAF9 !important;
+            }}
+
+            .dest-card {{
+                position: relative; border-radius: 12px; overflow: hidden; height: 280px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; background-color: #1e1e1e;
+            }}
+            .dest-card:hover {{ transform: translateY(-5px); }}
+            .dest-card img {{ width: 100%; height: 100%; object-fit: cover; }}
+            .dest-overlay {{
+                position: absolute; bottom: 0; left: 0; right: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+                padding: 20px 14px 14px 14px; color: white;
+            }}
+            .dest-title {{ font-size: 1em; font-weight: 700; margin-bottom: 2px; }}
+            .dest-title a {{ color: white !important; text-decoration: none !important; }}
+            .dest-title a:hover {{ text-decoration: underline !important; }}
+            .dest-details {{ font-size: 0.8em; color: #d0d0d0; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.3s ease; }}
+            .dest-card:hover .dest-details {{ opacity: 1; max-height: 60px; margin-top: 6px; }}
+        </style>
+    """, unsafe_allow_html=True)
 
     # --- 7. TOP NAVIGATION BAR ---
     logo_col, nav_col1, nav_col2, nav_col3, nav_col4, spacer_col = st.columns([2, 1, 1.4, 1.2, 1.2, 1.2])
@@ -308,8 +286,8 @@ try:
 
     st.markdown('<hr style="margin-top:0;">', unsafe_allow_html=True)
 
-    # --- 8. SIDEBAR FILTERS (Visible on Recommendations, Map, and Diagnostics) ---
-    if active_page == "Main":
+    # --- 8. SIDEBAR FILTERS (Visible ONLY on Recommendations page) ---
+    if active_page != "Top Recommendations":
         selected_model = "Hybrid Recommender (Ensemble)"
         selected_age = selected_gender = selected_province = selected_category = selected_duration = "Ignore"
         top_n = 8
