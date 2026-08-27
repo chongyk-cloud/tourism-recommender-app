@@ -237,6 +237,21 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
+    # --- 6. TABS STRUCTURE (Main added to the front) ---
+    tab_main, tab1, tab2, tab3 = st.tabs(["🏠 Main", "🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
+
+    # ========================== TAB MAIN: WELCOME & HERO ==========================
+    with tab_main:
+        # Hero Banner
+        st.markdown("""
+            <div style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://en.wikipedia.org/wiki/Great_Wall_of_China#/media/File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg); background-size: cover; background-position: center; padding: 60px 40px; border-radius: 12px; color: white; text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 3em; margin-bottom: 10px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
+                <p style="font-size: 1.2em; max-width: 700px; margin: 0 auto; line-height: 1.6;">
+                    Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+    # ========================== TAB 1: TRAVELER VIEW ==========================
     # --- AUTOMATIC PERSONA MATCHING ---
     persona_df = df_raw.copy()
     all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
@@ -273,21 +288,6 @@ try:
         elif "Hybrid" in selected_model:
             st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
 
-    # --- 6. TABS STRUCTURE (Main added to the front) ---
-    tab_main, tab1, tab2, tab3 = st.tabs(["🏠 Main", "🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
-
-    # ========================== TAB MAIN: WELCOME & HERO ==========================
-    with tab_main:
-        # Hero Banner
-        st.markdown("""
-            <div style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://en.wikipedia.org/wiki/Great_Wall_of_China#/media/File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg); background-size: cover; background-position: center; padding: 60px 40px; border-radius: 12px; color: white; text-align: center; margin-bottom: 30px;">
-                <h1 style="font-size: 3em; margin-bottom: 10px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
-                <p style="font-size: 1.2em; max-width: 700px; margin: 0 auto; line-height: 1.6;">
-                    Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-    # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
 
