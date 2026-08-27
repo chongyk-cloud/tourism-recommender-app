@@ -278,31 +278,15 @@ try:
 
     # ========================== TAB MAIN: WELCOME & HERO ==========================
     with tab_main:
-        # Hero Banner HTML/CSS Styling
+        # Hero Banner
         st.markdown("""
-            <div style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg'); background-size: cover; background-position: center; padding: 60px 40px; border-radius: 12px; color: white; text-align: center; margin-bottom: 30px;">
+            <div style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://en.wikipedia.org/wiki/Great_Wall_of_China#/media/File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg); background-size: cover; background-position: center; padding: 60px 40px; border-radius: 12px; color: white; text-align: center; margin-bottom: 30px;">
                 <h1 style="font-size: 3em; margin-bottom: 10px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
                 <p style="font-size: 1.2em; max-width: 700px; margin: 0 auto; line-height: 1.6;">
                     Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
                 </p>
             </div>
         """, unsafe_allow_html=True)
-
-        st.subheader("🌟 Why China is the Ultimate Travel Destination")
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("### 🏛️ Ancient Heritage")
-            st.write("Walk along the majestic Great Wall, explore the Forbidden City, and witness ancient dynasties come alive through world-renowned historical architecture and UNESCO World Heritage sites.")
-        with c2:
-            st.markdown("### 🏔️ Breathtaking Nature")
-            st.write("From the mystical mist-shrouded pillars of Zhangjiajie and the towering sacred peaks of Wudang and Lao Jun Shan to serene lakes and dramatic karst formations.")
-        with c3:
-            st.markdown("### 🍜 Vibrant Modern Culture")
-            st.write("Experience a seamless blend of hyper-modern smart cities, high-speed rail infrastructure, and rich culinary traditions ranging from Sichuan spice to Cantonese dim sum.")
-
-        st.info("👉 **Ready to begin?** Switch to the **Top Recommendations** tab above or use the **Traveler Profile & Filters** sidebar to let our AI build your custom travel itinerary!")
-
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
