@@ -263,33 +263,33 @@ try:
             elif "Hybrid" in selected_model:
                 st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
 
-    # --- AUTOMATIC PERSONA MATCHING ---
-    persona_df = df_raw.copy()
-    all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
-                           selected_province == "Ignore" and selected_category == "Ignore" and 
-                           selected_duration == "Ignore")
-
-    if all_filters_ignored:
-        active_tourist_id = None
-        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
-    else:
-        if selected_age != "Ignore":
-            persona_df = persona_df[persona_df['age_group'] == selected_age]
-        if selected_gender != "Ignore":
-            persona_df = persona_df[persona_df['gender'] == selected_gender]
-            
-        if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
-            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching your inputs to historical Tourist ID: {active_tourist_id}")
+        # --- AUTOMATIC PERSONA MATCHING ---
+        persona_df = df_raw.copy()
+        all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
+                               selected_province == "Ignore" and selected_category == "Ignore" and 
+                               selected_duration == "Ignore")
+    
+        if all_filters_ignored:
+            active_tourist_id = None
+            st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
         else:
-            active_tourist_id = 605 
-            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
-
-    recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
-    )
-            
-        st.subheader("Your Personalized Itinerary")
+            if selected_age != "Ignore":
+                persona_df = persona_df[persona_df['age_group'] == selected_age]
+            if selected_gender != "Ignore":
+                persona_df = persona_df[persona_df['gender'] == selected_gender]
+                
+            if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
+                active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+                st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching your inputs to historical Tourist ID: {active_tourist_id}")
+            else:
+                active_tourist_id = 605 
+                st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
+    
+        recommendations, is_personalized = generate_recommendations(
+            active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
+        )
+                
+            st.subheader("Your Personalized Itinerary")
 
         if is_personalized:
             user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
