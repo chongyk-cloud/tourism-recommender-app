@@ -195,7 +195,7 @@ try:
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
 
-    # --- 5. GLOBAL STYLE (top nav + hover cards) ---
+    # --- 5. GLOBAL STYLE (top nav + infinite marquee slider) ---
     st.markdown("""
         <style>
             #MainMenu, header {visibility: hidden;}
@@ -219,18 +219,38 @@ try:
                 color: #1565C0 !important;
             }
 
+            /* Infinite Scrolling Marquee Carousel Container */
+            .marquee-container {
+                overflow: hidden;
+                width: 100%;
+                display: flex;
+                position: relative;
+                padding: 10px 0;
+            }
+            .marquee-track {
+                display: flex;
+                gap: 20px;
+                width: max-content;
+                animation: scrollMarquee 30s linear infinite;
+            }
+            .marquee-container:hover .marquee-track {
+                animation-play-state: paused;
+            }
+            @keyframes scrollMarquee {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+
             /* Hover Card Styles for Trending Destinations */
             .dest-card {
                 position: relative;
                 border-radius: 12px;
                 overflow: hidden;
+                width: 230px;
                 height: 280px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: transform 0.3s ease;
                 background-color: #1e1e1e;
-            }
-            .dest-card:hover {
-                transform: translateY(-5px);
+                flex-shrink: 0;
             }
             .dest-card img {
                 width: 100%;
@@ -247,7 +267,7 @@ try:
                 color: white;
             }
             .dest-title {
-                font-size: 1em;
+                font-size: 0.95em;
                 font-weight: 700;
                 margin-bottom: 2px;
             }
@@ -259,7 +279,7 @@ try:
                 text-decoration: underline !important;
             }
             .dest-details {
-                font-size: 0.8em;
+                font-size: 0.78em;
                 color: #d0d0d0;
                 opacity: 0;
                 max-height: 0;
@@ -352,7 +372,7 @@ try:
 
         top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # ========================== PAGE: MAIN (HERO + TOP 5 TRENDING) ==========================
+    # ========================== PAGE: MAIN (HERO + INFINITE SCROLLING TRENDING) ==========================
     if active_page == "Main":
         st.markdown("""
             <div style="background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop); background-size: cover; background-position: center; padding: 80px 50px; border-radius: 16px; color: white; text-align: center; margin-bottom: 25px;">
@@ -371,54 +391,61 @@ try:
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("🔥 Trending Destinations Worldwide")
-        st.markdown("Explore our top 5 highest-rated and most popular attractions. Hover over any card for details or click the name to navigate via Google Maps.")
+        st.markdown("Explore our top highest-rated attractions. *Hover over any card to pause scrolling and view details, or click the name to navigate via Google Maps.*")
 
-        # Compute top 5 highest rated / popular attractions
+        # Compute top attractions
         try:
             if 'rating' in df_raw.columns:
                 top_grouped = df_raw.groupby('attraction_name').agg(
                     avg_rating=('rating', 'mean'),
                     visit_count=('rating', 'count')
                 ).reset_index()
-                top_5_df = top_grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(5)
-                top_5_names = top_5_df['attraction_name'].tolist()
+                top_df = top_grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(8)
+                top_names = top_df['attraction_name'].tolist()
             else:
-                top_5_names = attr_meta['attraction_name'].head(5).tolist()
+                top_names = attr_meta['attraction_name'].head(8).tolist()
         except Exception:
-            top_5_names = attr_meta['attraction_name'].head(5).tolist()
+            top_names = attr_meta['attraction_name'].head(8).tolist()
 
-        card_cols = st.columns(5)
-        for idx, name in enumerate(top_5_names[:5]):
-            with card_cols[idx]:
-                meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
-                
-                lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
-                lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
-                
-                img_url = get_attraction_photo(name)
-                
-                # Estimated spend calculation
-                seed = sum(ord(c) for c in name)
-                est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
-                
-                nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
-                
-                card_html = f"""
-                    <div class="dest-card">
-                        <img src="{img_url}" alt="{name}">
-                        <div class="dest-overlay">
-                            <div class="dest-title">
-                                <a href="{nav_link}" target="_blank">{name} ↗</a>
-                            </div>
-                            <div class="dest-details">
-                                📂 {category}<br>
-                                💰 Est. Spend: {est_spend}
-                            </div>
+        # Build cards HTML content
+        cards_html_content = ""
+        for name in top_names:
+            meta_row = attr_meta[attr_meta['attraction_name'] == name]
+            category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+            
+            lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+            lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+            
+            img_url = get_attraction_photo(name)
+            seed = sum(ord(c) for c in name)
+            est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+            nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+            
+            cards_html_content += f"""
+                <div class="dest-card">
+                    <img src="{img_url}" alt="{name}">
+                    <div class="dest-overlay">
+                        <div class="dest-title">
+                            <a href="{nav_link}" target="_blank">{name} ↗</a>
+                        </div>
+                        <div class="dest-details">
+                            📂 {category}<br>
+                            💰 Est. Spend: {est_spend}
                         </div>
                     </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
+                </div>
+            """
+
+        # Duplicate the cards once to create a seamless infinite loop effect
+        infinite_marquee_html = f"""
+            <div class="marquee-container">
+                <div class="marquee-track">
+                    {cards_html_content}
+                    {cards_html_content}
+                </div>
+            </div>
+        """
+        st.markdown(infinite_marquee_html, unsafe_allow_html=True)
 
     # ========================== PAGE: TRAVELER VIEW ==========================
     elif active_page == "Top Recommendations":
@@ -694,7 +721,7 @@ try:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        st.markdown("### 🎯 Rating Prediction & Classification Theorem")
+        st.markdown("### 🎯 Rating Prediction & Classification")
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
 
         r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
