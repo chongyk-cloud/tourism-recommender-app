@@ -289,17 +289,17 @@ try:
     # --- 6. NAVIGATION STATE ---
     PAGES = ["Main", "Top Recommendations", "3D Spatial Map", "Model Evaluation & Diagnostics"]
     NAV_LABELS = {
-        "Main": "🏠 Home",
-        "Top Recommendations": "🎯 Recommendations",
-        "3D Spatial Map": "📍 Spatial Map",
-        "Model Evaluation & Diagnostics": "⚙️ Diagnostics",
+        "Main": "Home",
+        "Top Recommendations": "Recommendations",
+        "3D Spatial Map": "Spatial Map",
+        "Model Evaluation & Diagnostics": "Diagnostics",
     }
     if "page" not in st.session_state:
         st.session_state.page = "Main"
 
     logo_col, nav_col1, nav_col2, nav_col3, nav_col4, spacer_col = st.columns([2, 1, 1.4, 1.2, 1.2, 1.2])
     with logo_col:
-        st.markdown('<div class="topnav-logo">🗺️ Personalized Tourism Recommender</div>', unsafe_allow_html=True)
+        st.markdown('<div class="topnav-logo">Personalized Tourism Recommender</div>', unsafe_allow_html=True)
 
     nav_cols = [nav_col1, nav_col2, nav_col3, nav_col4]
     for col, page_key in zip(nav_cols, PAGES):
@@ -375,14 +375,8 @@ try:
             </div>
         """, unsafe_allow_html=True)
 
-        cta_col, _ = st.columns([1, 4])
-        with cta_col:
-            if st.button("🚀 Start Exploring", use_container_width=True):
-                st.session_state.page = "Top Recommendations"
-                st.rerun()
-
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("🔥 Trending Destinations Worldwide")
+        st.subheader("Trending Destinations Worldwide")
         st.markdown("Explore our top 5 highest-rated and most popular attractions. Hover over any card for details or click the name to navigate via Google Maps.")
 
         # Compute top 5 highest rated / popular attractions
