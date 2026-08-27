@@ -372,8 +372,74 @@ try:
 
         top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    
-        
+    # ========================== PAGE: MAIN (HERO + TRENDING CARDS) ==========================
+    if active_page == "Main":
+        st.markdown("""
+            <div style="background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop); background-size: cover; background-position: center; padding: 80px 50px; border-radius: 16px; color: white; text-align: center; margin-bottom: 25px;">
+                <h1 style="font-size: 3.2em; margin-bottom: 14px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
+                <p style="font-size: 1.2em; max-width: 720px; margin: 0 auto 28px auto; line-height: 1.6;">
+                    Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        cta_col, _ = st.columns([1, 4])
+        with cta_col:
+            if st.button("🚀 Start Exploring", use_container_width=True):
+                st.session_state.page = "Top Recommendations"
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("🔥 Trending Destinations Worldwide")
+        st.markdown("Explore our top highest-rated attractions. *Hover over any card to view details, or click the name to navigate via Google Maps.*")
+
+        # Compute top attractions safely
+        try:
+            if 'rating' in df_raw.columns:
+                top_grouped = df_raw.groupby('attraction_name').agg(
+                    avg_rating=('rating', 'mean'),
+                    visit_count=('rating', 'count')
+                ).reset_index()
+                top_df = top_grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(5)
+                top_names = top_df['attraction_name'].tolist()
+            else:
+                top_names = attr_meta['attraction_name'].head(5).tolist()
+        except Exception:
+            top_names = attr_meta['attraction_name'].head(5).tolist()
+
+        # Render using native Streamlit columns to guarantee 100% stable rendering without code leakage
+        card_cols = st.columns(len(top_names))
+        for idx, name in enumerate(top_names):
+            with card_cols[idx]:
+                meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+                
+                lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+                lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+                
+                img_url = get_attraction_photo(name)
+                seed = sum(ord(c) for c in name)
+                est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+                
+                # Clean card layout with image, hover details, and Google Maps link
+                st.markdown(f"""
+                    <div style="background-color: #1e1e1e; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 10px;">
+                        <div style="height: 180px; width: 100%;">
+                            <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div style="padding: 12px; color: white;">
+                            <div style="font-weight: 700; font-size: 0.95em; margin-bottom: 6px;">
+                                <a href="{nav_link}" target="_blank" style="color: #64B5F6; text-decoration: none;">{name} ↗</a>
+                            </div>
+                            <div style="font-size: 0.8em; color: #b0b0b0;">
+                                📂 {category}<br>
+                                💰 Est: {est_spend}
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
     # ========================== PAGE: TRAVELER VIEW ==========================
     elif active_page == "Top Recommendations":
         persona_df = df_raw.copy()
