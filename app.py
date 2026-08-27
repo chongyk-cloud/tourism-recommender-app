@@ -68,14 +68,13 @@ def get_attraction_photo(attraction_name):
 # --- 3. ML MODEL & DATA LOADER ---
 @st.cache_resource
 def load_all_data_v2():
-    # Load primary dataset
     try:
         df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
     except Exception:
-        pass
+        df_raw = pd.read_csv('attraction_metadata.csv')
+        
     attr_meta = pd.read_csv('attraction_metadata_filled.csv')
 
-    # Hardcoded metrics for the prototype presentation
     eval_metrics_df = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
@@ -83,20 +82,17 @@ def load_all_data_v2():
             "Neural Network", 
             "Hybrid Recommender (Ensemble)"
         ],
-        # Ranking Metrics
         "Precision@5": [0.0045, 0.0043, 0.0053, 0.0049],
         "Recall@5": [0.0121, 0.0117, 0.0139, 0.0138],
         "F1@5": [0.0064, 0.0062, 0.0075, 0.0071],
         "HR@5": [0.0222, 0.0217, 0.0261, 0.0246],
         "NDCG@5": [0.0082, 0.0082, 0.0097, 0.0089],
-        # Rating & Classification Metrics
         "RMSE": [0.2872, 0.3939, 0.3090, 0.3312],
         "MAE": [0.2449, 0.3212, 0.2587, 0.2751],
         "Accuracy": [0.8955, 0.8895, 0.8895, 0.8963],
         "Class F1-Score": [0.9436, 0.9415, 0.9400, 0.9452]
     })
 
-    # Load ML artifacts safely
     script_dir = os.path.dirname(os.path.abspath(__file__))
     matrices = {}
     ml_ready = False
@@ -109,7 +105,6 @@ def load_all_data_v2():
         with open(os.path.join(script_dir, 'train_seen.pkl'), 'rb') as f:
             train_seen = pickle.load(f)
             
-        # Dynamically load whichever ML matrices are present in the folder
         model_files = {
             "Content-Based Filtering": 'pred_content_matrix.npy',
             "Collaborative Filtering (SVD)": 'pred_cf_matrix.npy',
@@ -131,8 +126,7 @@ def load_all_data_v2():
 
     return df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready
 
-
-# Start of the main execution block
+# Start of main execution block
 try:
     df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
@@ -157,17 +151,15 @@ try:
             user_idx = user_to_idx[tourist_id]
             selected_matrix = matrices[selected_model]
             scores = selected_matrix[user_idx].copy()
-            # Squeeze crazy high/low scores into a standard 1.0 - 5.0 rating scale
             min_score = scores.min()
             max_score = scores.max()
             
             if max_score > 5.0 or min_score < 0.0:
-                if max_score > min_score: # If scores are different, scale them proportionally
+                if max_score > min_score:
                     scores = 1.0 + 4.0 * ((scores - min_score) / (max_score - min_score))
-                else: # If model collapsed (all scores identical), cap at 5.0
+                else:
                     scores = np.full_like(scores, 5.0)
             else:
-                # If they are already in a normal range, just clip them to be safe
                 scores = np.clip(scores, 1.0, 5.0)
             seen_indices = train_seen.get(user_idx, set())
             
@@ -179,7 +171,6 @@ try:
                     recs.append((item_name, scores[item_idx]))
                     
             recs.sort(key=lambda x: x[1], reverse=True)
-            # --- CONVERT RAW SCORES TO NETFLIX-STYLE MATCH % ---
             top_recs = recs[:top_n]
             if top_recs:
                 max_score = top_recs[0][1]
@@ -188,10 +179,9 @@ try:
                 final_recs = []
                 for name, score in top_recs:
                     if max_score > min_score:
-                        # Scale to between 80% and 99%
                         match_pct = 80 + 19 * ((score - min_score) / (max_score - min_score))
                     else:
-                        match_pct = 95.0 # Fallback if model collapsed
+                        match_pct = 95.0
                     final_recs.append((name, match_pct))
                 return final_recs, True
             return recs[:top_n], True
@@ -204,12 +194,12 @@ try:
         top_spots = grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(top_n)
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
-# --- 5. SIDEBAR & UI CONTROLS ---
+
+    # --- 5. SIDEBAR & UI CONTROLS ---
     st.title("🗺️ Personalized Tourism Recommender")
     st.markdown("A dual-perspective prototype: explore curated travel plans or inspect backend AI evaluation benchmarks.")
 
     st.sidebar.header("🎯 Traveler Profile & Filters")
-    
     st.sidebar.subheader("🧠 Algorithm Selection")
     
     if ml_ready:
@@ -228,7 +218,6 @@ try:
 
     st.sidebar.divider()
 
-    # Dropdowns for Criteria
     def get_default_index(opts, target): return opts.index(target) if target in opts else len(opts) - 1
     
     avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"]
@@ -248,19 +237,16 @@ try:
 
     top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-   # --- AUTOMATIC PERSONA MATCHING ---
+    # --- AUTOMATIC PERSONA MATCHING ---
     persona_df = df_raw.copy()
-    
-    # Check if literally every filter is set to "Ignore"
     all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
                            selected_province == "Ignore" and selected_category == "Ignore" and 
                            selected_duration == "Ignore")
 
     if all_filters_ignored:
-        active_tourist_id = None  # None tells the system to use Popularity Baseline
+        active_tourist_id = None
         st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
     else:
-        # Filter the dataset to find a user matching the selected demographics
         if selected_age != "Ignore":
             persona_df = persona_df[persona_df['age_group'] == selected_age]
         if selected_gender != "Ignore":
@@ -273,7 +259,6 @@ try:
             active_tourist_id = 605 
             st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605) to demonstrate AI capabilities.")
 
-    # Fetch Recommendations
     recommendations, is_personalized = generate_recommendations(
         active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
     )
@@ -287,23 +272,47 @@ try:
             st.write("A Deep Learning approach that captures complex, non-linear interactions between Tourist {}'s demographics and attraction features using a Multi-Layer Perceptron.".format(active_tourist_id))
         elif "Hybrid" in selected_model:
             st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
-            
-    # --- 6. TABS STRUCTURE ---
-    tab1, tab2, tab3 = st.tabs(["🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
-  
+
+    # --- 6. TABS STRUCTURE (Main added to the front) ---
+    tab_main, tab1, tab2, tab3 = st.tabs(["🏠 Main", "🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Model Evaluation & Diagnostics"])
+
+    # ========================== TAB MAIN: WELCOME & HERO ==========================
+    with tab_main:
+        # Hero Banner HTML/CSS Styling
+        st.markdown("""
+            <div style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://www.travelchinaguide.com/images/photogallery/2010/wudang-mountain.jpg'); background-size: cover; background-position: center; padding: 60px 40px; border-radius: 12px; color: white; text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 3em; margin-bottom: 10px; font-weight: 800;">Discover Your Next Adventure in China.</h1>
+                <p style="font-size: 1.2em; max-width: 700px; margin: 0 auto; line-height: 1.6;">
+                    Immerse yourself in five thousand years of magnificent history, breathtaking landscapes, architectural marvels, and vibrant cultures. China offers a journey like no other place on Earth.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.subheader("🌟 Why China is the Ultimate Travel Destination")
+        
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("### 🏛️ Ancient Heritage")
+            st.write("Walk along the majestic Great Wall, explore the Forbidden City, and witness ancient dynasties come alive through world-renowned historical architecture and UNESCO World Heritage sites.")
+        with c2:
+            st.markdown("### 🏔️ Breathtaking Nature")
+            st.write("From the mystical mist-shrouded pillars of Zhangjiajie and the towering sacred peaks of Wudang and Lao Jun Shan to serene lakes and dramatic karst formations.")
+        with c3:
+            st.markdown("### 🍜 Vibrant Modern Culture")
+            st.write("Experience a seamless blend of hyper-modern smart cities, high-speed rail infrastructure, and rich culinary traditions ranging from Sichuan spice to Cantonese dim sum.")
+
+        st.info("👉 **Ready to begin?** Switch to the **Top Recommendations** tab above or use the **Traveler Profile & Filters** sidebar to let our AI build your custom travel itinerary!")
+
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         st.subheader("Your Personalized Itinerary")
 
-        # 1. Traveler Context
         if is_personalized:
-            # Find what this user previously liked in the dataset
             user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
             if not user_history.empty:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
         
-        # 2. Status Messages
         if not recommendations:
             st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         elif not ml_ready:
@@ -313,7 +322,6 @@ try:
         else:
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
             
-        # 3. Image Rendering (Now safely outside the else block!)
         if recommendations:
             num_cols = 4
             for row_idx in range(0, len(recommendations), num_cols):
@@ -323,7 +331,7 @@ try:
                 for i, (name, score) in enumerate(row_items):
                     with cols[i]:
                         meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_level'].iloc[0]) else "5A"
                         img_url = get_attraction_photo(name)
                         
                         st.markdown(
@@ -333,7 +341,6 @@ try:
                             </div>
                             """, unsafe_allow_html=True
                         )
-                        # Dynamic Explainability Badge
                         if "Collaborative" in selected_model:
                             reason = "🧑‍🤝‍🧑 Popular with similar travelers"
                         elif "Content" in selected_model:
@@ -346,7 +353,6 @@ try:
                         st.markdown(f"*{reason}*")
                         st.markdown(f"**{name}**")
                         
-                        # Fetch the actual average rating from the dataset for this specific attraction
                         item_data = df_raw[df_raw['attraction_name'] == name]
                         real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
                         
@@ -357,16 +363,14 @@ try:
         st.subheader("📍 3D Journey & Spatial Layout")
         st.info("Interactive routing from your origin point to recommended destinations.")
 
-        # Dictionary of rough coordinates for user origins (Longitude, Latitude)
         PROVINCE_COORDS = {
             "Beijing": [116.4074, 39.9042], "Shanghai": [121.4737, 31.2304],
             "Guangdong": [113.2644, 23.1291], "Shandong": [117.1201, 36.6512],
             "Zhejiang": [120.1551, 30.2741], "Jiangsu": [118.7969, 32.0603],
             "Sichuan": [104.0648, 30.6586], "Henan": [113.6253, 34.7466],
-            "Default": [108.9398, 34.3416] # Fallback to central China (Xi'an)
+            "Default": [108.9398, 34.3416]
         }
         
-        # Determine the origin point based on the sidebar filter
         origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
         origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
 
@@ -379,7 +383,6 @@ try:
                     raw_lat = meta_row['latitude'].iloc[0]
                     raw_lon = meta_row['longitude'].iloc[0]
                     
-                    # SAFETY CHECK: Skip if coordinates are missing (NaN)
                     if pd.isna(raw_lat) or pd.isna(raw_lon):
                         continue
                         
@@ -388,7 +391,6 @@ try:
                     
                     color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
                     
-                    # Calculate Haversine Distance (in kilometers)
                     R = 6371.0
                     lat1, lon1, lat2, lon2 = map(np.radians, [origin_lat, origin_lon, lat, lon])
                     dlon = lon2 - lon1
@@ -396,43 +398,32 @@ try:
                     a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
                     distance_km = R * 2 * np.arcsin(np.sqrt(a))
                     
-                    # Safely convert to integer
                     safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
                     
                     map_data.append({
-                        "name": name, 
-                        "lat": lat, 
-                        "lon": lon, 
-                        "score": float(score),
-                        "color": color,
-                        "origin_lat": origin_lat,
-                        "origin_lon": origin_lon,
+                        "name": name, "lat": lat, "lon": lon, "score": float(score),
+                        "color": color, "origin_lat": origin_lat, "origin_lon": origin_lon,
                         "distance": safe_distance
                     })
 
             if map_data:
                 map_df = pd.DataFrame(map_data)
-                
-                # Center map slightly between origin and average destination
                 avg_lat = (map_df["lat"].mean() + origin_lat) / 2
                 avg_lon = (map_df["lon"].mean() + origin_lon) / 2
                 
                 view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=4.5, pitch=50, bearing=-10)
                 
-                # Layer 1: Destination Base Rings
                 scatter_layer = pdk.Layer(
                     "ScatterplotLayer", data=map_df, get_position=["lon", "lat"],
                     get_radius=8000, get_fill_color="color", pickable=False, 
                 )
                 
-                # Layer 2: Destination 3D Pillars
                 column_layer = pdk.Layer(
                     "ColumnLayer", data=map_df, get_position=["lon", "lat"],
                     get_elevation="score * 1200", elevation_scale=10, radius=3500,
                     get_fill_color="color", pickable=True, auto_highlight=True,
                 )
                 
-                # NEW LAYER: 3D Arcs flying from User Origin to Destinations
                 arc_layer = pdk.Layer(
                     "ArcLayer", data=map_df,
                     get_source_position=["origin_lon", "origin_lat"],
@@ -443,7 +434,6 @@ try:
                     tilt=15
                 )
                 
-                # Updated Tooltip including Distance
                 custom_tooltip = {
                     "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/>📏 Distance: {distance} km from " + origin_name,
                     "style": {"backgroundColor": "#1E1E1E", "color": "white", "border": "1px solid #4682B4", "borderRadius": "5px"}
@@ -455,7 +445,6 @@ try:
                     initial_view_state=view_state, tooltip=custom_tooltip
                 ))
                 
-                # --- GPS NAVIGATION LINKS ---
                 st.markdown("### 🚗 Start Your Journey")
                 nav_cols = st.columns(4)
                 for i, row in enumerate(map_data):
@@ -464,14 +453,12 @@ try:
                         st.markdown(f"**[{row['name']}]({nav_link})** <br> <span style='font-size:0.8em; color:gray;'>({row['distance']} km away)</span>", unsafe_allow_html=True)
             else:
                 st.warning("Coordinate data not found for these specific recommendations.")
-            
 
     # ========================== TAB 3: DIAGNOSTICS ==========================
     with tab3:
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment dynamically tracking changes across models.")
 
-        # --- DYNAMIC COMPARISON LOGIC ---
         SHORT_NAMES = {
             "Hybrid Recommender (Ensemble)": "Ensemble",
             "Collaborative Filtering (SVD)": "SVD",
@@ -490,19 +477,16 @@ try:
             base_short = SHORT_NAMES.get(baseline_model, "Baseline")
             curr_short = SHORT_NAMES.get(selected_model, "Model")
 
-            # Format Ranking Metrics
             prec_val = f"{current_row['Precision@5'] * 100:.2f}%"
             rec_val = f"{current_row['Recall@5'] * 100:.2f}%"
             f1_val = f"{current_row['F1@5'] * 100:.2f}%"
             ndcg_val = f"{current_row['NDCG@5']:.4f}"
             
-            # Format Rating Metrics
             rmse_val = f"{current_row['RMSE']:.4f}"
             mae_val = f"{current_row['MAE']:.4f}"
             acc_val = f"{current_row['Accuracy'] * 100:.2f}%"
             clf_f1_val = f"{current_row['Class F1-Score'] * 100:.2f}%"
             
-            # Calculate Deltas
             prec_delta = f"{(current_row['Precision@5'] - baseline_row['Precision@5']) * 100:+.2f}% vs {base_short}"
             rec_delta = f"{(current_row['Recall@5'] - baseline_row['Recall@5']) * 100:+.2f}% vs {base_short}"
             f1_delta = f"{(current_row['F1@5'] - baseline_row['F1@5']) * 100:+.2f}% vs {base_short}"
@@ -520,7 +504,6 @@ try:
 
         st.divider()
         
-        # --- SECTION 1: RANKING METRICS ---
         st.markdown("### 🏆 Top-N Ranking Performance")
         r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
         
@@ -535,13 +518,11 @@ try:
             use_container_width=True
         )
 
-        st.markdown("<br>", unsafe_allow_html=True) # Spacer
+        st.markdown("<br>", unsafe_allow_html=True)
 
-        # --- SECTION 2: RATING PREDICTION METRICS ---
         st.markdown("### 🎯 Rating Prediction & Classification")
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         
-        # Note: RMSE and MAE use 'inverse' delta colors because lower is better
         r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
         r2_col2.metric(f"{curr_short} MAE", mae_val, delta=mae_delta, delta_color="inverse")
         r2_col3.metric(f"{curr_short} Accuracy", acc_val, delta=acc_delta, delta_color="normal")
@@ -553,6 +534,6 @@ try:
             .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
             use_container_width=True
         )
-        
+
 except Exception as e:
     st.error(f"Application error: {e}")
