@@ -353,7 +353,6 @@ try:
                         st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
 
     # ========================== TAB 2: SPATIAL MAP ==========================
-    # ========================== TAB 2: SPATIAL MAP ==========================
     with tab2:
         st.subheader("📍 3D Journey & Spatial Layout")
         st.info("Interactive routing from your origin point to recommended destinations.")
@@ -377,8 +376,15 @@ try:
             for name, score in recommendations:
                 meta_row = attr_meta[attr_meta['attraction_name'] == name]
                 if not meta_row.empty:
-                    lat = float(meta_row['latitude'].iloc[0])
-                    lon = float(meta_row['longitude'].iloc[0])
+                    raw_lat = meta_row['latitude'].iloc[0]
+                    raw_lon = meta_row['longitude'].iloc[0]
+                    
+                    # SAFETY CHECK: Skip if coordinates are missing (NaN)
+                    if pd.isna(raw_lat) or pd.isna(raw_lon):
+                        continue
+                        
+                    lat = float(raw_lat)
+                    lon = float(raw_lon)
                     
                     color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
                     
@@ -390,6 +396,9 @@ try:
                     a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
                     distance_km = R * 2 * np.arcsin(np.sqrt(a))
                     
+                    # Safely convert to integer
+                    safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
+                    
                     map_data.append({
                         "name": name, 
                         "lat": lat, 
@@ -398,7 +407,7 @@ try:
                         "color": color,
                         "origin_lat": origin_lat,
                         "origin_lon": origin_lon,
-                        "distance": int(distance_km)
+                        "distance": safe_distance
                     })
 
             if map_data:
@@ -428,7 +437,7 @@ try:
                     "ArcLayer", data=map_df,
                     get_source_position=["origin_lon", "origin_lat"],
                     get_target_position=["lon", "lat"],
-                    get_source_color=[33, 150, 243, 160], # Blue origin
+                    get_source_color=[33, 150, 243, 160], 
                     get_target_color="color",
                     get_width=3,
                     tilt=15
