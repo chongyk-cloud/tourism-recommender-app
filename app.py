@@ -77,6 +77,7 @@ def load_all_data_v2():
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
     # Hardcoded metrics for the prototype presentation
+    # Updated metrics from Jupyter Notebook
     eval_metrics_df = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
@@ -84,11 +85,11 @@ def load_all_data_v2():
             "Neural Network", 
             "Hybrid Recommender (Ensemble)"
         ],
-        "RMSE": [0.892, 0.9412, 0.8651, 0.8210],
-        "MSE": [0.7964, 0.8859, 0.7484, 0.6740],
-        "MAE": [0.6811, 0.7320, 0.6540, 0.6125],
-        "Precision@5": [0.7640, 0.7120, 0.7950, 0.8420],
-        "Recall@5": [0.6820, 0.6350, 0.7210, 0.7780]
+        "Precision@5": [0.0045, 0.0043, 0.0053, 0.0049],
+        "Recall@5": [0.0121, 0.0117, 0.0139, 0.0138],
+        "F1@5": [0.0064, 0.0062, 0.0075, 0.0071],
+        "HR@5": [0.0222, 0.0217, 0.0261, 0.0246],
+        "NDCG@5": [0.0082, 0.0082, 0.0097, 0.0089]
     })
 
     # Load ML artifacts safely
@@ -377,7 +378,7 @@ try:
         SHORT_NAMES = {
             "Hybrid Recommender (Ensemble)": "Ensemble",
             "Collaborative Filtering (SVD)": "SVD",
-            "Neural Collaborative Filtering": "Neural",
+            "Neural Network": "Neural",
             "Content-Based Filtering": "Content-Based"
         }
 
@@ -395,46 +396,48 @@ try:
             base_short = SHORT_NAMES.get(baseline_model, "Baseline")
             curr_short = SHORT_NAMES.get(selected_model, "Model")
 
-            rmse_val = f"{current_row['RMSE']:.4f}"
-            mse_val = f"{current_row['MSE']:.4f}"
+            # Format as percentages for cleaner UI display
             prec_val = f"{current_row['Precision@5'] * 100:.2f}%"
             rec_val = f"{current_row['Recall@5'] * 100:.2f}%"
+            f1_val = f"{current_row['F1@5'] * 100:.2f}%"
+            ndcg_val = f"{current_row['NDCG@5']:.4f}"
             
             # Calculate dynamic deltas
-            rmse_diff = current_row['RMSE'] - baseline_row['RMSE']
-            mse_diff = current_row['MSE'] - baseline_row['MSE']
             prec_diff = (current_row['Precision@5'] - baseline_row['Precision@5']) * 100
             rec_diff = (current_row['Recall@5'] - baseline_row['Recall@5']) * 100
+            f1_diff = (current_row['F1@5'] - baseline_row['F1@5']) * 100
+            ndcg_diff = current_row['NDCG@5'] - baseline_row['NDCG@5']
 
-            rmse_delta = f"{rmse_diff:+.4f} vs {base_short}"
-            mse_delta = f"{mse_diff:+.4f} vs {base_short}"
             prec_delta = f"{prec_diff:+.2f}% vs {base_short}"
             rec_delta = f"{rec_diff:+.2f}% vs {base_short}"
+            f1_delta = f"{f1_diff:+.2f}% vs {base_short}"
+            ndcg_delta = f"{ndcg_diff:+.4f} vs {base_short}"
             
         except Exception:
-            rmse_val, mse_val, prec_val, rec_val = "N/A", "N/A", "N/A", "N/A"
-            rmse_delta, mse_delta, prec_delta, rec_delta = None, None, None, None
+            prec_val, rec_val, f1_val, ndcg_val = "N/A", "N/A", "N/A", "N/A"
+            prec_delta, rec_delta, f1_delta, ndcg_delta = None, None, None, None
             curr_short = "Model"
 
-        # Build dynamic columns with correct color mapping for error metrics
+        # Build dynamic columns
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         
-        # For RMSE and MSE, an increase (+) is bad (inverse color), a decrease (-) is good (green)
-        m_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
-        m_col2.metric(f"{curr_short} MSE", mse_val, delta=mse_delta, delta_color="inverse")
-        
-        # For Precision and Recall, an increase (+) is good (normal color)
-        m_col3.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
-        m_col4.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
+        # All ranking metrics are "higher is better", so normal delta coloring is used
+        m_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
+        m_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
+        m_col3.metric(f"{curr_short} F1@5", f1_val, delta=f1_delta, delta_color="normal")
+        m_col4.metric(f"{curr_short} NDCG@5", ndcg_val, delta=ndcg_delta, delta_color="normal")
 
         st.divider()
         st.markdown("### Comparative Performance Matrix")
         
+        # Highlight maximums in blue (since all metrics here are 'higher is better')
         st.dataframe(
-            eval_metrics_df.style.highlight_min(subset=["RMSE", "MSE", "MAE"], color="#2E7D32")
-                                 .highlight_max(subset=["Precision@5", "Recall@5"], color="#1565C0"),
+            eval_metrics_df.style.highlight_max(
+                subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], 
+                color="#1565C0"
+            ),
             use_container_width=True
         )
-
+        
 except Exception as e:
     st.error(f"Application error: {e}")
