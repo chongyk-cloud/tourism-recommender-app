@@ -366,57 +366,81 @@ try:
                 if not meta_row.empty:
                     lat = float(meta_row['latitude'].iloc[0])
                     lon = float(meta_row['longitude'].iloc[0])
+                    
+                    # VISUAL UPGRADE: Dynamic coloring based on AI Match %
+                    # Emerald Green for > 90% matches, Amber/Yellow for anything lower
+                    color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
+                    
                     map_data.append({
                         "name": name, 
                         "lat": lat, 
                         "lon": lon, 
-                        "score": float(score)
+                        "score": float(score),
+                        "color": color
                     })
 
             if map_data:
                 map_df = pd.DataFrame(map_data)
                 
-                # Dynamically center the map on the average coordinates of the recommendations
+                # Dynamically center the map
                 avg_lat = map_df["lat"].mean()
                 avg_lon = map_df["lon"].mean()
                 
-                view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=5, pitch=45)
+                # Tilt the pitch and zoom in for a better 3D angle
+                view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=6, pitch=55, bearing=-15)
                 
-                # Draw the actual locations
-                layer = pdk.Layer(
+                # VISUAL UPGRADE 1: The glowing base ring
+                scatter_layer = pdk.Layer(
                     "ScatterplotLayer", 
                     data=map_df, 
                     get_position=["lon", "lat"],
-                    get_radius=15000,
-                    get_fill_color=[255, 75, 75, 200], 
-                    pickable=True, 
-                    auto_highlight=True,
+                    get_radius=5000,
+                    get_fill_color="color", 
+                    pickable=False, 
                 )
                 
-                # Draw columns to represent the score height
+                # VISUAL UPGRADE 2: Sleeker, colored 3D Pillars
                 column_layer = pdk.Layer(
                     "ColumnLayer", 
                     data=map_df, 
                     get_position=["lon", "lat"],
-                    get_elevation="score * 15000", 
-                    elevation_scale=4, 
-                    radius=10000,
-                    get_fill_color=[33, 150, 243, 200], 
+                    get_elevation="score * 1200", # Scaled to look realistic
+                    elevation_scale=10, 
+                    radius=2500, # Slimmer radius for a cleaner look
+                    get_fill_color="color", 
                     pickable=True, 
                     auto_highlight=True,
                 )
                 
-                st.pydeck_chart(pdk.Deck(layers=[layer, column_layer], initial_view_state=view_state, tooltip={"text": "{name}\nMatch: {score}%"}))
+                # VISUAL UPGRADE 3: Custom HTML Tooltip
+                custom_tooltip = {
+                    "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/><i>👇 Scroll down for GPS Navigation</i>",
+                    "style": {
+                        "backgroundColor": "#1E1E1E",
+                        "color": "white",
+                        "border": "1px solid #4682B4",
+                        "borderRadius": "5px"
+                    }
+                }
                 
-                # --- NEW: ADD NAVIGATION LINKS ---
-                st.markdown("### 🚗 Ready to go?")
-                st.markdown("Click any destination below to open your device's native GPS for real-time routing:")
+                # Render the map with a dark theme to make the colors pop
+                st.pydeck_chart(pdk.Deck(
+                    map_style="mapbox://styles/mapbox/dark-v11",
+                    layers=[scatter_layer, column_layer], 
+                    initial_view_state=view_state, 
+                    tooltip=custom_tooltip
+                ))
+                
+                # --- GPS NAVIGATION LINKS ---
+                st.markdown("### 🚗 Start Your Journey")
+                st.markdown("Select your destination to open real-time routing on your device.")
                 
                 nav_cols = st.columns(4)
                 for i, row in enumerate(map_data):
                     with nav_cols[i % 4]:
-                        # Generate a Google Maps routing link
                         nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
+                        st.button(f"🧭 Navigate to {row['name'][:12]}...", key=f"nav_{i}", on_click=lambda url=nav_link: st.markdown(f'<meta http-equiv="refresh" content="0;url={url}">', unsafe_allow_html=True))
+                        # Alternatively, use a clean markdown link which is more reliable in Streamlit
                         st.markdown(f"**[{row['name']}]({nav_link})**")
             else:
                 st.warning("Coordinate data not found for these specific recommendations.")
