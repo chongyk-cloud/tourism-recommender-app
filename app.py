@@ -199,7 +199,7 @@ try:
     st.markdown("""
         <style>
             #MainMenu, header {visibility: hidden;}
-            .block-container {padding-top: 1rem; max-width: 1200px;}
+            .block-container {padding-top: 1rem; max-width: 2000px;}
 
             .topnav-wrap {
                 display: flex; align-items: center; justify-content: space-between;
