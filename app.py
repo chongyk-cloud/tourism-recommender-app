@@ -208,33 +208,38 @@ try:
 
     active_page = st.session_state.page
 
-    # --- 6. CONDITIONAL SIDEBAR HIDING & GLOBAL STYLE ---
+    # --- 6. CONDITIONAL SIDEBAR HIDING & LIGHT MODE STYLING ---
     if active_page == "Main":
         st.markdown("""
             <style>
-                /* Force overall app and container background to white */
                 .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
                     background-color: #FFFFFF !important;
                     color: #262626 !important;
                 }
-                /* Hide sidebar exclusively on Main page */
                 section[data-testid="stSidebar"] {display: none !important;}
                 div[data-testid="collapsedControl"] {display: none !important;}
 
                 #MainMenu, header {visibility: hidden;}
                 .block-container {padding-top: 1rem; max-width: 2000px;}
-
                 .topnav-logo {font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}
 
+                /* Force navigation buttons to have a clean light theme styling */
                 div[data-testid="stHorizontalBlock"] div.stButton > button {
-                    background: transparent !important; border: none !important;
-                    color: #333 !important; font-weight: 500; padding: 8px 16px;
-                    border-radius: 20px; transition: all 0.15s ease; box-shadow: none !important;
+                    background-color: #F8F9FA !important;
+                    border: 1px solid #E0E0E0 !important;
+                    color: #262626 !important;
+                    font-weight: 600;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    transition: all 0.15s ease;
+                    box-shadow: none !important;
                 }
                 div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
-                    background: #f0f4fa !important; color: #1565C0 !important;
+                    background-color: #E3F2FD !important;
+                    color: #1565C0 !important;
+                    border-color: #90CAF9 !important;
                 }
-                
+
                 .dest-card {
                     position: relative; border-radius: 12px; overflow: hidden; height: 280px;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; background-color: #1e1e1e;
@@ -267,6 +272,23 @@ try:
                 #MainMenu, header {visibility: hidden;}
                 .block-container {padding-top: 1rem; max-width: 2000px;}
                 .topnav-logo {font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}
+
+                /* Force navigation buttons to have a clean light theme styling */
+                div[data-testid="stHorizontalBlock"] div.stButton > button {
+                    background-color: #F8F9FA !important;
+                    border: 1px solid #E0E0E0 !important;
+                    color: #262626 !important;
+                    font-weight: 600;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    transition: all 0.15s ease;
+                    box-shadow: none !important;
+                }
+                div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
+                    background-color: #E3F2FD !important;
+                    color: #1565C0 !important;
+                    border-color: #90CAF9 !important;
+                }
             </style>
         """, unsafe_allow_html=True)
 
