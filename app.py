@@ -195,9 +195,21 @@ try:
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
 
-    # --- 5. GLOBAL STYLE (top nav + hover cards) ---
+    # --- 5. GLOBAL STYLE (top nav + hover cards + white background) ---
     st.markdown("""
         <style>
+            /* Force overall app and container background to white */
+            .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+                background-color: #FFFFFF !important;
+                color: #262626 !important;
+            }
+
+            /* Style sidebar background and text for light mode */
+            [data-testid="stSidebar"] {
+                background-color: #F8F9FA !important;
+                color: #262626 !important;
+            }
+
             #MainMenu, header {visibility: hidden;}
             .block-container {padding-top: 1rem; max-width: 2000px;}
 
