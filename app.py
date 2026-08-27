@@ -393,7 +393,7 @@ try:
         st.subheader("🔥 Trending Destinations Worldwide")
         st.markdown("Explore our top highest-rated attractions. *Hover over any card to pause scrolling and view details, or click the name to navigate via Google Maps.*")
 
-        # Compute top attractions
+        # Compute top attractions safely
         try:
             if 'rating' in df_raw.columns:
                 top_grouped = df_raw.groupby('attraction_name').agg(
@@ -407,7 +407,7 @@ try:
         except Exception:
             top_names = attr_meta['attraction_name'].head(8).tolist()
 
-        # Build cards HTML content
+        # Build cards HTML content cleanly
         cards_html_content = ""
         for name in top_names:
             meta_row = attr_meta[attr_meta['attraction_name'] == name]
@@ -422,31 +422,31 @@ try:
             nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
             
             cards_html_content += f"""
-                <div class="dest-card">
-                    <img src="{img_url}" alt="{name}">
-                    <div class="dest-overlay">
-                        <div class="dest-title">
-                            <a href="{nav_link}" target="_blank">{name} ↗</a>
-                        </div>
-                        <div class="dest-details">
-                            📂 {category}<br>
-                            💰 Est. Spend: {est_spend}
-                        </div>
+            <div class="dest-card">
+                <img src="{img_url}" alt="{name}">
+                <div class="dest-overlay">
+                    <div class="dest-title">
+                        <a href="{nav_link}" target="_blank">{name} ↗</a>
+                    </div>
+                    <div class="dest-details">
+                        📂 {category}<br>
+                        💰 Est. Spend: {est_spend}
                     </div>
                 </div>
+            </div>
             """
 
-        # Duplicate the cards once to create a seamless infinite loop effect
+        # Combine into an infinite scrolling marquee wrapper
         infinite_marquee_html = f"""
-            <div class="marquee-container">
-                <div class="marquee-track">
-                    {cards_html_content}
-                    {cards_html_content}
-                </div>
+        <div class="marquee-container">
+            <div class="marquee-track">
+                {cards_html_content}
+                {cards_html_content}
             </div>
+        </div>
         """
         st.markdown(infinite_marquee_html, unsafe_allow_html=True)
-
+        
     # ========================== PAGE: TRAVELER VIEW ==========================
     elif active_page == "Top Recommendations":
         persona_df = df_raw.copy()
