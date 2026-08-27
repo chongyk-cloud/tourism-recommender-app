@@ -77,7 +77,6 @@ def load_all_data_v2():
     attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
     # Hardcoded metrics for the prototype presentation
-    # Updated metrics from Jupyter Notebook
     eval_metrics_df = pd.DataFrame({
         "Algorithm": [
             "Collaborative Filtering (SVD)", 
@@ -85,11 +84,17 @@ def load_all_data_v2():
             "Neural Network", 
             "Hybrid Recommender (Ensemble)"
         ],
+        # Ranking Metrics
         "Precision@5": [0.0045, 0.0043, 0.0053, 0.0049],
         "Recall@5": [0.0121, 0.0117, 0.0139, 0.0138],
         "F1@5": [0.0064, 0.0062, 0.0075, 0.0071],
         "HR@5": [0.0222, 0.0217, 0.0261, 0.0246],
-        "NDCG@5": [0.0082, 0.0082, 0.0097, 0.0089]
+        "NDCG@5": [0.0082, 0.0082, 0.0097, 0.0089],
+        # Rating & Classification Metrics
+        "RMSE": [0.2872, 0.3939, 0.3090, 0.3312],
+        "MAE": [0.2449, 0.3212, 0.2587, 0.2751],
+        "Accuracy": [0.8955, 0.8895, 0.8895, 0.8963],
+        "Class F1-Score": [0.9436, 0.9415, 0.9400, 0.9452]
     })
 
     # Load ML artifacts safely
@@ -382,10 +387,7 @@ try:
             "Content-Based Filtering": "Content-Based"
         }
 
-        # Define a standard baseline for comparison (e.g., Collaborative Filtering)
         baseline_model = "Collaborative Filtering (SVD)"
-        
-        # If the user happens to select SVD as their current model, compare it against Content-Based instead
         if selected_model == baseline_model:
             baseline_model = "Content-Based Filtering"
 
@@ -396,46 +398,67 @@ try:
             base_short = SHORT_NAMES.get(baseline_model, "Baseline")
             curr_short = SHORT_NAMES.get(selected_model, "Model")
 
-            # Format as percentages for cleaner UI display
+            # Format Ranking Metrics
             prec_val = f"{current_row['Precision@5'] * 100:.2f}%"
             rec_val = f"{current_row['Recall@5'] * 100:.2f}%"
             f1_val = f"{current_row['F1@5'] * 100:.2f}%"
             ndcg_val = f"{current_row['NDCG@5']:.4f}"
             
-            # Calculate dynamic deltas
-            prec_diff = (current_row['Precision@5'] - baseline_row['Precision@5']) * 100
-            rec_diff = (current_row['Recall@5'] - baseline_row['Recall@5']) * 100
-            f1_diff = (current_row['F1@5'] - baseline_row['F1@5']) * 100
-            ndcg_diff = current_row['NDCG@5'] - baseline_row['NDCG@5']
-
-            prec_delta = f"{prec_diff:+.2f}% vs {base_short}"
-            rec_delta = f"{rec_diff:+.2f}% vs {base_short}"
-            f1_delta = f"{f1_diff:+.2f}% vs {base_short}"
-            ndcg_delta = f"{ndcg_diff:+.4f} vs {base_short}"
+            # Format Rating Metrics
+            rmse_val = f"{current_row['RMSE']:.4f}"
+            mae_val = f"{current_row['MAE']:.4f}"
+            acc_val = f"{current_row['Accuracy'] * 100:.2f}%"
+            clf_f1_val = f"{current_row['Class F1-Score'] * 100:.2f}%"
+            
+            # Calculate Deltas
+            prec_delta = f"{(current_row['Precision@5'] - baseline_row['Precision@5']) * 100:+.2f}% vs {base_short}"
+            rec_delta = f"{(current_row['Recall@5'] - baseline_row['Recall@5']) * 100:+.2f}% vs {base_short}"
+            f1_delta = f"{(current_row['F1@5'] - baseline_row['F1@5']) * 100:+.2f}% vs {base_short}"
+            ndcg_delta = f"{current_row['NDCG@5'] - baseline_row['NDCG@5']:+.4f} vs {base_short}"
+            
+            rmse_delta = f"{current_row['RMSE'] - baseline_row['RMSE']:+.4f} vs {base_short}"
+            mae_delta = f"{current_row['MAE'] - baseline_row['MAE']:+.4f} vs {base_short}"
+            acc_delta = f"{(current_row['Accuracy'] - baseline_row['Accuracy']) * 100:+.2f}% vs {base_short}"
+            clf_f1_delta = f"{(current_row['Class F1-Score'] - baseline_row['Class F1-Score']) * 100:+.2f}% vs {base_short}"
             
         except Exception:
-            prec_val, rec_val, f1_val, ndcg_val = "N/A", "N/A", "N/A", "N/A"
-            prec_delta, rec_delta, f1_delta, ndcg_delta = None, None, None, None
+            prec_val = rec_val = f1_val = ndcg_val = rmse_val = mae_val = acc_val = clf_f1_val = "N/A"
+            prec_delta = rec_delta = f1_delta = ndcg_delta = rmse_delta = mae_delta = acc_delta = clf_f1_delta = None
             curr_short = "Model"
 
-        # Build dynamic columns
-        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-        
-        # All ranking metrics are "higher is better", so normal delta coloring is used
-        m_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
-        m_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
-        m_col3.metric(f"{curr_short} F1@5", f1_val, delta=f1_delta, delta_color="normal")
-        m_col4.metric(f"{curr_short} NDCG@5", ndcg_val, delta=ndcg_delta, delta_color="normal")
-
         st.divider()
-        st.markdown("### Comparative Performance Matrix")
         
-        # Highlight maximums in blue (since all metrics here are 'higher is better')
+        # --- SECTION 1: RANKING METRICS ---
+        st.markdown("### 🏆 Top-N Ranking Performance")
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+        
+        r1_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
+        r1_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
+        r1_col3.metric(f"{curr_short} F1@5", f1_val, delta=f1_delta, delta_color="normal")
+        r1_col4.metric(f"{curr_short} NDCG@5", ndcg_val, delta=ndcg_delta, delta_color="normal")
+
         st.dataframe(
-            eval_metrics_df.style.highlight_max(
-                subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], 
-                color="#1565C0"
-            ),
+            eval_metrics_df[["Algorithm", "Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"]]
+            .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
+            use_container_width=True
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True) # Spacer
+
+        # --- SECTION 2: RATING PREDICTION METRICS ---
+        st.markdown("### 🎯 Rating Prediction & Classification")
+        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+        
+        # Note: RMSE and MAE use 'inverse' delta colors because lower is better
+        r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
+        r2_col2.metric(f"{curr_short} MAE", mae_val, delta=mae_delta, delta_color="inverse")
+        r2_col3.metric(f"{curr_short} Accuracy", acc_val, delta=acc_delta, delta_color="normal")
+        r2_col4.metric(f"{curr_short} Class F1-Score", clf_f1_val, delta=clf_f1_delta, delta_color="normal")
+
+        st.dataframe(
+            eval_metrics_df[["Algorithm", "RMSE", "MAE", "Accuracy", "Class F1-Score"]]
+            .style.highlight_min(subset=["RMSE", "MAE"], color="#2E7D32")
+            .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
             use_container_width=True
         )
         
