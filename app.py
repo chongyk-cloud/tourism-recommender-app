@@ -73,10 +73,7 @@ def load_all_data_v2():
         df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
     except Exception:
         pass
-
     attr_meta = pd.read_csv('attraction_metadata_filled.csv')
-        
-    attr_meta = df_raw[['attraction_name', 'attraction_category', 'attraction_level']].drop_duplicates(subset=['attraction_name'])
 
     # Hardcoded metrics for the prototype presentation
     eval_metrics_df = pd.DataFrame({
