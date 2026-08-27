@@ -425,7 +425,8 @@ try:
                 
                 # Render the map with a dark theme to make the colors pop
                 st.pydeck_chart(pdk.Deck(
-                    map_style="mapbox://styles/mapbox/dark-v11",
+                    map_provider="carto",           
+                    map_style="dark",               
                     layers=[scatter_layer, column_layer], 
                     initial_view_state=view_state, 
                     tooltip=custom_tooltip
