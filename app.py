@@ -254,14 +254,14 @@ try:
     # ========================== TAB 1: TRAVELER VIEW ==========================
     with tab1:
         with st.expander(f"💡 How the {selected_model} generated this itinerary"):
-        if "Collaborative" in selected_model:
-            st.write("This model looks at the visiting patterns of Tourist {} and finds similarities with other users. It recommends places loved by people with similar travel tastes!".format(active_tourist_id))
-        elif "Content" in selected_model:
-            st.write("This model analyzes the categories (e.g., Nature, History) and ratings of places Tourist {} previously enjoyed, and finds new attractions with matching metadata.".format(active_tourist_id))
-        elif "Neural" in selected_model:
-            st.write("A Deep Learning approach that captures complex, non-linear interactions between Tourist {}'s demographics and attraction features using a Multi-Layer Perceptron.".format(active_tourist_id))
-        elif "Hybrid" in selected_model:
-            st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
+            if "Collaborative" in selected_model:
+                st.write("This model looks at the visiting patterns of Tourist {} and finds similarities with other users. It recommends places loved by people with similar travel tastes!".format(active_tourist_id))
+            elif "Content" in selected_model:
+                st.write("This model analyzes the categories (e.g., Nature, History) and ratings of places Tourist {} previously enjoyed, and finds new attractions with matching metadata.".format(active_tourist_id))
+            elif "Neural" in selected_model:
+                st.write("A Deep Learning approach that captures complex, non-linear interactions between Tourist {}'s demographics and attraction features using a Multi-Layer Perceptron.".format(active_tourist_id))
+            elif "Hybrid" in selected_model:
+                st.write("An ensemble method that blends user behavior (Collaborative) and attraction metadata (Content-Based) to overcome the weaknesses of using either model alone.")
 
     # --- AUTOMATIC PERSONA MATCHING ---
     persona_df = df_raw.copy()
