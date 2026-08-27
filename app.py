@@ -289,7 +289,7 @@ try:
             active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
         )
                 
-            st.subheader("Your Personalized Itinerary")
+        st.subheader("Your Personalized Itinerary")
 
         if is_personalized:
             user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
