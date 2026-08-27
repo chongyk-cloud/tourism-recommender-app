@@ -8,7 +8,7 @@ import pickle
 import os
 
 # --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️", initial_sidebar_state="expanded")
 
 # --- 2. IMAGE DATABASE & FETCHER ---
 IMAGE_DATABASE = {
@@ -195,104 +195,90 @@ try:
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
 
-    # --- 5. GLOBAL STYLE (top nav + hover cards) ---
-    st.markdown("""
-        <style>
-            #MainMenu, header {visibility: hidden;}
-            .block-container {padding-top: 1rem; max-width: 1200px;}
-
-            .topnav-wrap {
-                display: flex; align-items: center; justify-content: space-between;
-                padding: 14px 28px; border-bottom: 1px solid #eaeaea; margin-bottom: 10px;
-            }
-            .topnav-logo {font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}
-
-            div[data-testid="stHorizontalBlock"] div.stButton > button {
-                background: transparent !important; border: none !important;
-                color: #333 !important; font-weight: 500; padding: 8px 16px;
-                border-radius: 20px; transition: all 0.15s ease; box-shadow: none !important;
-            }
-            div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
-                background: #f0f4fa !important; color: #1565C0 !important;
-            }
-            div[data-testid="stHorizontalBlock"] div.stButton > button:focus:not(:active) {
-                color: #1565C0 !important;
-            }
-
-            /* Hover Card Styles for Trending Destinations */
-            .dest-card {
-                position: relative;
-                border-radius: 12px;
-                overflow: hidden;
-                height: 280px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: transform 0.3s ease;
-                background-color: #1e1e1e;
-            }
-            .dest-card:hover {
-                transform: translateY(-5px);
-            }
-            .dest-card img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-            .dest-overlay {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-                padding: 20px 14px 14px 14px;
-                color: white;
-            }
-            .dest-title {
-                font-size: 1em;
-                font-weight: 700;
-                margin-bottom: 2px;
-            }
-            .dest-title a {
-                color: white !important;
-                text-decoration: none !important;
-            }
-            .dest-title a:hover {
-                text-decoration: underline !important;
-            }
-            .dest-details {
-                font-size: 0.8em;
-                color: #d0d0d0;
-                opacity: 0;
-                max-height: 0;
-                overflow: hidden;
-                transition: all 0.3s ease;
-            }
-            .dest-card:hover .dest-details {
-                opacity: 1;
-                max-height: 60px;
-                margin-top: 6px;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # --- 6. NAVIGATION STATE ---
+    # --- 5. NAVIGATION STATE ---
     PAGES = ["Main", "Top Recommendations", "3D Spatial Map", "Model Evaluation & Diagnostics"]
     NAV_LABELS = {
-        "Main": "🏠 Home",
-        "Top Recommendations": "🎯 Recommendations",
-        "3D Spatial Map": "📍 Spatial Map",
-        "Model Evaluation & Diagnostics": "⚙️ Diagnostics",
+        "Main": "Home",
+        "Top Recommendations": "Recommendations",
+        "3D Spatial Map": "Spatial Map",
+        "Model Evaluation & Diagnostics": "Diagnostics",
     }
     if "page" not in st.session_state:
         st.session_state.page = "Main"
 
+    active_page = st.session_state.page
+
+    # --- 6. DYNAMIC SIDEBAR VISIBILITY & GLOBAL STYLING ---
+    # Hide sidebar on all pages EXCEPT "Top Recommendations"
+    sidebar_css_rule = ""
+    if active_page != "Top Recommendations":
+        sidebar_css_rule = """
+            section[data-testid="stSidebar"] {display: none !important;}
+            div[data-testid="collapsedControl"] {display: none !important;}
+        """
+    else:
+        sidebar_css_rule = """
+            section[data-testid="stSidebar"] {display: block !important;}
+            [data-testid="stSidebar"] { background-color: #F8F9FA !important; color: #262626 !important; }
+        """
+
+    st.markdown(f"""
+        <style>
+            .stApp, .block-container, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+                background-color: #FFFFFF !important;
+                color: #262626 !important;
+            }}
+            {sidebar_css_rule}
+
+            #MainMenu, header {{visibility: hidden;}}
+            .block-container {{padding-top: 1rem; max-width: 2000px;}}
+            .topnav-logo {{font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}}
+
+            /* Force navigation buttons to have clean light theme styling */
+            div[data-testid="stHorizontalBlock"] div.stButton > button {{
+                background-color: #F8F9FA !important;
+                border: 1px solid #E0E0E0 !important;
+                color: #262626 !important;
+                font-weight: 600;
+                padding: 8px 16px;
+                border-radius: 20px;
+                transition: all 0.15s ease;
+                box-shadow: none !important;
+            }}
+            div[data-testid="stHorizontalBlock"] div.stButton > button:hover {{
+                background-color: #E3F2FD !important;
+                color: #1565C0 !important;
+                border-color: #90CAF9 !important;
+            }}
+
+            .dest-card {{
+                position: relative; border-radius: 12px; overflow: hidden; height: 280px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.3s ease; background-color: #1e1e1e;
+            }}
+            .dest-card:hover {{ transform: translateY(-5px); }}
+            .dest-card img {{ width: 100%; height: 100%; object-fit: cover; }}
+            .dest-overlay {{
+                position: absolute; bottom: 0; left: 0; right: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+                padding: 20px 14px 14px 14px; color: white;
+            }}
+            .dest-title {{ font-size: 1em; font-weight: 700; margin-bottom: 2px; }}
+            .dest-title a {{ color: white !important; text-decoration: none !important; }}
+            .dest-title a:hover {{ text-decoration: underline !important; }}
+            .dest-details {{ font-size: 0.8em; color: #d0d0d0; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.3s ease; }}
+            .dest-card:hover .dest-details {{ opacity: 1; max-height: 60px; margin-top: 6px; }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # --- 7. TOP NAVIGATION BAR ---
     logo_col, nav_col1, nav_col2, nav_col3, nav_col4, spacer_col = st.columns([2, 1, 1.4, 1.2, 1.2, 1.2])
     with logo_col:
-        st.markdown('<div class="topnav-logo">🗺️ TourExplorer</div>', unsafe_allow_html=True)
+        st.markdown('<div class="topnav-logo">Personalized Tourism Recommender</div>', unsafe_allow_html=True)
 
     nav_cols = [nav_col1, nav_col2, nav_col3, nav_col4]
     for col, page_key in zip(nav_cols, PAGES):
         label = NAV_LABELS[page_key]
-        display_label = f"● {label}" if st.session_state.page == page_key else label
+        display_label = f"● {label}" if active_page == page_key else label
         with col:
             if st.button(display_label, key=f"nav_{page_key}", use_container_width=True):
                 st.session_state.page = page_key
@@ -300,16 +286,8 @@ try:
 
     st.markdown('<hr style="margin-top:0;">', unsafe_allow_html=True)
 
-    active_page = st.session_state.page
-
-    # --- 7. SIDEBAR FILTERS (hidden entirely on the Main/hero page) ---
-    if active_page == "Main":
-        st.markdown("""
-            <style>
-                section[data-testid="stSidebar"] {display: none !important;}
-                div[data-testid="collapsedControl"] {display: none !important;}
-            </style>
-        """, unsafe_allow_html=True)
+    # --- 8. SIDEBAR FILTERS (Visible ONLY on Recommendations page) ---
+    if active_page != "Top Recommendations":
         selected_model = "Hybrid Recommender (Ensemble)"
         selected_age = selected_gender = selected_province = selected_category = selected_duration = "Ignore"
         top_n = 8
@@ -352,7 +330,7 @@ try:
 
         top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
 
-    # ========================== PAGE: MAIN (HERO + TOP 5 TRENDING) ==========================
+    # ========================== PAGE: MAIN (HOME) ==========================
     if active_page == "Main":
         st.markdown("""
             <div style="background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop); background-size: cover; background-position: center; padding: 80px 50px; border-radius: 16px; color: white; text-align: center; margin-bottom: 25px;">
@@ -363,17 +341,10 @@ try:
             </div>
         """, unsafe_allow_html=True)
 
-        cta_col, _ = st.columns([1, 4])
-        with cta_col:
-            if st.button("🚀 Start Exploring", use_container_width=True):
-                st.session_state.page = "Top Recommendations"
-                st.rerun()
-
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("🔥 Trending Destinations Worldwide")
+        st.subheader("Trending Destinations Worldwide")
         st.markdown("Explore our top 5 highest-rated and most popular attractions. Hover over any card for details or click the name to navigate via Google Maps.")
 
-        # Compute top 5 highest rated / popular attractions
         try:
             if 'rating' in df_raw.columns:
                 top_grouped = df_raw.groupby('attraction_name').agg(
@@ -392,18 +363,15 @@ try:
             with card_cols[idx]:
                 meta_row = attr_meta[attr_meta['attraction_name'] == name]
                 category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
-                
+
                 lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
                 lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
-                
+
                 img_url = get_attraction_photo(name)
-                
-                # Estimated spend calculation
                 seed = sum(ord(c) for c in name)
                 est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
-                
                 nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
-                
+
                 card_html = f"""
                     <div class="dest-card">
                         <img src="{img_url}" alt="{name}">
@@ -420,7 +388,7 @@ try:
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
-    # ========================== PAGE: TRAVELER VIEW ==========================
+    # ========================== PAGE: TRAVELER VIEW (RECOMMENDATIONS) ==========================
     elif active_page == "Top Recommendations":
         persona_df = df_raw.copy()
         all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and
