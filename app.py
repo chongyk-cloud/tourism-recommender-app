@@ -842,7 +842,7 @@ try:
                 <div class="info-card">
                     <h4>💰 Estimated Trip Cost</h4>
                     <p style="font-size:1.6rem; font-weight:800; color:#111111; margin-bottom:2px;">
-                        ¥{est_total:,} <span style="font-size:0.9rem; font-weight:500; color:#666;">({len(recommendations)} stops)</span>
+                        ¥{est_total:,.2f} <span style="font-size:0.9rem; font-weight:500; color:#666;">({len(recommendations)} stops)</span>
                     </p>
                     <div class="cost-bar-track"><div class="cost-bar-fill" style="width:{fill_pct}%;"></div></div>
                     <p style="font-size:0.85rem; color:{'#111' if within_budget else '#a33'};">
