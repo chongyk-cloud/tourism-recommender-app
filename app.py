@@ -418,14 +418,6 @@ try:
             width=0
         )
     
-        # 2. Add your Python button directly underneath
-        cta_col, _ = st.columns([1, 4])
-        with cta_col:
-            # Using type="primary" gives it a blue background to match the old button
-            if st.button("🚀 Start Exploring", use_container_width=True, type="primary"):
-                st.session_state.active_page = "Recommendations"
-                st.rerun()
-    
     # ========================== TAB 2: TRAVELER VIEW ==========================
     elif st.session_state.active_page == "Recommendations":
         st.subheader("Your Personalized Itinerary")
