@@ -198,7 +198,8 @@ div[data-baseweb="tab"] {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 0 5px 16px 5px;
+    flex: 1;
+    min-width: 180px;
 }
 .why-choose-icon {
     width: 40px;
@@ -579,31 +580,34 @@ try:
         # ========== Why Choose TravelAI ==========
         st.markdown("<br>", unsafe_allow_html=True)
 
-        with st.container():
-            st.markdown('<div class="why-choose-wrapper">', unsafe_allow_html=True)
-            st.markdown('<h3 class="why-choose-heading">🛡️ Why Choose TravelAI?</h3>', unsafe_allow_html=True)
-
-            why_items = [
+        why_items = [
                 ("👍", "Personalized", "Recommendations just for you"),
                 ("🗺️", "Smart & Accurate", "AI-powered insights"),
                 ("💰", "Budget Friendly", "Find the best value"),
                 ("❤️", "Plan with Confidence", "Explore with ease"),
             ]
-
-            why_cols = st.columns(4)
-            for col, (icon, title, sub) in zip(why_cols, why_items):
-                with col:
-                    st.markdown(f"""
-                        <div class="why-choose-card">
-                            <div class="why-choose-icon">{icon}</div>
-                            <div>
-                                <div class="why-choose-title">{title}</div>
-                                <div class="why-choose-sub">{sub}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-            st.markdown('</div>', unsafe_allow_html=True)
+    
+        cards_html = "".join(
+                f'<div class="why-choose-card">'
+                f'<div class="why-choose-icon">{icon}</div>'
+                f'<div>'
+                f'<div class="why-choose-title">{title}</div>'
+                f'<div class="why-choose-sub">{sub}</div>'
+                f'</div>'
+                f'</div>'
+                for icon, title, sub in why_items
+            )
+    
+        why_choose_html = (
+                '<div class="why-choose-wrapper">'
+                '<h3 class="why-choose-heading">🛡️ Why Choose TravelAI?</h3>'
+                '<div style="display:flex; gap:24px; flex-wrap:wrap;">'
+                + cards_html +
+                '</div>'
+                '</div>'
+            )
+    
+        st.markdown(why_choose_html, unsafe_allow_html=True)
     # Tab 2
     elif st.session_state.active_page == "Recommendations":
         # ========== Banner ==========
