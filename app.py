@@ -587,7 +587,7 @@ try:
                 Tell Us About Your Travel Preferences
             </div>
             """, unsafe_allow_html=True)
-
+            
         with st.container():
             # Setup helper functions and lists
             def get_default_index(opts, target="Ignore"):
