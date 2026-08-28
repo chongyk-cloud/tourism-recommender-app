@@ -39,7 +39,6 @@ div[data-baseweb="tab"] {
 /* Hero Banner Styling */
 .hero-banner {
     position: relative;
-    /* Your new background gradient and Unsplash image */
     background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
@@ -47,8 +46,6 @@ div[data-baseweb="tab"] {
     padding: 80px 50px;
     margin-bottom: 25px;
     color: white;
-    
-    /* Layout properties preserved to keep the button and text in the right place */
     height: 65vh;
     min-height: 550px;
     display: flex;
@@ -70,7 +67,7 @@ div[data-baseweb="tab"] {
 }
 
 .hero-btn {
-    background-color: #0078D4; /* Matches the blue button in the image */
+    background-color: #0078D4;
     color: white;
     border: none;
     padding: 14px 28px;
@@ -133,12 +130,10 @@ div[data-baseweb="tab"] {
     transition: transform 0.3s ease;
 }
 
-/* Zoom image slightly on hover */
 .dest-card:hover img {
     transform: scale(1.08);
 }
 
-/* Hide overlay details until hover */
 .dest-overlay {
     position: absolute;
     inset: 0;
@@ -152,7 +147,6 @@ div[data-baseweb="tab"] {
     transition: opacity 0.3s ease;
 }
 
-/* Reveal overlay on hover */
 .dest-card:hover .dest-overlay {
     opacity: 1;
 }
@@ -169,27 +163,6 @@ div[data-baseweb="tab"] {
     margin-top: 6px;
     line-height: 1.4;
     color: #e0e0e0;
-}
-
-/* Target the button with key "start_explore_btn" */
-div[data-testid="stButton"] button[data-testid="baseButton-start_explore_btn"] {
-    background-color: #0078D4 !important;
-    color: white !important;
-    border: none !important;
-    padding: 14px 28px !important;
-    font-size: 1.1rem !important;
-    font-weight: bold !important;
-    border-radius: 30px !important;
-    cursor: pointer !important;
-    transition: background-color 0.3s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-    margin-top: -10px;  /* fine‑tune vertical positioning */
-}
-div[data-testid="stButton"] button[data-testid="baseButton-start_explore_btn"]:hover {
-    background-color: #005A9E !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -370,7 +343,9 @@ try:
         recs = [(row['attraction_name'], row['avg_rating']) for _, row in top_spots.iterrows()]
         return recs, False
 
-    # --- 5. SIDEBAR & UI CONTROLS ---
+    # =========================================================================
+    # ========================== SIDEBAR (only algorithm + mode info) ==========
+    # =========================================================================
     st.sidebar.header("🎯 Traveler Profile & Filters")
     st.sidebar.subheader("🧠 Algorithm Selection")
     
@@ -382,56 +357,25 @@ try:
     selected_model = st.sidebar.selectbox("Choose Recommendation Engine", options=model_options)
     st.sidebar.divider()
 
-    def get_default_index(opts, target): return opts.index(target) if target in opts else len(opts) - 1
-    
-    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    selected_age = st.sidebar.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages, "Ignore"))
+    # -------- We removed the demographic filters from sidebar and will place them in the main area --------
+    # However, we still need to compute the "active_tourist_id" and show the mode info in sidebar.
+    # We'll still read the filter values from the main area widgets, but they are defined later.
+    # So we define placeholder variables that will be updated after the main widgets are created.
+    # We'll use a function to get the current values.
 
-    avail_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    selected_gender = st.sidebar.selectbox("Gender", avail_genders, index=get_default_index(avail_genders, "Ignore"))
+    # We'll store the filter values in session state or use the widget values directly.
+    # But we need to compute persona matching after the filters are defined.
+    # So we'll define the filters in the main area first (after navigation) and then compute persona.
 
-    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    selected_category = st.sidebar.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories, "Ignore"))
-    
-    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    selected_province = st.sidebar.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces, "Ignore"))
-
-    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-    selected_duration = st.sidebar.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options, "Ignore"))
-
-    top_n = st.sidebar.slider("Number of Recommendations", 1, 12, 8)
-
-    # Automatic Persona Matching
-    persona_df = df_raw.copy()
-    all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and selected_province == "Ignore" and selected_category == "Ignore" and selected_duration == "Ignore")
-
-    if all_filters_ignored:
-        active_tourist_id = None 
-        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
-    else:
-        if selected_age != "Ignore": persona_df = persona_df[persona_df['age_group'] == selected_age]
-        if selected_gender != "Ignore": persona_df = persona_df[persona_df['gender'] == selected_gender]
-            
-        if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
-            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
-        else:
-            active_tourist_id = 605 
-            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
-
-    recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
-    )
-            
-    # --- CUSTOM NAVIGATION STYLING ---
-    # Determine which column (1-4) is active based on session state
+    # =========================================================================
+    # ========================== CUSTOM NAVIGATION =============================
+    # =========================================================================
+    # Determine which column is active
     page_to_col = {"Home": 1, "Recommendations": 2, "Map": 3, "Diagnostics": 4}
     active_col = page_to_col.get(st.session_state.active_page, 1)
     
-    # Inject dynamic CSS to style only the top navigation buttons
     st.markdown(f"""
     <style>
-    /* Base styling for all navigation buttons */
     div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="stButton"] button {{
         background: transparent !important;
         border: none !important;
@@ -445,33 +389,26 @@ try:
         padding-bottom: 6px !important;
         transition: color 0.3s ease;
     }}
-    
-    /* Hover effect */
     div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="stButton"] button:hover {{
         color: #000 !important;
     }}
-    
-    /* ACTIVE STATE: Bold text and tan underline for the selected page */
     div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-child({active_col}) div[data-testid="stButton"] button p {{
         font-weight: 800 !important;
         color: #111 !important;
     }}
     div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-child({active_col}) div[data-testid="stButton"] button {{
-        border-bottom: 2px solid #C4A47C !important; /* Custom tan underline */
+        border-bottom: 2px solid #C4A47C !important;
     }}
     </style>
     """, unsafe_allow_html=True)
     
-    # --- NAVIGATION BUTTONS ---
-    # Removed the emojis to match the sleek, text-only aesthetic of your image
     nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
-    
     with nav_col1:
         if st.button("Home", use_container_width=True):
             st.session_state.active_page = "Home"
             st.rerun()
     with nav_col2:
-        if st.button("Recommendations", key="nav_recommendations", use_container_width=True):
+        if st.button("Recommendations", use_container_width=True):
             st.session_state.active_page = "Recommendations"
             st.rerun()
     with nav_col3:
@@ -483,16 +420,84 @@ try:
             st.session_state.active_page = "Diagnostics"
             st.rerun()
             
-    # --- SEPARATOR LINE ---
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
-  
-    # ========================== TAB 1: HOME PAGE ==========================
+
+    # =========================================================================
+    # ============== FILTERS (moved to main area, below navigation) ===========
+    # =========================================================================
+    # <-- CHANGED: all demographic filters and the slider are now here.
+    # They are placed in a horizontal layout using columns.
+    st.markdown("#### 🔍 Filter your recommendations")
+    col_f1, col_f2, col_f3, col_f4 = st.columns(4)   # first row: Age, Gender, Category, Province
+    col_f5, col_f6 = st.columns([1, 1])              # second row: Duration, Top N
+
+    # Define the options and default indices
+    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    avail_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+
+    # Helper to get default index (prefer "Ignore")
+    def get_default_index(opts, target="Ignore"):
+        return opts.index(target) if target in opts else len(opts)-1
+
+    with col_f1:
+        selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
+    with col_f2:
+        selected_gender = st.selectbox("Gender", avail_genders, index=get_default_index(avail_genders))
+    with col_f3:
+        selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
+    with col_f4:
+        selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
+    with col_f5:
+        selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
+    with col_f6:
+        top_n = st.slider("Number of Recommendations", 1, 12, 8)
+
+    # =========================================================================
+    # ============== PERSONA MATCHING (now uses the widgets above) ============
+    # =========================================================================
+    # <-- CHANGED: moved this code after the filters are defined.
+    persona_df = df_raw.copy()
+    all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
+                           selected_province == "Ignore" and selected_category == "Ignore" and 
+                           selected_duration == "Ignore")
+
+    if all_filters_ignored:
+        active_tourist_id = None 
+        # Show mode info in sidebar (unchanged)
+        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
+    else:
+        if selected_age != "Ignore": 
+            persona_df = persona_df[persona_df['age_group'] == selected_age]
+        if selected_gender != "Ignore": 
+            persona_df = persona_df[persona_df['gender'] == selected_gender]
+            
+        if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
+            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
+        else:
+            active_tourist_id = 605 
+            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
+
+    # Generate recommendations using the current filters
+    recommendations, is_personalized = generate_recommendations(
+        active_tourist_id, selected_model, selected_age, selected_gender, 
+        selected_province, selected_category, selected_duration, top_n
+    )
+
+    # =========================================================================
+    # ========================== PAGE CONTENT =================================
+    # =========================================================================
+    # ========================== TAB 1: HOME ==================================
     if st.session_state.active_page == "Home":
-       # Hero banner background (no button inside)
+        # (unchanged hero banner and trending destinations)
         st.markdown("""
-            <div class="hero-banner" id="hero-banner">
+            <div class="hero-banner">
                 <div class="hero-top">
                     <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
+                    <!-- The HTML button is removed – we use a Streamlit button below -->
                 </div>
                 <div class="hero-bottom">
                     <div class="hero-pills">
@@ -507,17 +512,18 @@ try:
                 </div>
             </div>
         """, unsafe_allow_html=True)
-        
-        # Now place the Streamlit button inside the banner using a column overlay
-        # We use a container with relative positioning and negative margin to overlay the banner
+
+        # <-- CHANGED: Streamlit button for "Start Explore" – no JavaScript needed.
+        # Position it using a container with columns to overlay the banner.
+        # We'll place it in the same spot as the original button.
         with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])   # adjust to position the button
-            with col2:
+            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+            with col_btn1:
                 if st.button("Start Explore ➔", key="start_explore_btn", use_container_width=True):
                     st.session_state.active_page = "Recommendations"
                     st.rerun()
-        
-        # --- TRENDING DESTINATIONS SECTION ---
+
+        # Trending destinations (unchanged)
         st.markdown("""
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 20px;">
                 <h3 style="margin: 0; padding: 0;">Trending Destinations China</h3>
@@ -574,9 +580,7 @@ try:
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
-    
-    
-    # ========================== TAB 2: TRAVELER VIEW ==========================
+    # ========================== TAB 2: RECOMMENDATIONS ======================
     elif st.session_state.active_page == "Recommendations":
         st.subheader("Your Personalized Itinerary")
 
