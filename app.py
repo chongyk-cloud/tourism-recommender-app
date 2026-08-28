@@ -242,6 +242,10 @@ def get_attraction_photo(attraction_name):
 def load_all_data_v2():
     try:
         df_raw = pd.read_csv('tourism_recommendation_dataset_en.csv')
+        attraction_spend_map = (
+            df_raw.groupby('attraction_name')['spend_amount'].mean().to_dict()
+            if not df_raw.empty and 'spend_amount' in df_raw.columns else {}
+        )
     except Exception:
         df_raw = pd.DataFrame()
     try:
@@ -299,7 +303,6 @@ try:
     df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
-    # Updated to accept new filters: spend_range, min_rating, season
     def generate_recommendations(tourist_id, selected_model, age, province, category, duration,
                                  spend_range, min_rating, season, top_n=8):
         filtered = df_raw.copy()
@@ -314,7 +317,11 @@ try:
         # Spend amount filter (range)
         if spend_range is not None:
             min_spend, max_spend = spend_range
-            filtered = filtered[(filtered['spend_amount'] >= min_spend) & (filtered['spend_amount'] <= max_spend)]
+            attraction_avg_spend = df_raw.groupby('attraction_name')['spend_amount'].mean()
+            valid_spend_attractions = attraction_avg_spend[
+                (attraction_avg_spend >= min_spend) & (attraction_avg_spend <= max_spend)
+            ].index
+            filtered = filtered[filtered['attraction_name'].isin(valid_spend_attractions)]
         # Minimum rating filter
         if min_rating is not None:
             filtered = filtered[filtered['rating'] >= min_rating]
@@ -699,7 +706,12 @@ try:
                             
                             img_url = get_attraction_photo(name)
                             seed = sum(ord(c) for c in name)
-                            est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                            avg_spend = attraction_spend_map.get(name)
+                                if avg_spend is not None:
+                                    est_spend = f"¥{avg_spend:.0f}"
+                                else:
+                                    seed = sum(ord(c) for c in name)
+                                    est_spend = f"¥{150 + (seed % 200)} (est.)"   # fallback only if no real data exists
                             nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
                             
                             item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
@@ -813,14 +825,13 @@ try:
             """, unsafe_allow_html=True)
         
             # --- Card 2: Estimated Trip Cost ---
-            if recommendations:
-                seeds = [sum(ord(c) for c in name) for name, _ in recommendations]
-                est_total = sum(150 + (s % 200) for s in seeds)
-            else:
-                est_total = 0
-            budget_cap = spend_range[1] if spend_range else 1000
-            fill_pct = min(100, int((est_total / budget_cap) * 100)) if budget_cap else 0
-            within_budget = est_total <= budget_cap
+           if recommendations:
+              est_total = sum(
+                  attraction_spend_map.get(name, 150 + (sum(ord(c) for c in name) % 200))
+                  for name, _ in recommendations
+                )
+           else:
+             est_total = 0
         
             st.markdown(f"""
                 <div class="info-card">
