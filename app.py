@@ -301,7 +301,7 @@ def load_all_data_v2():
 
 # Start main execution block
 try:
-    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
+    df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready, attraction_spend_map = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
     def generate_recommendations(tourist_id, selected_model, age, province, category, duration,
