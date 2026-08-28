@@ -492,26 +492,30 @@ try:
         """, unsafe_allow_html=True)
 
         # Invisible bridge connecting the HTML button to Streamlit's Session State Navigation
-        components.html(
-            """
+        components.html("""
             <script>
             const parentDoc = window.parent.document;
             
-            // 1. Target the HTML button inside the hero banner
-            const heroBtn = parentDoc.getElementById('start-explore-btn');
-            
-            if (heroBtn) {
-                heroBtn.addEventListener('click', function() {
-                    // 2. Find all native Streamlit buttons on the page
-                    const allButtons = Array.from(parentDoc.querySelectorAll('button'));
-                    
-                    // 3. Find the navigation button we created and click it
-                    const targetTab = allButtons.find(btn => btn.innerText.includes('Recommendations'));
-                    if (targetTab) {
-                        targetTab.click();
-                    }
-                });
-            }
+            // Use an interval to wait for the element to render in the DOM
+            const checkExist = setInterval(function() {
+                const heroBtn = parentDoc.getElementById('start-explore-btn');
+                
+                if (heroBtn) {
+                    // Once found, attach the event listener
+                    heroBtn.addEventListener('click', function() {
+                        // Find all native Streamlit buttons on the page
+                        const allButtons = Array.from(parentDoc.querySelectorAll('button'));
+                        
+                        // Find the navigation button we created and click it
+                        const targetTab = allButtons.find(btn => btn.innerText.includes('Recommendations'));
+                        if (targetTab) {
+                            targetTab.click();
+                        }
+                    });
+                    // Stop the interval loop since we found the button
+                    clearInterval(checkExist); 
+                }
+            }, 100); // Check every 100 milliseconds
             </script>
             """,
             height=0, 
