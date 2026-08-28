@@ -1202,7 +1202,7 @@ try:
             {
                 "name": "Collaborative Filtering",
                 "sub": "Matrix Factorization (SVD)",
-                "pill": "baseline / popular",
+                "pill": "popular",
                 "is_best": False,
                 "metrics": [
                     ("Accuracy", "89.55%", 89.5), 
@@ -1256,7 +1256,7 @@ try:
             {
                 "name": "Hybrid Ensemble",
                 "sub": "Multi-Model Architecture",
-                "pill": "flagship / comprehensive",
+                "pill": "comprehensive",
                 "is_best": False,
                 "metrics": [
                     ("Accuracy", "89.63%", 89.6), 
