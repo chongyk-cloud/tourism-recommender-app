@@ -17,7 +17,8 @@ spend_range = (0, 1000)
 min_rating = 3.0
 top_n = 8
 active_tourist_id = None
-recommendations = []
+if "recommendations" not in st.session_state:
+    st.session_state.recommendations = []
 is_personalized = False
 
 
@@ -623,10 +624,12 @@ try:
                 st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
     
         recommendations, is_personalized = generate_recommendations(
-            active_tourist_id, selected_model, selected_age, selected_province,
+            active_tourist_id, selected_model, selected_age, selected_province, 
             selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
         )
-    
+        # Save to session state so the Map tab can access it
+        st.session_state.recommendations = recommendations
+            
         # ========== Display Itinerary ==========
         st.subheader("Your Personalized Itinerary")
     
@@ -693,9 +696,9 @@ try:
         origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
         origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
 
-        if recommendations and not attr_meta.empty:
+        if st.session_state.recommendations and not attr_meta.empty:
             map_data = []
-            for name, score in recommendations:
+            for name, score in st.session_state.recommendations:
                 meta_row = attr_meta[attr_meta['attraction_name'] == name]
                 if not meta_row.empty:
                     raw_lat, raw_lon = meta_row['latitude'].iloc[0], meta_row['longitude'].iloc[0]
