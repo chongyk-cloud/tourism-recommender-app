@@ -600,7 +600,7 @@ try:
     
         why_choose_html = (
                 '<div class="why-choose-wrapper">'
-                '<h3 class="why-choose-heading">Why Choose TravelAI?</h3>'
+                '<h3 class="why-choose-heading">Why Choose Duolingo?</h3>'
                 '<div style="display:flex; gap:24px; flex-wrap:wrap;">'
                 + cards_html +
                 '</div>'
