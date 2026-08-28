@@ -845,6 +845,43 @@ try:
                     <ul>{points_html}</ul>
                 </div>
             """, unsafe_allow_html=True)
+
+            # --- Card 2: Estimated Trip Cost ---
+            if recommendations:
+                est_total = sum(
+                    attraction_spend_map.get(name, 150 + (sum(ord(c) for c in name) % 200))
+                    for name, _ in recommendations
+                )
+            else:
+                est_total = 0
+        
+            budget_cap = spend_range[1] if spend_range else 1000
+            fill_pct = min(100, int((est_total / budget_cap) * 100)) if budget_cap else 0
+            within_budget = est_total <= budget_cap
+        
+            st.markdown(f"""
+                <div class="info-card">
+                    <h4>💰 Estimated Trip Cost</h4>
+                    <p style="font-size:1.6rem; font-weight:800; color:#111111; margin-bottom:2px;">
+                        ¥{est_total:,} <span style="font-size:0.9rem; font-weight:500; color:#666;">({len(recommendations)} stops)</span>
+                    </p>
+                    <div class="cost-bar-track"><div class="cost-bar-fill" style="width:{fill_pct}%;"></div></div>
+                    <p style="font-size:0.85rem; color:{'#111' if within_budget else '#a33'};">
+                        {'✓ Within your budget' if within_budget else '⚠ Above your budget'}
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+            # --- Card 3: Suggested Itinerary (first 3 recs as a mini day plan) ---
+            if recommendations:
+                days_html = ""
+                for i, (name, score) in enumerate(recommendations[:3], start=1):
+                    days_html += (
+                        f'<div class="itinerary-day">'
+                        f'<b>Day {i}</b><br><span>{name}</span>'
+                        f'</div>'
+                    )
+                st.markdown(f"""<div class="info-card"><h4>📅 Suggested Itinerary</h4>{days_html}</div>""", unsafe_allow_html=True)
     
         with side_col:
             render_info_panel(st.session_state.recommendations, spend_range, top_n, attraction_spend_map, selected_model)
