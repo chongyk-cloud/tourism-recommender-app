@@ -181,17 +181,31 @@ div[data-baseweb="tab"] {
 }
 
 /* Why Choose TravelAI section */
+.why-choose-wrapper {
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 24px 20px 8px 20px;
+    background: #fafafa;
+    margin-bottom: 20px;
+}
+.why-choose-heading {
+    margin: 0 0 18px 0;
+    color: #111111;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
 .why-choose-card {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 10px 5px;
+    padding: 0 5px 16px 5px;
 }
 .why-choose-icon {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: #f2f2f2;
+    background: #ffffff;
+    border: 1px solid #eaeaea;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -564,33 +578,32 @@ try:
                 
         # ========== Why Choose TravelAI ==========
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("""
-            <div style="border: 1px solid #e5e5e5; border-radius: 16px; padding: 24px 20px; background: #fafafa;">
-                <h3 style="margin: 0 0 18px 0; color: #111111; font-weight: 800; font-size: 1.2rem;">
-                    🛡️ Why Choose TravelAI?
-                </h3>
-            </div>
-        """, unsafe_allow_html=True)
 
-        why_items = [
-            ("👍", "Personalized", "Recommendations just for you"),
-            ("🗺️", "Smart & Accurate", "AI-powered insights"),
-            ("💰", "Budget Friendly", "Find the best value"),
-            ("❤️", "Plan with Confidence", "Explore with ease"),
-        ]
+        with st.container():
+            st.markdown('<div class="why-choose-wrapper">', unsafe_allow_html=True)
+            st.markdown('<h3 class="why-choose-heading">🛡️ Why Choose TravelAI?</h3>', unsafe_allow_html=True)
 
-        why_cols = st.columns(4)
-        for col, (icon, title, sub) in zip(why_cols, why_items):
-            with col:
-                st.markdown(f"""
-                    <div class="why-choose-card">
-                        <div class="why-choose-icon">{icon}</div>
-                        <div>
-                            <div class="why-choose-title">{title}</div>
-                            <div class="why-choose-sub">{sub}</div>
+            why_items = [
+                ("👍", "Personalized", "Recommendations just for you"),
+                ("🗺️", "Smart & Accurate", "AI-powered insights"),
+                ("💰", "Budget Friendly", "Find the best value"),
+                ("❤️", "Plan with Confidence", "Explore with ease"),
+            ]
+
+            why_cols = st.columns(4)
+            for col, (icon, title, sub) in zip(why_cols, why_items):
+                with col:
+                    st.markdown(f"""
+                        <div class="why-choose-card">
+                            <div class="why-choose-icon">{icon}</div>
+                            <div>
+                                <div class="why-choose-title">{title}</div>
+                                <div class="why-choose-sub">{sub}</div>
+                            </div>
                         </div>
-                    </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+
+            st.markdown('</div>', unsafe_allow_html=True)
     # Tab 2
     elif st.session_state.active_page == "Recommendations":
         # ========== Banner ==========
