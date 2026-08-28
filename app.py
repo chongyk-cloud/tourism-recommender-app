@@ -284,16 +284,25 @@ try:
     df_raw, attr_meta, eval_metrics_df, matrices, idx_to_item, user_to_idx, train_seen, ml_ready = load_all_data_v2()
 
     # --- 4. MULTI-MODEL RECOMMENDATION ENGINE ---
-    def generate_recommendations(tourist_id, selected_model, age, gender, province, category, duration, top_n=8):
+    # Updated to accept new filters: spend_range, min_rating, season
+    def generate_recommendations(tourist_id, selected_model, age, province, category, duration,
+                                 spend_range, min_rating, season, top_n=8):
         filtered = df_raw.copy()
         if age != "Ignore": filtered = filtered[filtered['age_group'] == age]
-        if gender != "Ignore": filtered = filtered[filtered['gender'] == gender]
         if province != "Ignore": filtered = filtered[filtered['province'] == province]
         if category != "Ignore": filtered = filtered[filtered['attraction_category'] == category]
         if duration != "Ignore":
             if duration == "Short (1-3 hours)": filtered = filtered[filtered['visit_duration_hours'] <= 3]
             elif duration == "Medium (3-5 hours)": filtered = filtered[(filtered['visit_duration_hours'] > 3) & (filtered['visit_duration_hours'] <= 5)]
             elif duration == "Long (5+ hours)": filtered = filtered[filtered['visit_duration_hours'] > 5]
+        if season != "Ignore": filtered = filtered[filtered['season'] == season]
+        # Spend amount filter (range)
+        if spend_range is not None:
+            min_spend, max_spend = spend_range
+            filtered = filtered[(filtered['spend_amount'] >= min_spend) & (filtered['spend_amount'] <= max_spend)]
+        # Minimum rating filter
+        if min_rating is not None:
+            filtered = filtered[filtered['rating'] >= min_rating]
             
         valid_candidates = set(filtered['attraction_name'].unique())
         
@@ -357,20 +366,12 @@ try:
     selected_model = st.sidebar.selectbox("Choose Recommendation Engine", options=model_options)
     st.sidebar.divider()
 
-    # -------- We removed the demographic filters from sidebar and will place them in the main area --------
-    # However, we still need to compute the "active_tourist_id" and show the mode info in sidebar.
-    # We'll still read the filter values from the main area widgets, but they are defined later.
-    # So we define placeholder variables that will be updated after the main widgets are created.
-    # We'll use a function to get the current values.
-
-    # We'll store the filter values in session state or use the widget values directly.
-    # But we need to compute persona matching after the filters are defined.
-    # So we'll define the filters in the main area first (after navigation) and then compute persona.
+    # We'll compute the persona info after defining main filters later, but we'll keep the sidebar info box.
+    # For now, we'll create placeholder for active_tourist_id and update after filters.
 
     # =========================================================================
     # ========================== CUSTOM NAVIGATION =============================
     # =========================================================================
-    # Determine which column is active
     page_to_col = {"Home": 1, "Recommendations": 2, "Map": 3, "Diagnostics": 4}
     active_col = page_to_col.get(st.session_state.active_page, 1)
     
@@ -425,56 +426,80 @@ try:
     # =========================================================================
     # ============== FILTERS (moved to main area, below navigation) ===========
     # =========================================================================
-    # <-- CHANGED: all demographic filters and the slider are now here.
-    # They are placed in a horizontal layout using columns.
     st.markdown("#### 🔍 Filter your recommendations")
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)   # first row: Age, Gender, Category, Province
-    col_f5, col_f6 = st.columns([1, 1])              # second row: Duration, Top N
-
-    # Define the options and default indices
-    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_genders = sorted(df_raw['gender'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+    
+    # First row: Age, Category, Province, Duration
+    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+    # Second row: Season, Spend Amount (range), Min Rating, Top N
+    col_f5, col_f6, col_f7, col_f8 = st.columns(4)
 
     # Helper to get default index (prefer "Ignore")
     def get_default_index(opts, target="Ignore"):
         return opts.index(target) if target in opts else len(opts)-1
 
+    # Define options
+    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+    # Season options: map to English for display, but keep original values
+    season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
+    avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
+    # We'll display English names but store original values
+    season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
+    season_values = avail_seasons + ["Ignore"]
+
     with col_f1:
         selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
     with col_f2:
-        selected_gender = st.selectbox("Gender", avail_genders, index=get_default_index(avail_genders))
-    with col_f3:
         selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
-    with col_f4:
+    with col_f3:
         selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
-    with col_f5:
+    with col_f4:
         selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
+    with col_f5:
+        # Season dropdown – display English names
+        idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
+        selected_season_display = st.selectbox("Season", season_display, index=idx_season)
+        # Map back to original value
+        if selected_season_display == "Ignore":
+            selected_season = "Ignore"
+        else:
+            # reverse mapping
+            reverse_map = {v: k for k, v in season_mapping.items()}
+            selected_season = reverse_map.get(selected_season_display, selected_season_display)
     with col_f6:
+        # Spend amount range slider
+        if not df_raw.empty:
+            min_spend = int(df_raw['spend_amount'].min())
+            max_spend = int(df_raw['spend_amount'].max())
+            # Set default to full range
+            spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
+        else:
+            spend_range = (0, 1000)
+    with col_f7:
+        # Minimum rating slider (3.0 to 5.0)
+        min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
+    with col_f8:
         top_n = st.slider("Number of Recommendations", 1, 12, 8)
 
     # =========================================================================
     # ============== PERSONA MATCHING (now uses the widgets above) ============
     # =========================================================================
-    # <-- CHANGED: moved this code after the filters are defined.
     persona_df = df_raw.copy()
-    all_filters_ignored = (selected_age == "Ignore" and selected_gender == "Ignore" and 
-                           selected_province == "Ignore" and selected_category == "Ignore" and 
-                           selected_duration == "Ignore")
+    all_filters_ignored = (selected_age == "Ignore" and selected_province == "Ignore" and 
+                           selected_category == "Ignore" and selected_duration == "Ignore" and
+                           selected_season == "Ignore")
 
     if all_filters_ignored:
         active_tourist_id = None 
-        # Show mode info in sidebar (unchanged)
         st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
     else:
         if selected_age != "Ignore": 
             persona_df = persona_df[persona_df['age_group'] == selected_age]
-        if selected_gender != "Ignore": 
-            persona_df = persona_df[persona_df['gender'] == selected_gender]
-            
-        if not persona_df.empty and (selected_age != "Ignore" or selected_gender != "Ignore"):
+        # No gender filter anymore, so we don't filter by gender.
+        # But we can still pick a tourist from the filtered set if age is selected.
+        if not persona_df.empty and selected_age != "Ignore":
             active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
             st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
         else:
@@ -483,8 +508,8 @@ try:
 
     # Generate recommendations using the current filters
     recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_gender, 
-        selected_province, selected_category, selected_duration, top_n
+        active_tourist_id, selected_model, selected_age, selected_province, 
+        selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
     )
 
     # =========================================================================
@@ -492,12 +517,10 @@ try:
     # =========================================================================
     # ========================== TAB 1: HOME ==================================
     if st.session_state.active_page == "Home":
-        # (unchanged hero banner and trending destinations)
         st.markdown("""
             <div class="hero-banner">
                 <div class="hero-top">
                     <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-                    <!-- The HTML button is removed – we use a Streamlit button below -->
                 </div>
                 <div class="hero-bottom">
                     <div class="hero-pills">
@@ -513,9 +536,7 @@ try:
             </div>
         """, unsafe_allow_html=True)
 
-        # <-- CHANGED: Streamlit button for "Start Explore" – no JavaScript needed.
-        # Position it using a container with columns to overlay the banner.
-        # We'll place it in the same spot as the original button.
+        # Streamlit button for "Start Explore"
         with st.container():
             col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
             with col_btn1:
