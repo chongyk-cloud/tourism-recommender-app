@@ -670,66 +670,71 @@ try:
             if len(user_history) > 0:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
-    
-        if not st.session_state.recommendations:
-            st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
-        elif not ml_ready:
-            st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
-        elif st.session_state.is_personalized:
-            st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {st.session_state.active_tourist_id}")
-        else:
-            st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
-    
-        if st.session_state.recommendations:
-            num_cols = 4
-            for row_idx in range(0, len(st.session_state.recommendations), num_cols):
-                row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
-                cols = st.columns(num_cols)
-                
-                for i, (name, score) in enumerate(row_items):
-                    with cols[i]:
-                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
-                        category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
-                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
-                        
-                        lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
-                        lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
-                        
-                        img_url = get_attraction_photo(name)
-                        seed = sum(ord(c) for c in name)
-                        est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
-                        nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
-                        
-                        item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
-                        real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
-                        
-                        if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
-                        elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
-                        elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
-                        else: reason = "🧠 Deep Learning Match"
-                        
-                        # 1. The Hover Card (Image with name and details inside)
-                        card_html = f"""
-                        <div class="dest-card">
-                            <img src="{img_url}" alt="{name}">
-                            <div class="dest-overlay">
-                                <div class="dest-title">
-                                    <a href="{nav_link}" target="_blank">{name} ↗</a>
-                                </div>
-                                <div class="dest-details">
-                                    ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
-                                    📂 Category: {category}<br>
-                                    💰 Est. Spend: {est_spend}
+        main_col, side_col = st.columns([3, 1])
+
+        with main_col:
+            if not st.session_state.recommendations:
+                st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
+            elif not ml_ready:
+                st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
+            elif st.session_state.is_personalized:
+                st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {st.session_state.active_tourist_id}")
+            else:
+                st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
+        
+            if st.session_state.recommendations:
+                num_cols = 3   # drop from 4 to 3 since the panel now takes some width
+                for row_idx in range(0, len(st.session_state.recommendations), num_cols):
+                    row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
+                    cols = st.columns(num_cols)
+                    for i, (name, score) in enumerate(row_items):
+                        with cols[i]:
+                            meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
+                            category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+                            level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+                            
+                            lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+                            lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+                            
+                            img_url = get_attraction_photo(name)
+                            seed = sum(ord(c) for c in name)
+                            est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                            nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+                            
+                            item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
+                            real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
+                            
+                            if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
+                            elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
+                            elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
+                            else: reason = "🧠 Deep Learning Match"
+                            
+                            # 1. The Hover Card (Image with name and details inside)
+                            card_html = f"""
+                            <div class="dest-card">
+                                <img src="{img_url}" alt="{name}">
+                                <div class="dest-overlay">
+                                    <div class="dest-title">
+                                        <a href="{nav_link}" target="_blank">{name} ↗</a>
+                                    </div>
+                                    <div class="dest-details">
+                                        ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
+                                        📂 Category: {category}<br>
+                                        💰 Est. Spend: {est_spend}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        """
-                        st.markdown(card_html, unsafe_allow_html=True)
-                        
-                        # 2. The Text Below (Reason and Caption kept, Name removed)
-                        st.markdown(f"*{reason}*")
-                        st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
-
+                            """
+                            st.markdown(card_html, unsafe_allow_html=True)
+                            
+                            # 2. The Text Below (Reason and Caption kept, Name removed)
+                            st.markdown(f"*{reason}*")
+                            st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
+                                pass
+        
+        with side_col:
+            render_info_panel(st.session_state.recommendations, spend_range, top_n)
+    
                         # --- Monochrome info-panel CSS (matches white background) ---
                         st.markdown("""
                         <style>
