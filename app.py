@@ -179,6 +179,36 @@ div[data-baseweb="tab"] {
     line-height: 1.4;
     color: #e0e0e0;
 }
+
+/* Why Choose TravelAI section */
+.why-choose-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 5px;
+}
+.why-choose-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #f2f2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.why-choose-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #111111;
+    margin-bottom: 2px;
+}
+.why-choose-sub {
+    font-size: 0.82rem;
+    color: #666666;
+    line-height: 1.3;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -531,6 +561,36 @@ try:
                     </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+                
+        # ========== Why Choose TravelAI ==========
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="border: 1px solid #e5e5e5; border-radius: 16px; padding: 24px 20px; background: #fafafa;">
+                <h3 style="margin: 0 0 18px 0; color: #111111; font-weight: 800; font-size: 1.2rem;">
+                    🛡️ Why Choose TravelAI?
+                </h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+        why_items = [
+            ("👍", "Personalized", "Recommendations just for you"),
+            ("🗺️", "Smart & Accurate", "AI-powered insights"),
+            ("💰", "Budget Friendly", "Find the best value"),
+            ("❤️", "Plan with Confidence", "Explore with ease"),
+        ]
+
+        why_cols = st.columns(4)
+        for col, (icon, title, sub) in zip(why_cols, why_items):
+            with col:
+                st.markdown(f"""
+                    <div class="why-choose-card">
+                        <div class="why-choose-icon">{icon}</div>
+                        <div>
+                            <div class="why-choose-title">{title}</div>
+                            <div class="why-choose-sub">{sub}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
     # Tab 2
     elif st.session_state.active_page == "Recommendations":
         # ========== Banner ==========
@@ -884,7 +944,7 @@ try:
 
         # ========== Spatial Map (moved here from its own tab) ==========
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("📍 3D Journey & Spatial Layout")
+        st.subheader("3D Journey & Spatial Layout")
         st.info("Interactive routing from your origin point to recommended destinations.")
 
         PROVINCE_COORDS = {
