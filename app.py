@@ -350,9 +350,9 @@ try:
         <div class="hero-banner">
             <div class="hero-top">
                 <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-                <button class="hero-btn">
+               <button class="hero-btn" onclick="window.parent.document.querySelectorAll('[data-baseweb=\\'tab\\']')[1].click()">
                     Start Explore &nbsp; ➔
-                </button>
+               </button>
             </div>
             <div class="hero-bottom">
                 <div class="hero-pills">
