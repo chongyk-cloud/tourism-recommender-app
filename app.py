@@ -553,250 +553,250 @@ try:
                 st.markdown(card_html, unsafe_allow_html=True)
 
     elif st.session_state.active_page == "Recommendations":
-    # =========================================================================
-    # ============== HERO BANNER (above filters) ===============================
-    # =========================================================================
-    st.markdown("""
-        <div style="
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                        url('https://2021-2025.state.gov/wp-content/uploads/2023/07/shutterstock_245773270v2-768x512.jpg');
-            background-size: cover;
-            background-position: center;
-            border-radius: 16px;
-            padding: 60px 40px;
-            margin-bottom: 30px;
-            color: white;
-            text-align: center;
-        ">
-            <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 10px;">
-                Find Your Perfect Travel Destinations
-            </h1>
-            <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">
-                Personalized recommendations based on your preferences, budget and travel style.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # =========================================================================
-    # ============== FILTERS ==================================================
-    # =========================================================================
-    st.markdown("#### 🔍 Filter your recommendations")
+        # =========================================================================
+        # ============== HERO BANNER (above filters) ===============================
+        # =========================================================================
+        st.markdown("""
+            <div style="
+                background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                            url('https://2021-2025.state.gov/wp-content/uploads/2023/07/shutterstock_245773270v2-768x512.jpg');
+                background-size: cover;
+                background-position: center;
+                border-radius: 16px;
+                padding: 60px 40px;
+                margin-bottom: 30px;
+                color: white;
+                text-align: center;
+            ">
+                <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 10px;">
+                    Find Your Perfect Travel Destinations
+                </h1>
+                <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">
+                    Personalized recommendations based on your preferences, budget and travel style.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
     
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
-    col_f5, col_f6, col_f7, col_f8 = st.columns(4)
-
-    def get_default_index(opts, target="Ignore"):
-        return opts.index(target) if target in opts else len(opts)-1
-
-    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-    
-    season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
-    avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
-    season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
-    season_values = avail_seasons + ["Ignore"]
-
-    with col_f1:
-        selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
-    with col_f2:
-        selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
-    with col_f3:
-        selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
-    with col_f4:
-        selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
-    with col_f5:
-        idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
-        selected_season_display = st.selectbox("Season", season_display, index=idx_season)
-        if selected_season_display == "Ignore":
-            selected_season = "Ignore"
-        else:
-            reverse_map = {v: k for k, v in season_mapping.items()}
-            selected_season = reverse_map.get(selected_season_display, selected_season_display)
-    with col_f6:
-        if not df_raw.empty:
-            min_spend = int(df_raw['spend_amount'].min())
-            max_spend = int(df_raw['spend_amount'].max())
-            spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
-        else:
-            spend_range = (0, 1000)
-    with col_f7:
-        min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
-    with col_f8:
-        top_n = st.slider("Number of Recommendations", 1, 12, 8)
-
-    # =========================================================================
-    # ============== PERSONA MATCHING & RECOMMENDATION GENERATION =============
-    # =========================================================================
-    # (Now that filters are defined, we compute the persona and recommendations)
-    persona_df = df_raw.copy()
-    all_filters_ignored = (
-        selected_age == "Ignore" and
-        selected_province == "Ignore" and
-        selected_category == "Ignore" and
-        selected_duration == "Ignore" and
-        selected_season == "Ignore"
-    )
-
-    if all_filters_ignored:
-        active_tourist_id = None
-        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
-    else:
-        if selected_age != "Ignore":
-            persona_df = persona_df[persona_df['age_group'] == selected_age]
-        # (Gender filter removed; you can add it back if needed)
-        if not persona_df.empty and selected_age != "Ignore":
-            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
-        else:
-            active_tourist_id = 605
-            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
-
-    # Generate recommendations using the current filters
-    recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_province,
-        selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
-    )
-
-    # =========================================================================
-    # ============== DISPLAY ITINERARY ========================================
-    # =========================================================================
-    st.subheader("Your Personalized Itinerary")
-
-    if is_personalized and not df_raw.empty:
-        user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
-        if not user_history.empty:
-            top_past = user_history['attraction_name'].iloc[0]
-            st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
-
-    if not recommendations:
-        st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
-    elif not ml_ready:
-        st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
-    elif is_personalized:
-        st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
-    else:
-        st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
-
-    if recommendations:
-        num_cols = 4
-        for row_idx in range(0, len(recommendations), num_cols):
-            row_items = recommendations[row_idx : row_idx + num_cols]
-            cols = st.columns(num_cols)
-            
-            for i, (name, score) in enumerate(row_items):
-                with cols[i]:
-                    meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
-                    level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
-                    img_url = get_attraction_photo(name)
-                    
-                    st.markdown(
-                        f"""
-                        <div style="height: 200px; width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                        """, unsafe_allow_html=True
-                    )
-                    if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
-                    elif "Content" in selected_model: reason = f"🏷️ Matches your preferred categories"
-                    elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
-                    else: reason = "🧠 Deep Learning Match"
-                        
-                    st.markdown(f"*{reason}*")
-                    st.markdown(f"**{name}**")
-                    
-                    item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
-                    real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
-                    
-                    st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
-
-    # ========================== TAB 3: SPATIAL MAP ==========================
-    elif st.session_state.active_page == "Map":
-        st.subheader("📍 3D Journey & Spatial Layout")
-        st.info("Interactive routing from your origin point to recommended destinations.")
-
-        PROVINCE_COORDS = {
-            "Beijing": [116.4074, 39.9042], "Shanghai": [121.4737, 31.2304],
-            "Guangdong": [113.2644, 23.1291], "Shandong": [117.1201, 36.6512],
-            "Zhejiang": [120.1551, 30.2741], "Jiangsu": [118.7969, 32.0603],
-            "Sichuan": [104.0648, 30.6586], "Henan": [113.6253, 34.7466],
-            "Default": [108.9398, 34.3416]
-        }
+        # =========================================================================
+        # ============== FILTERS ==================================================
+        # =========================================================================
+        st.markdown("#### 🔍 Filter your recommendations")
         
-        origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
-        origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
-
-        if recommendations and not attr_meta.empty:
-            map_data = []
-            for name, score in recommendations:
-                meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                if not meta_row.empty:
-                    raw_lat, raw_lon = meta_row['latitude'].iloc[0], meta_row['longitude'].iloc[0]
-                    if pd.isna(raw_lat) or pd.isna(raw_lon): continue
-                        
-                    lat, lon = float(raw_lat), float(raw_lon)
-                    color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
-                    
-                    R = 6371.0
-                    lat1, lon1, lat2, lon2 = map(np.radians, [origin_lat, origin_lon, lat, lon])
-                    dlon = lon2 - lon1
-                    dlat = lat2 - lat1
-                    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-                    distance_km = R * 2 * np.arcsin(np.sqrt(a))
-                    safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
-                    
-                    map_data.append({
-                        "name": name, "lat": lat, "lon": lon, "score": float(score),
-                        "color": color, "origin_lat": origin_lat, "origin_lon": origin_lon,
-                        "distance": safe_distance
-                    })
-
-            if map_data:
-                map_df = pd.DataFrame(map_data)
-                avg_lat = (map_df["lat"].mean() + origin_lat) / 2
-                avg_lon = (map_df["lon"].mean() + origin_lon) / 2
-                
-                view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=4.5, pitch=50, bearing=-10)
-                
-                scatter_layer = pdk.Layer(
-                    "ScatterplotLayer", data=map_df, get_position=["lon", "lat"],
-                    get_radius=8000, get_fill_color="color", pickable=False, 
-                )
-                
-                column_layer = pdk.Layer(
-                    "ColumnLayer", data=map_df, get_position=["lon", "lat"],
-                    get_elevation="score * 1200", elevation_scale=10, radius=3500,
-                    get_fill_color="color", pickable=True, auto_highlight=True,
-                )
-                
-                arc_layer = pdk.Layer(
-                    "ArcLayer", data=map_df,
-                    get_source_position=["origin_lon", "origin_lat"],
-                    get_target_position=["lon", "lat"],
-                    get_source_color=[33, 150, 243, 160], 
-                    get_target_color="color", get_width=3, tilt=15
-                )
-                
-                custom_tooltip = {
-                    "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/>📏 Distance: {distance} km from " + origin_name,
-                    "style": {"backgroundColor": "#1E1E1E", "color": "white", "border": "1px solid #4682B4", "borderRadius": "5px"}
-                }
-                
-                st.pydeck_chart(pdk.Deck(
-                    map_provider="carto", map_style="dark",
-                    layers=[scatter_layer, arc_layer, column_layer], 
-                    initial_view_state=view_state, tooltip=custom_tooltip
-                ))
-                
-                st.markdown("### 🚗 Start Your Journey")
-                nav_cols = st.columns(4)
-                for i, row in enumerate(map_data):
-                    with nav_cols[i % 4]:
-                        nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
-                        st.markdown(f"**[{row['name']}]({nav_link})** <br> <span style='font-size:0.8em; color:gray;'>({row['distance']} km away)</span>", unsafe_allow_html=True)
+        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+        col_f5, col_f6, col_f7, col_f8 = st.columns(4)
+    
+        def get_default_index(opts, target="Ignore"):
+            return opts.index(target) if target in opts else len(opts)-1
+    
+        avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+        
+        season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
+        avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
+        season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
+        season_values = avail_seasons + ["Ignore"]
+    
+        with col_f1:
+            selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
+        with col_f2:
+            selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
+        with col_f3:
+            selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
+        with col_f4:
+            selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
+        with col_f5:
+            idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
+            selected_season_display = st.selectbox("Season", season_display, index=idx_season)
+            if selected_season_display == "Ignore":
+                selected_season = "Ignore"
             else:
-                st.warning("Coordinate data not found for these specific recommendations.")
+                reverse_map = {v: k for k, v in season_mapping.items()}
+                selected_season = reverse_map.get(selected_season_display, selected_season_display)
+        with col_f6:
+            if not df_raw.empty:
+                min_spend = int(df_raw['spend_amount'].min())
+                max_spend = int(df_raw['spend_amount'].max())
+                spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
+            else:
+                spend_range = (0, 1000)
+        with col_f7:
+            min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
+        with col_f8:
+            top_n = st.slider("Number of Recommendations", 1, 12, 8)
+    
+        # =========================================================================
+        # ============== PERSONA MATCHING & RECOMMENDATION GENERATION =============
+        # =========================================================================
+        # (Now that filters are defined, we compute the persona and recommendations)
+        persona_df = df_raw.copy()
+        all_filters_ignored = (
+            selected_age == "Ignore" and
+            selected_province == "Ignore" and
+            selected_category == "Ignore" and
+            selected_duration == "Ignore" and
+            selected_season == "Ignore"
+        )
+    
+        if all_filters_ignored:
+            active_tourist_id = None
+            st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
+        else:
+            if selected_age != "Ignore":
+                persona_df = persona_df[persona_df['age_group'] == selected_age]
+            # (Gender filter removed; you can add it back if needed)
+            if not persona_df.empty and selected_age != "Ignore":
+                active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+                st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
+            else:
+                active_tourist_id = 605
+                st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
+    
+        # Generate recommendations using the current filters
+        recommendations, is_personalized = generate_recommendations(
+            active_tourist_id, selected_model, selected_age, selected_province,
+            selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
+        )
+    
+        # =========================================================================
+        # ============== DISPLAY ITINERARY ========================================
+        # =========================================================================
+        st.subheader("Your Personalized Itinerary")
+    
+        if is_personalized and not df_raw.empty:
+            user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
+            if not user_history.empty:
+                top_past = user_history['attraction_name'].iloc[0]
+                st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
+    
+        if not recommendations:
+            st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
+        elif not ml_ready:
+            st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
+        elif is_personalized:
+            st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
+        else:
+            st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
+    
+        if recommendations:
+            num_cols = 4
+            for row_idx in range(0, len(recommendations), num_cols):
+                row_items = recommendations[row_idx : row_idx + num_cols]
+                cols = st.columns(num_cols)
+                
+                for i, (name, score) in enumerate(row_items):
+                    with cols[i]:
+                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
+                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+                        img_url = get_attraction_photo(name)
+                        
+                        st.markdown(
+                            f"""
+                            <div style="height: 200px; width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            """, unsafe_allow_html=True
+                        )
+                        if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
+                        elif "Content" in selected_model: reason = f"🏷️ Matches your preferred categories"
+                        elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
+                        else: reason = "🧠 Deep Learning Match"
+                            
+                        st.markdown(f"*{reason}*")
+                        st.markdown(f"**{name}**")
+                        
+                        item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
+                        real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
+                        
+                        st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
+    
+        # ========================== TAB 3: SPATIAL MAP ==========================
+        elif st.session_state.active_page == "Map":
+            st.subheader("📍 3D Journey & Spatial Layout")
+            st.info("Interactive routing from your origin point to recommended destinations.")
+    
+            PROVINCE_COORDS = {
+                "Beijing": [116.4074, 39.9042], "Shanghai": [121.4737, 31.2304],
+                "Guangdong": [113.2644, 23.1291], "Shandong": [117.1201, 36.6512],
+                "Zhejiang": [120.1551, 30.2741], "Jiangsu": [118.7969, 32.0603],
+                "Sichuan": [104.0648, 30.6586], "Henan": [113.6253, 34.7466],
+                "Default": [108.9398, 34.3416]
+            }
+            
+            origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
+            origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
+    
+            if recommendations and not attr_meta.empty:
+                map_data = []
+                for name, score in recommendations:
+                    meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                    if not meta_row.empty:
+                        raw_lat, raw_lon = meta_row['latitude'].iloc[0], meta_row['longitude'].iloc[0]
+                        if pd.isna(raw_lat) or pd.isna(raw_lon): continue
+                            
+                        lat, lon = float(raw_lat), float(raw_lon)
+                        color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
+                        
+                        R = 6371.0
+                        lat1, lon1, lat2, lon2 = map(np.radians, [origin_lat, origin_lon, lat, lon])
+                        dlon = lon2 - lon1
+                        dlat = lat2 - lat1
+                        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+                        distance_km = R * 2 * np.arcsin(np.sqrt(a))
+                        safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
+                        
+                        map_data.append({
+                            "name": name, "lat": lat, "lon": lon, "score": float(score),
+                            "color": color, "origin_lat": origin_lat, "origin_lon": origin_lon,
+                            "distance": safe_distance
+                        })
+    
+                if map_data:
+                    map_df = pd.DataFrame(map_data)
+                    avg_lat = (map_df["lat"].mean() + origin_lat) / 2
+                    avg_lon = (map_df["lon"].mean() + origin_lon) / 2
+                    
+                    view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=4.5, pitch=50, bearing=-10)
+                    
+                    scatter_layer = pdk.Layer(
+                        "ScatterplotLayer", data=map_df, get_position=["lon", "lat"],
+                        get_radius=8000, get_fill_color="color", pickable=False, 
+                    )
+                    
+                    column_layer = pdk.Layer(
+                        "ColumnLayer", data=map_df, get_position=["lon", "lat"],
+                        get_elevation="score * 1200", elevation_scale=10, radius=3500,
+                        get_fill_color="color", pickable=True, auto_highlight=True,
+                    )
+                    
+                    arc_layer = pdk.Layer(
+                        "ArcLayer", data=map_df,
+                        get_source_position=["origin_lon", "origin_lat"],
+                        get_target_position=["lon", "lat"],
+                        get_source_color=[33, 150, 243, 160], 
+                        get_target_color="color", get_width=3, tilt=15
+                    )
+                    
+                    custom_tooltip = {
+                        "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/>📏 Distance: {distance} km from " + origin_name,
+                        "style": {"backgroundColor": "#1E1E1E", "color": "white", "border": "1px solid #4682B4", "borderRadius": "5px"}
+                    }
+                    
+                    st.pydeck_chart(pdk.Deck(
+                        map_provider="carto", map_style="dark",
+                        layers=[scatter_layer, arc_layer, column_layer], 
+                        initial_view_state=view_state, tooltip=custom_tooltip
+                    ))
+                    
+                    st.markdown("### 🚗 Start Your Journey")
+                    nav_cols = st.columns(4)
+                    for i, row in enumerate(map_data):
+                        with nav_cols[i % 4]:
+                            nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
+                            st.markdown(f"**[{row['name']}]({nav_link})** <br> <span style='font-size:0.8em; color:gray;'>({row['distance']} km away)</span>", unsafe_allow_html=True)
+                else:
+                    st.warning("Coordinate data not found for these specific recommendations.")
 
     # ========================== TAB 4: DIAGNOSTICS ==========================
     elif st.session_state.active_page == "Diagnostics":
