@@ -402,26 +402,65 @@ try:
         active_tourist_id, selected_model, selected_age, selected_gender, selected_province, selected_category, selected_duration, top_n
     )
             
-    # --- 6. TABS STRUCTURE ---
+    # --- CUSTOM NAVIGATION STYLING ---
+    # Determine which column (1-4) is active based on session state
+    page_to_col = {"Home": 1, "Recommendations": 2, "Map": 3, "Diagnostics": 4}
+    active_col = page_to_col.get(st.session_state.active_page, 1)
+    
+    # Inject dynamic CSS to style only the top navigation buttons
+    st.markdown(f"""
+    <style>
+    /* Base styling for all navigation buttons */
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="stButton"] button {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        text-transform: uppercase !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 1.5px;
+        color: #555 !important;
+        font-weight: 500 !important;
+        border-radius: 0 !important;
+        padding-bottom: 6px !important;
+        transition: color 0.3s ease;
+    }}
+    
+    /* Hover effect */
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="stButton"] button:hover {{
+        color: #000 !important;
+    }}
+    
+    /* ACTIVE STATE: Bold text and tan underline for the selected page */
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-child({active_col}) div[data-testid="stButton"] button p {{
+        font-weight: 800 !important;
+        color: #111 !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-child({active_col}) div[data-testid="stButton"] button {{
+        border-bottom: 2px solid #C4A47C !important; /* Custom tan underline */
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # --- NAVIGATION BUTTONS ---
+    # Removed the emojis to match the sleek, text-only aesthetic of your image
     nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
+    
     with nav_col1:
         if st.button("Home", use_container_width=True):
             st.session_state.active_page = "Home"
             st.rerun()
     with nav_col2:
-        if st.button("Top Recommendations", use_container_width=True):
+        if st.button("Recommendations", use_container_width=True):
             st.session_state.active_page = "Recommendations"
             st.rerun()
     with nav_col3:
-        if st.button("3D Spatial Map", use_container_width=True):
+        if st.button("Spatial Map", use_container_width=True):
             st.session_state.active_page = "Map"
             st.rerun()
     with nav_col4:
         if st.button("Diagnostics", use_container_width=True):
             st.session_state.active_page = "Diagnostics"
             st.rerun()
-    
-    st.divider()
   
     # ========================== TAB 1: HOME PAGE ==========================
     if st.session_state.active_page == "Home":
