@@ -170,6 +170,27 @@ div[data-baseweb="tab"] {
     line-height: 1.4;
     color: #e0e0e0;
 }
+
+/* Target the button with key "start_explore_btn" */
+div[data-testid="stButton"] button[data-testid="baseButton-start_explore_btn"] {
+    background-color: #0078D4 !important;
+    color: white !important;
+    border: none !important;
+    padding: 14px 28px !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    border-radius: 30px !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    margin-top: -10px;  /* fine‑tune vertical positioning */
+}
+div[data-testid="stButton"] button[data-testid="baseButton-start_explore_btn"]:hover {
+    background-color: #005A9E !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -450,7 +471,7 @@ try:
             st.session_state.active_page = "Home"
             st.rerun()
     with nav_col2:
-        if st.button("Recommendations", use_container_width=True):
+        if st.button("Recommendations", key="nav_recommendations", use_container_width=True):
             st.session_state.active_page = "Recommendations"
             st.rerun()
     with nav_col3:
@@ -467,15 +488,11 @@ try:
   
     # ========================== TAB 1: HOME PAGE ==========================
     if st.session_state.active_page == "Home":
-        # 1. Render the HTML Hero Banner (WITHOUT the HTML <button> tag inside it)
+       # Hero banner background (no button inside)
         st.markdown("""
-            <div class="hero-banner">
+            <div class="hero-banner" id="hero-banner">
                 <div class="hero-top">
                     <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-                    <!-- The HTML button is back inside -->
-                    <button id="start-explore-btn" class="hero-btn">
-                        Start Explore &nbsp; ➔
-                    </button>
                 </div>
                 <div class="hero-bottom">
                     <div class="hero-pills">
@@ -490,37 +507,15 @@ try:
                 </div>
             </div>
         """, unsafe_allow_html=True)
-
-        # Invisible bridge connecting the HTML button to Streamlit's Session State Navigation
-        components.html("""
-            <script>
-            const parentDoc = window.parent.document;
-            
-            // Use an interval to wait for the element to render in the DOM
-            const checkExist = setInterval(function() {
-                const heroBtn = parentDoc.getElementById('start-explore-btn');
-                
-                if (heroBtn) {
-                    // Once found, attach the event listener
-                    heroBtn.addEventListener('click', function() {
-                        // Find all native Streamlit buttons on the page
-                        const allButtons = Array.from(parentDoc.querySelectorAll('button'));
-                        
-                        // Find the navigation button we created and click it
-                        const targetTab = allButtons.find(btn => btn.innerText.includes("Recommendations"));
-                        if (targetTab) {
-                            targetTab.click();
-                        }
-                    });
-                    // Stop the interval loop since we found the button
-                    clearInterval(checkExist); 
-                }
-            }, 100); // Check every 100 milliseconds
-            </script>
-            """,
-            height=0, 
-            width=0
-        )
+        
+        # Now place the Streamlit button inside the banner using a column overlay
+        # We use a container with relative positioning and negative margin to overlay the banner
+        with st.container():
+            col1, col2, col3 = st.columns([1, 2, 1])   # adjust to position the button
+            with col2:
+                if st.button("Start Explore ➔", key="start_explore_btn", use_container_width=True):
+                    st.session_state.active_page = "Recommendations"
+                    st.rerun()
         
         # --- TRENDING DESTINATIONS SECTION ---
         st.markdown("""
