@@ -490,12 +490,12 @@ try:
         # Streamlit button for "Start Explore"
         with st.container():
             col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-            with col_btn1:
+            with col_btn2:   # <-- changed from col_btn1 to col_btn2
                 if st.button("Start Explore ➔", key="start_explore_btn", use_container_width=True):
                     st.session_state.active_page = "Recommendations"
                     st.rerun()
 
-        # Trending destinations (unchanged)
+        # Trending destinations 
         st.markdown("""
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 20px;">
                 <h3 style="margin: 0; padding: 0;">Trending Destinations China</h3>
