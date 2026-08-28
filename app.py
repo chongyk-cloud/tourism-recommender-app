@@ -479,7 +479,7 @@ try:
         # --- TRENDING DESTINATIONS SECTION ---
         st.markdown("### Trending Destinations China")
         st.markdown("""
-            <div style="right: 10px;color: black; font-size: 1rem; z-index: 9999999;">
+            <div style="right: 100px;color: black; font-size: 1rem; z-index: 9999999;">
                 See all
             </div>
         """, unsafe_allow_html=True)
