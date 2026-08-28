@@ -733,8 +733,7 @@ try:
                             st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
                             pass
         
-        with side_col:
-            render_info_panel(st.session_state.recommendations, spend_range, top_n)
+        
             
         # --- Monochrome info-panel CSS (matches white background) ---
         st.markdown("""
@@ -852,7 +851,8 @@ try:
                     </div>
                 """, unsafe_allow_html=True)
 
-    
+        with side_col:
+            render_info_panel(st.session_state.recommendations, spend_range, top_n)
                         
                         
     # ========================== TAB 3: SPATIAL MAP ==========================
