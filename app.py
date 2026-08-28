@@ -435,28 +435,7 @@ try:
             st.rerun()
             
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
-    # =========================================================================
-    # ============== PERSONA MATCHING (now uses the widgets above) ============
-    # =========================================================================
-
-    if all_filters_ignored:
-        active_tourist_id = None 
-        st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
-    else:
-        if selected_age != "Ignore": 
-            persona_df = persona_df[persona_df['age_group'] == selected_age]
-        if not persona_df.empty and selected_age != "Ignore":
-            active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-            st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
-        else:
-            active_tourist_id = 605 
-            st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
-
-    # Generate recommendations using the current filters
-    recommendations, is_personalized = generate_recommendations(
-        active_tourist_id, selected_model, selected_age, selected_province, 
-        selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
-    )
+    
 
     # =========================================================================
     # ========================== PAGE CONTENT =================================
