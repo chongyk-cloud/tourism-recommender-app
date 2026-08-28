@@ -631,7 +631,7 @@ try:
         st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
         
         # Only process if button is clicked or we have no recommendations yet
-        if generate_clicked or not st.session_state.recommendations:
+        if not st.session_state.recommendations:
             persona_df = df_raw.copy()
             all_filters_ignored = (
                 selected_age == "Ignore" and
