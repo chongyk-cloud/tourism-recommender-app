@@ -213,12 +213,12 @@ try:
     sidebar_css_rule = ""
     if active_page != "Top Recommendations":
         sidebar_css_rule = """
-            section[data-testid="stSidebar"] {display: none !important;}
-            div[data-testid="collapsedControl"] {display: none !important;}
+            [data-testid="stSidebar"] {display: none !important;}
+            [data-testid="collapsedControl"] {display: none !important;}
         """
     else:
+        # NOTE: Do not force 'display: block' here! Let Streamlit handle its own flex layout.
         sidebar_css_rule = """
-            section[data-testid="stSidebar"] {display: block !important;}
             [data-testid="stSidebar"] { background-color: #F8F9FA !important; color: #262626 !important; }
         """
 
@@ -230,7 +230,9 @@ try:
             }}
             {sidebar_css_rule}
 
-            #MainMenu, header {{visibility: hidden;}}
+            /* Hide only the hamburger menu. Keep the header so the sidebar toggle button works! */
+            #MainMenu {{visibility: hidden;}}
+            
             .block-container {{padding-top: 1rem; max-width: 2000px;}}
             .topnav-logo {{font-size: 1.3em; font-weight: 800; color: #1565C0; letter-spacing: -0.5px;}}
 
@@ -269,7 +271,7 @@ try:
             .dest-card:hover .dest-details {{ opacity: 1; max-height: 60px; margin-top: 6px; }}
         </style>
     """, unsafe_allow_html=True)
-
+    
     # --- 7. TOP NAVIGATION BAR ---
     logo_col, nav_col1, nav_col2, nav_col3, nav_col4, spacer_col = st.columns([2, 1, 1.4, 1.2, 1.2, 1.2])
     with logo_col:
