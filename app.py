@@ -839,17 +839,12 @@ try:
             if recommendations:
                 days_html = ""
                 for i, (name, score) in enumerate(recommendations[:3], start=1):
-                    days_html += f"""
-                        <div class="itinerary-day">
-                            <b>Day {i}</b><br><span>{name}</span>
-                        </div>
-                    """
-                st.markdown(f"""
-                    <div class="info-card">
-                        <h4>📅 Suggested Itinerary</h4>
-                        {days_html}
-                    </div>
-                """, unsafe_allow_html=True)
+                    days_html += (
+                        f'<div class="itinerary-day">'
+                        f'<b>Day {i}</b><br><span>{name}</span>'
+                        f'</div>'
+                    )
+                st.markdown(f"""<div class="info-card"><h4>📅 Suggested Itinerary</h4>{days_html}</div>""", unsafe_allow_html=True)
 
         with side_col:
             render_info_panel(st.session_state.recommendations, spend_range, top_n)
