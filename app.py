@@ -6,6 +6,7 @@ import random
 import requests
 import pickle
 import os
+import streamlit.components.v1 as components
 
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
@@ -350,9 +351,9 @@ try:
         <div class="hero-banner">
             <div class="hero-top">
                 <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-               <button class="hero-btn" onclick="window.parent.document.querySelectorAll('[data-baseweb=\\'tab\\']')[1].click()">
+              <button id="start-explore-btn" class="hero-btn">
                     Start Explore &nbsp; ➔
-               </button>
+              </button>
             </div>
             <div class="hero-bottom">
                 <div class="hero-pills">
@@ -367,6 +368,31 @@ try:
             </div>
         </div>
         """, unsafe_allow_html=True)
+        components.html(
+    """
+    <script>
+    // Access the main Streamlit page outside this iframe
+    const parentDoc = window.parent.document;
+    
+    // Find our custom HTML button
+    const btn = parentDoc.getElementById('start-explore-btn');
+    
+    if (btn) {
+        btn.addEventListener('click', function() {
+            // Find all Streamlit tabs and click the second one (index 1)
+            const tabs = parentDoc.querySelectorAll('[data-baseweb="tab"]');
+            if (tabs.length > 1) {
+                tabs[1].click();
+            }
+        });
+    }
+    </script>
+    """,
+    height=0, 
+    width=0
+)
+
+    
         
     # ========================== TAB 2: TRAVELER VIEW ==========================
     with tab_recs:
