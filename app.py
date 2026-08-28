@@ -707,11 +707,11 @@ try:
                             img_url = get_attraction_photo(name)
                             seed = sum(ord(c) for c in name)
                             avg_spend = attraction_spend_map.get(name)
-                                if avg_spend is not None:
-                                    est_spend = f"¥{avg_spend:.0f}"
-                                else:
-                                    seed = sum(ord(c) for c in name)
-                                    est_spend = f"¥{150 + (seed % 200)} (est.)"   # fallback only if no real data exists
+                            if avg_spend is not None:
+                                est_spend = f"¥{avg_spend:.0f}"
+                            else:
+                                seed = sum(ord(c) for c in name)
+                                est_spend = f"¥{150 + (seed % 200)} (est.)"   # fallback only if no real data exists
                             nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
                             
                             item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
