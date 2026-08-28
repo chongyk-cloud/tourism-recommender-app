@@ -422,6 +422,17 @@ try:
             st.rerun()
             
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
+    selected_age = "Ignore"
+    selected_category = "Ignore"
+    selected_province = "Ignore"
+    selected_duration = "Ignore"
+    selected_season = "Ignore"
+    spend_range = (0, 1000)
+    min_rating = 3.0
+    top_n = 8
+    active_tourist_id = None
+    recommendations = []
+    is_personalized = False
     
     # =========================================================================
     # ============== PERSONA MATCHING (now uses the widgets above) ============
