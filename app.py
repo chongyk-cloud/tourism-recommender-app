@@ -670,6 +670,7 @@ try:
             if len(user_history) > 0:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
+                
         main_col, side_col = st.columns([3, 1])
 
         with main_col:
@@ -733,123 +734,126 @@ try:
                             pass
         
         with side_col:
-        render_info_panel(st.session_state.recommendations, spend_range, top_n)
+            render_info_panel(st.session_state.recommendations, spend_range, top_n)
+            
+        # --- Monochrome info-panel CSS (matches white background) ---
+        st.markdown("""
+        <style>
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .info-card h4 {
+            color: #111111;
+            font-weight: 800;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-card p, .info-card li {
+            color: #333333;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .info-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .info-card li {
+            margin-bottom: 6px;
+        }
+        .info-card li::before {
+            content: "✓";
+            color: #111111;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .cost-bar-track {
+            background: #eeeeee;
+            border-radius: 8px;
+            height: 8px;
+            margin: 10px 0 6px 0;
+            overflow: hidden;
+        }
+        .cost-bar-fill {
+            background: #111111;
+            height: 100%;
+            border-radius: 8px;
+        }
+        .itinerary-day {
+            border-left: 2px solid #111111;
+            padding-left: 12px;
+            margin-bottom: 10px;
+        }
+        .itinerary-day b { color: #111111; }
+        .itinerary-day span { color: #555555; font-size: 0.85rem; }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        
+        def render_info_panel(recommendations, spend_range, top_n):
+            # --- Card 1: How We Recommend ---
+            st.markdown("""
+                <div class="info-card">
+                    <h4>🧠 How We Recommend</h4>
+                    <p>Our AI system uses a hybrid recommendation approach based on:</p>
+                    <ul>
+                        <li>Your personal preferences</li>
+                        <li>Your budget</li>
+                        <li>Trip duration</li>
+                        <li>Popular user reviews</li>
+                    </ul>
+                </div>
+            """, unsafe_allow_html=True)
+        
+            # --- Card 2: Estimated Trip Cost ---
+            if recommendations:
+                seeds = [sum(ord(c) for c in name) for name, _ in recommendations]
+                est_total = sum(150 + (s % 200) for s in seeds)
+            else:
+                est_total = 0
+            budget_cap = spend_range[1] if spend_range else 1000
+            fill_pct = min(100, int((est_total / budget_cap) * 100)) if budget_cap else 0
+            within_budget = est_total <= budget_cap
+        
+            st.markdown(f"""
+                <div class="info-card">
+                    <h4>💰 Estimated Trip Cost</h4>
+                    <p style="font-size:1.6rem; font-weight:800; color:#111111; margin-bottom:2px;">
+                        ¥{est_total:,} <span style="font-size:0.9rem; font-weight:500; color:#666;">({len(recommendations)} stops)</span>
+                    </p>
+                    <div class="cost-bar-track"><div class="cost-bar-fill" style="width:{fill_pct}%;"></div></div>
+                    <p style="font-size:0.85rem; color:{'#111' if within_budget else '#a33'};">
+                        {'✓ Within your budget' if within_budget else '⚠ Above your budget'}
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+            # --- Card 3: Suggested Itinerary (first 3 recs as a mini day plan) ---
+            if recommendations:
+                days_html = ""
+                for i, (name, score) in enumerate(recommendations[:3], start=1):
+                    days_html += f"""
+                        <div class="itinerary-day">
+                            <b>Day {i}</b><br><span>{name}</span>
+                        </div>
+                    """
+                st.markdown(f"""
+                    <div class="info-card">
+                        <h4>📅 Suggested Itinerary</h4>
+                        {days_html}
+                    </div>
+                """, unsafe_allow_html=True)
+
     
-                        # --- Monochrome info-panel CSS (matches white background) ---
-                        st.markdown("""
-                        <style>
-                        .info-card {
-                            background: #ffffff;
-                            border: 1px solid #e5e5e5;
-                            border-radius: 14px;
-                            padding: 20px;
-                            margin-bottom: 18px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                        }
-                        .info-card h4 {
-                            color: #111111;
-                            font-weight: 800;
-                            font-size: 1.05rem;
-                            margin-bottom: 12px;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        }
-                        .info-card p, .info-card li {
-                            color: #333333;
-                            font-size: 0.92rem;
-                            line-height: 1.5;
-                        }
-                        .info-card ul {
-                            list-style: none;
-                            padding-left: 0;
-                            margin: 0;
-                        }
-                        .info-card li {
-                            margin-bottom: 6px;
-                        }
-                        .info-card li::before {
-                            content: "✓";
-                            color: #111111;
-                            font-weight: bold;
-                            margin-right: 8px;
-                        }
-                        .cost-bar-track {
-                            background: #eeeeee;
-                            border-radius: 8px;
-                            height: 8px;
-                            margin: 10px 0 6px 0;
-                            overflow: hidden;
-                        }
-                        .cost-bar-fill {
-                            background: #111111;
-                            height: 100%;
-                            border-radius: 8px;
-                        }
-                        .itinerary-day {
-                            border-left: 2px solid #111111;
-                            padding-left: 12px;
-                            margin-bottom: 10px;
-                        }
-                        .itinerary-day b { color: #111111; }
-                        .itinerary-day span { color: #555555; font-size: 0.85rem; }
-                        </style>
-                        """, unsafe_allow_html=True)
                         
-                        
-                        def render_info_panel(recommendations, spend_range, top_n):
-                            # --- Card 1: How We Recommend ---
-                            st.markdown("""
-                                <div class="info-card">
-                                    <h4>🧠 How We Recommend</h4>
-                                    <p>Our AI system uses a hybrid recommendation approach based on:</p>
-                                    <ul>
-                                        <li>Your personal preferences</li>
-                                        <li>Your budget</li>
-                                        <li>Trip duration</li>
-                                        <li>Popular user reviews</li>
-                                    </ul>
-                                </div>
-                            """, unsafe_allow_html=True)
-                        
-                            # --- Card 2: Estimated Trip Cost ---
-                            if recommendations:
-                                seeds = [sum(ord(c) for c in name) for name, _ in recommendations]
-                                est_total = sum(150 + (s % 200) for s in seeds)
-                            else:
-                                est_total = 0
-                            budget_cap = spend_range[1] if spend_range else 1000
-                            fill_pct = min(100, int((est_total / budget_cap) * 100)) if budget_cap else 0
-                            within_budget = est_total <= budget_cap
-                        
-                            st.markdown(f"""
-                                <div class="info-card">
-                                    <h4>💰 Estimated Trip Cost</h4>
-                                    <p style="font-size:1.6rem; font-weight:800; color:#111111; margin-bottom:2px;">
-                                        ¥{est_total:,} <span style="font-size:0.9rem; font-weight:500; color:#666;">({len(recommendations)} stops)</span>
-                                    </p>
-                                    <div class="cost-bar-track"><div class="cost-bar-fill" style="width:{fill_pct}%;"></div></div>
-                                    <p style="font-size:0.85rem; color:{'#111' if within_budget else '#a33'};">
-                                        {'✓ Within your budget' if within_budget else '⚠ Above your budget'}
-                                    </p>
-                                </div>
-                            """, unsafe_allow_html=True)
-                        
-                            # --- Card 3: Suggested Itinerary (first 3 recs as a mini day plan) ---
-                            if recommendations:
-                                days_html = ""
-                                for i, (name, score) in enumerate(recommendations[:3], start=1):
-                                    days_html += f"""
-                                        <div class="itinerary-day">
-                                            <b>Day {i}</b><br><span>{name}</span>
-                                        </div>
-                                    """
-                                st.markdown(f"""
-                                    <div class="info-card">
-                                        <h4>📅 Suggested Itinerary</h4>
-                                        {days_html}
-                                    </div>
-                                """, unsafe_allow_html=True)
                         
     # ========================== TAB 3: SPATIAL MAP ==========================
     elif st.session_state.active_page == "Map":
