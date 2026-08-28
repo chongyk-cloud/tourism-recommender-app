@@ -708,16 +708,22 @@ try:
                         elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
                         else: reason = "🧠 Deep Learning Match"
                         
+                        # 1. The Hover Card (Name always visible inside, details on hover)
                         card_html = f"""
-                        <div class="dest-card">
+                        <div class="dest-card" style="position: relative;">
                             <img src="{img_url}" alt="{name}">
+                            
+                            <!-- Always visible name at the bottom of the image -->
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 15px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); pointer-events: none;">
+                                <span style="color: white; font-weight: bold; font-size: 1.1rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{name}</span>
+                            </div>
+
+                            <!-- Hover Overlay -->
                             <div class="dest-overlay">
                                 <div class="dest-title">
                                     <a href="{nav_link}" target="_blank">{name} ↗</a>
                                 </div>
                                 <div class="dest-details">
-                                    <i>{reason}</i><br><br>
-                                    🎯 Match: {score:.0f}% AI Match<br>
                                     ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
                                     📂 Category: {category}<br>
                                     💰 Est. Spend: {est_spend}
@@ -727,17 +733,8 @@ try:
                         """
                         st.markdown(card_html, unsafe_allow_html=True)
                         
-                        if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
-                        elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
-                        elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
-                        else: reason = "🧠 Deep Learning Match"
-                            
+                        # 2. The Text Below (Reason and Caption kept)
                         st.markdown(f"*{reason}*")
-                        
-                        
-                        item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
-                        real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
-                        
                         st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
     
     # ========================== TAB 3: SPATIAL MAP ==========================
