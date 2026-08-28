@@ -708,17 +708,10 @@ try:
                         elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
                         else: reason = "🧠 Deep Learning Match"
                         
-                        # 1. The Hover Card (Name always visible inside, details on hover)
+                        # 1. The Hover Card (Image with name and details inside)
                         card_html = f"""
-                        <div class="dest-card" style="position: relative;">
+                        <div class="dest-card">
                             <img src="{img_url}" alt="{name}">
-                            
-                            <!-- Always visible name at the bottom of the image -->
-                            <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 15px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); pointer-events: none;">
-                                <span style="color: white; font-weight: bold; font-size: 1.1rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">{name}</span>
-                            </div>
-
-                            <!-- Hover Overlay -->
                             <div class="dest-overlay">
                                 <div class="dest-title">
                                     <a href="{nav_link}" target="_blank">{name} ↗</a>
@@ -733,7 +726,7 @@ try:
                         """
                         st.markdown(card_html, unsafe_allow_html=True)
                         
-                        # 2. The Text Below (Reason and Caption kept)
+                        # 2. The Text Below (Reason and Caption kept, Name removed)
                         st.markdown(f"*{reason}*")
                         st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
     
