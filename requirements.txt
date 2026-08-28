@@ -6,3 +6,5 @@ scipy
 surprise
 joblib
 duckduckgo-search
+matplotlib
+seaborn
