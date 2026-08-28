@@ -8,8 +8,18 @@ import pickle
 import os
 import streamlit.components.v1 as components
 
+selected_age = "Ignore"
+selected_category = "Ignore"
 selected_province = "Ignore"
+selected_duration = "Ignore"
+selected_season = "Ignore"
+spend_range = (0, 1000)
+min_rating = 3.0
+top_n = 8
+active_tourist_id = None
 recommendations = []
+is_personalized = False
+
 
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
