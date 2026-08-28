@@ -862,8 +862,8 @@ try:
                 )
             st.markdown(f"""<div class="info-card"><h4>📅 Suggested Itinerary</h4>{days_html}</div>""", unsafe_allow_html=True)
     
-        with side_col:
-            render_info_panel(st.session_state.recommendations, spend_range, top_n, attraction_spend_map)
+    with side_col:
+        render_info_panel(st.session_state.recommendations, spend_range, top_n, attraction_spend_map)
                         
                         
     # ========================== TAB 3: SPATIAL MAP ==========================
