@@ -186,7 +186,7 @@ div[data-baseweb="tab"] {
 .why-choose-wrapper {
     border: 1px solid #e5e5e5;
     border-radius: 16px;
-    padding: 24px 20px 8px 20px;
+    padding: 1px 20px 8px 20px;
     background: #fafafa;
     margin-bottom: 20px;
 }
