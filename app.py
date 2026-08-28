@@ -1255,34 +1255,30 @@ try:
             with cols[i]:
                 metrics_html = ""
                 for label, val, bar_width in model["metrics"]:
-                    metrics_html += f"""
-                        <div class="metric-row"><span>{label}</span><span class="metric-val">{val}</span></div>
-                        <div class="progress-track"><div class="progress-fill" style="width: {bar_width}%;"></div></div>
-                    """
+                    # Keep this entirely on one line to prevent indentation issues
+                    metrics_html += f"""<div class="metric-row"><span>{label}</span><span class="metric-val">{val}</span></div><div class="progress-track"><div class="progress-fill" style="width: {bar_width}%;"></div></div>"""
                     
                 caps_html = "".join([f"<li><span style='color:#a1a1aa;'>✓</span> {cap.replace('✓ ', '')}</li>" for cap in model["capabilities"]])
                 
+                # All HTML below must be flush left (no spaces at the start of the lines)
                 st.markdown(f"""
-                <div class="model-card">
-                    <div class="card-header">
-                        <div>
-                            <h3 class="model-title">{model["name"]}</h3>
-                            <div class="model-sub">{model["sub"]}</div>
-                        </div>
-                        <div class="card-pill">{model["pill"]}</div>
-                    </div>
-                    
-                    <div class="section-title">Performance</div>
-                    {metrics_html}
-                    
-                    <div class="section-title">Capabilities</div>
-                    <ul class="capabilities-list">
-                        {caps_html}
-                    </ul>
-                    
-                    <div class="card-footer">{model["date"]}</div>
-                </div>
-                """, unsafe_allow_html=True)
+        <div class="model-card">
+        <div class="card-header">
+        <div>
+        <h3 class="model-title">{model["name"]}</h3>
+        <div class="model-sub">{model["sub"]}</div>
+        </div>
+        <div class="card-pill">{model["pill"]}</div>
+        </div>
+        <div class="section-title">Performance</div>
+        {metrics_html}
+        <div class="section-title">Capabilities</div>
+        <ul class="capabilities-list">
+        {caps_html}
+        </ul>
+        <div class="card-footer">{model["date"]}</div>
+        </div>
+        """, unsafe_allow_html=True)
                 st.divider()
         
         # 1. Initialize states for both buttons
