@@ -8,6 +8,9 @@ import pickle
 import os
 import streamlit.components.v1 as components
 
+selected_province = "Ignore"
+recommendations = []
+
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
@@ -422,18 +425,6 @@ try:
             st.rerun()
             
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
-    selected_age = "Ignore"
-    selected_category = "Ignore"
-    selected_province = "Ignore"
-    selected_duration = "Ignore"
-    selected_season = "Ignore"
-    spend_range = (0, 1000)
-    min_rating = 3.0
-    top_n = 8
-    active_tourist_id = None
-    recommendations = []
-    is_personalized = False
-    
     # =========================================================================
     # ============== PERSONA MATCHING (now uses the widgets above) ============
     # =========================================================================
@@ -551,11 +542,9 @@ try:
                     </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
-
+    # Tab 2
     elif st.session_state.active_page == "Recommendations":
-        # =========================================================================
-        # ============== HERO BANNER (above filters) ===============================
-        # =========================================================================
+        # ========== Banner ==========
         st.markdown("""
             <div style="
                 background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
@@ -577,9 +566,7 @@ try:
             </div>
         """, unsafe_allow_html=True)
     
-        # =========================================================================
-        # ============== FILTERS ==================================================
-        # =========================================================================
+        # ========== Filters ==========
         st.markdown("#### 🔍 Filter your recommendations")
         
         col_f1, col_f2, col_f3, col_f4 = st.columns(4)
@@ -626,10 +613,7 @@ try:
         with col_f8:
             top_n = st.slider("Number of Recommendations", 1, 12, 8)
     
-        # =========================================================================
-        # ============== PERSONA MATCHING & RECOMMENDATION GENERATION =============
-        # =========================================================================
-        # (Now that filters are defined, we compute the persona and recommendations)
+        # ========== Persona Matching & Recommendation Generation ==========
         persona_df = df_raw.copy()
         all_filters_ignored = (
             selected_age == "Ignore" and
@@ -639,13 +623,15 @@ try:
             selected_season == "Ignore"
         )
     
+        # Clear previous sidebar messages (optional – you can use st.sidebar.empty())
+        # We'll just overwrite the info box each time.
         if all_filters_ignored:
             active_tourist_id = None
             st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
         else:
             if selected_age != "Ignore":
                 persona_df = persona_df[persona_df['age_group'] == selected_age]
-            # (Gender filter removed; you can add it back if needed)
+            # If you ever re-add gender, filter here as well.
             if not persona_df.empty and selected_age != "Ignore":
                 active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
                 st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
@@ -653,15 +639,12 @@ try:
                 active_tourist_id = 605
                 st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
     
-        # Generate recommendations using the current filters
         recommendations, is_personalized = generate_recommendations(
             active_tourist_id, selected_model, selected_age, selected_province,
             selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
         )
     
-        # =========================================================================
-        # ============== DISPLAY ITINERARY ========================================
-        # =========================================================================
+        # ========== Display Itinerary ==========
         st.subheader("Your Personalized Itinerary")
     
         if is_personalized and not df_raw.empty:
