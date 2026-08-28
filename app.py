@@ -686,7 +686,7 @@ try:
                 row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
                 cols = st.columns(num_cols)
                 
-               for i, (name, score) in enumerate(row_items):
+                for i, (name, score) in enumerate(row_items):
                     with cols[i]:
                         meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
                         category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
