@@ -17,10 +17,11 @@ spend_range = (0, 1000)
 min_rating = 3.0
 top_n = 8
 active_tourist_id = None
+is_personalized = False
 if "recommendations" not in st.session_state:
     st.session_state.recommendations = []
-is_personalized = False
-
+    st.session_state.is_personalized = False
+    st.session_state.active_tourist_id = None
 
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
@@ -663,11 +664,9 @@ try:
         
         # ========== Display Itinerary ==========
         st.subheader("Your Personalized Itinerary")
-            
-        st.subheader("Your Personalized Itinerary")
     
-        if is_personalized and not df_raw.empty:
-            user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
+        if st.session_state.is_personalized and not df_raw.empty:
+            user_history = df_raw[(df_raw['tourist_id'] == st.session_state.active_tourist_id) & (df_raw['rating'] >= 4.0)]
             if len(user_history) > 0:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
@@ -676,8 +675,8 @@ try:
             st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         elif not ml_ready:
             st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
-        elif is_personalized:
-            st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {active_tourist_id}")
+        elif st.session_state.is_personalized:
+            st.success(f"🤖 Showing **{selected_model}** Predictions for Tourist {st.session_state.active_tourist_id}")
         else:
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
     
