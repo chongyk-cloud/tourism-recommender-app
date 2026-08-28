@@ -477,10 +477,12 @@ try:
         )
         
         # --- TRENDING DESTINATIONS SECTION ---
-        st.markdown("### Trending Destinations China")
         st.markdown("""
-            <div style="right: 100px;color: black; font-size: 1rem; z-index: 9999999;">
-                See all
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 20px;">
+                <h3 style="margin: 0; padding: 0;">🔥 Trending Destinations China</h3>
+                <a href="#" style="color: #333; text-decoration: underline; font-size: 1rem; font-weight: 500; cursor: pointer;">
+                    See all
+                </a>
             </div>
         """, unsafe_allow_html=True)
         
