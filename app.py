@@ -810,7 +810,7 @@ try:
         """, unsafe_allow_html=True)
         
         
-        def render_info_panel(recommendations, spend_range, top_n, attraction_spend_map):
+    def render_info_panel(recommendations, spend_range, top_n, attraction_spend_map):
     # --- Card 1: How We Recommend ---
     st.markdown("""
         <div class="info-card">
