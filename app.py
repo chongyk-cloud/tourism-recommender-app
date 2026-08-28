@@ -479,7 +479,7 @@ try:
         # --- TRENDING DESTINATIONS SECTION ---
         st.markdown("""
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 20px;">
-                <h3 style="margin: 0; padding: 0;">🔥 Trending Destinations China</h3>
+                <h3 style="margin: 0; padding: 0;">Trending Destinations China</h3>
                 <a href="#" style="color: #333; text-decoration: underline; font-size: 1rem; font-weight: 500; cursor: pointer;">
                     See all
                 </a>
