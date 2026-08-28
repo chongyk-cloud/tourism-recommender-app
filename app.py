@@ -1087,23 +1087,30 @@ try:
             prec_delta = rec_delta = f1_delta = ndcg_delta = rmse_delta = mae_delta = acc_delta = clf_f1_delta = None
             curr_short = "Model"
 
-        st.divider()
-        
-        st.markdown("### 🏆 Top-N Ranking Performance")
-        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
-        r1_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
-        r1_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
-        r1_col3.metric(f"{curr_short} F1@5", f1_val, delta=f1_delta, delta_color="normal")
-        r1_col4.metric(f"{curr_short} NDCG@5", ndcg_val, delta=ndcg_delta, delta_color="normal")
+        st.divider()  
+        # Initialize the toggle state if it doesn't exist
+        if "show_metrics" not in st.session_state:
+            st.session_state.show_metrics = False
 
-        st.dataframe(
-            eval_metrics_df[["Algorithm", "Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"]]
-            .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
-            use_container_width=True
-        )
+        # Create the button to toggle visibility
+        if st.button("🏆 Visualize Top-N Ranking Performance"):
+            st.session_state.show_metrics = not st.session_state.show_metrics
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        # Only display the content if the state is True
+        if st.session_state.show_metrics:
+            st.markdown("### 🏆 Top-N Ranking Performance")
+            r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
+            r1_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
+            r1_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
+            r1_col3.metric(f"{curr_short} F1@5", f1_val, delta=f1_delta, delta_color="normal")
+            r1_col4.metric(f"{curr_short} NDCG@5", ndcg_val, delta=ndcg_delta, delta_color="normal")
 
+            st.dataframe(
+                eval_metrics_df[["Algorithm", "Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"]]
+                .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
+                use_container_width=True
+            )
+            
         st.markdown("### 🎯 Rating Prediction & Classification")
         r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
         r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
