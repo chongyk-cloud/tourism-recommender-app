@@ -686,8 +686,9 @@ try:
                 row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
                 cols = st.columns(num_cols)
                 
-                for i, (name, score) in enumerate(row_items):
+               for i, (name, score) in enumerate(row_items):
                     with cols[i]:
+                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
                         category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
                         
@@ -702,6 +703,11 @@ try:
                         item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
                         real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
                         
+                        if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
+                        elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
+                        elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
+                        else: reason = "🧠 Deep Learning Match"
+                        
                         card_html = f"""
                         <div class="dest-card">
                             <img src="{img_url}" alt="{name}">
@@ -710,7 +716,9 @@ try:
                                     <a href="{nav_link}" target="_blank">{name} ↗</a>
                                 </div>
                                 <div class="dest-details">
-                                    ⭐ Rating: {real_avg_rating:.1f} / 5.0<br>
+                                    <i>{reason}</i><br><br>
+                                    🎯 Match: {score:.0f}% AI Match<br>
+                                    ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
                                     📂 Category: {category}<br>
                                     💰 Est. Spend: {est_spend}
                                 </div>
