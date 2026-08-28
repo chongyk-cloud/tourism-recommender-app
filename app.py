@@ -422,6 +422,29 @@ try:
             st.rerun()
             
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
+    # =========================================================================
+    # ============== HERO BANNER (above filters) ===============================
+    # =========================================================================
+    st.markdown("""
+        <div style="
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                        url('https://2021-2025.state.gov/wp-content/uploads/2023/07/shutterstock_245773270v2-768x512.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            padding: 60px 40px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        ">
+            <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 10px;">
+                Find Your Perfect Travel Destinations
+            </h1>
+            <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">
+                Personalized recommendations based on your preferences, budget and travel style.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # =========================================================================
     # ============== FILTERS (moved to main area, below navigation) ===========
