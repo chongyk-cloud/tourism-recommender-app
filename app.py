@@ -438,10 +438,6 @@ try:
     # =========================================================================
     # ============== PERSONA MATCHING (now uses the widgets above) ============
     # =========================================================================
-    persona_df = df_raw.copy()
-    all_filters_ignored = (selected_age == "Ignore" and selected_province == "Ignore" and 
-                           selected_category == "Ignore" and selected_duration == "Ignore" and
-                           selected_season == "Ignore")
 
     if all_filters_ignored:
         active_tourist_id = None 
