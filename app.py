@@ -1041,7 +1041,7 @@ try:
         
     # ========================== TAB 4: DIAGNOSTICS ==========================
     elif st.session_state.active_page == "Diagnostics":
-        st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
+        st.subheader("Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment dynamically tracking changes across models.")
 
         SHORT_NAMES = {
@@ -1101,6 +1101,24 @@ try:
             min-height: 550px;
             display: flex;
             flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        /* New classes for the highlighted "Best Model" */
+        .model-card.best-model {
+            border: 2px solid #0078D4;
+            box-shadow: 0 8px 20px rgba(0, 120, 212, 0.15);
+            transform: scale(1.02);
+            position: relative;
+            z-index: 10;
+        }
+        .best-model .model-title {
+            color: #0078D4;
+        }
+        .best-model .card-pill {
+            background-color: #0078D4;
+            color: #ffffff;
+            border-color: #0078D4;
+            font-weight: bold;
         }
         .card-header {
             display: flex;
@@ -1155,6 +1173,9 @@ try:
             height: 100%;
             border-radius: 2px;
         }
+        .best-model .progress-fill {
+            background: #0078D4;
+        }
         .capabilities-list {
             list-style: none;
             padding: 0;
@@ -1177,15 +1198,15 @@ try:
         </style>
         """, unsafe_allow_html=True)
         
-        # Define model data mapped to your evaluation metrics
         models_data = [
             {
                 "name": "Collaborative Filtering",
                 "sub": "Matrix Factorization (SVD)",
-                "pill": "popular",
+                "pill": "baseline / popular",
+                "is_best": False,
                 "metrics": [
                     ("Accuracy", "89.55%", 89.5), 
-                    ("RMSE", "0.2872", 75),  # Shorter bar for higher error
+                    ("RMSE", "0.2872", 75), 
                     ("Precision@5", "0.45%", 85), 
                     ("Recall@5", "1.21%", 87)
                 ],
@@ -1200,6 +1221,7 @@ try:
                 "name": "Content-Based",
                 "sub": "Attribute Matching",
                 "pill": "metadata / categories",
+                "is_best": False,
                 "metrics": [
                     ("Accuracy", "88.95%", 88.9), 
                     ("RMSE", "0.3939", 55), 
@@ -1216,7 +1238,8 @@ try:
             {
                 "name": "Neural Network",
                 "sub": "Deep Learning Model",
-                "pill": "deep-reasoning / complex",
+                "pill": "🏆 Top Performer",
+                "is_best": True,  # This flag triggers the styling
                 "metrics": [
                     ("Accuracy", "88.95%", 88.9), 
                     ("RMSE", "0.3090", 69), 
@@ -1233,7 +1256,8 @@ try:
             {
                 "name": "Hybrid Ensemble",
                 "sub": "Multi-Model Architecture",
-                "pill": "comprehensive",
+                "pill": "flagship / comprehensive",
+                "is_best": False,
                 "metrics": [
                     ("Accuracy", "89.63%", 89.6), 
                     ("RMSE", "0.3312", 65), 
@@ -1249,20 +1273,20 @@ try:
             }
         ]
         
-        # Render the cards in 4 columns
         cols = st.columns(4)
         for i, model in enumerate(models_data):
             with cols[i]:
                 metrics_html = ""
                 for label, val, bar_width in model["metrics"]:
-                    # Keep this entirely on one line to prevent indentation issues
                     metrics_html += f"""<div class="metric-row"><span>{label}</span><span class="metric-val">{val}</span></div><div class="progress-track"><div class="progress-fill" style="width: {bar_width}%;"></div></div>"""
                     
                 caps_html = "".join([f"<li><span style='color:#a1a1aa;'>✓</span> {cap.replace('✓ ', '')}</li>" for cap in model["capabilities"]])
                 
-                # All HTML below must be flush left (no spaces at the start of the lines)
+                # Apply the CSS class dynamically
+                card_class = "model-card best-model" if model["is_best"] else "model-card"
+                
                 st.markdown(f"""
-        <div class="model-card">
+        <div class="{card_class}">
         <div class="card-header">
         <div>
         <h3 class="model-title">{model["name"]}</h3>
@@ -1302,7 +1326,7 @@ try:
 
         # 3. Conditionally display Top-N Metrics
         if st.session_state.show_top_n:
-            st.markdown("### 🏆 Top-N Ranking Performance")
+            st.markdown("### Top-N Ranking Performance")
             r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
             r1_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
             r1_col2.metric(f"{curr_short} Recall@5", rec_val, delta=rec_delta, delta_color="normal")
@@ -1317,7 +1341,7 @@ try:
 
         # 4. Conditionally display Rating Prediction Metrics
         if st.session_state.show_rating_pred:
-            st.markdown("### 🎯 Rating Prediction & Classification")
+            st.markdown("### Rating Prediction & Classification")
             r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
             r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
             r2_col2.metric(f"{curr_short} MAE", mae_val, delta=mae_delta, delta_color="inverse")
