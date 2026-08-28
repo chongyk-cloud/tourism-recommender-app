@@ -549,33 +549,30 @@ try:
                 </p>
             </div>
         """, unsafe_allow_html=True)
-    
+
         # ========== Filters ==========
         st.markdown("""
             <style>
-                /* Header Styling */
-                .filter-title {
-                    color: #000000;
-                    font-size: 1.4rem;
-                    font-weight: 800;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 15px;
-                }
-                /* Button Styling to match the blue gradient in the image */
-                div[data-testid="column"]:last-child div[data-testid="stButton"] button {
-                    background: linear-gradient(to right, #0078D4, #004A87) !important;
-                    color: white !important;
-                    border: none !important;
-                    border-radius: 8px !important;
-                    font-weight: bold !important;
-                    width: 100% !important;
-                    height: 42px !important;
-                    margin-top: 28px !important; /* Aligns button with dropdowns */
-                }
+            .filter-title {
+                color: #000000;
+                font-size: 1.4rem;
+                font-weight: 800;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            div[data-testid="column"]:last-child div[data-testid="stButton"] button {
+                background: linear-gradient(to right, #0078D4, #004A87) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 8px !important;
+                font-weight: bold !important;
+                width: 100% !important;
+                height: 42px !important;
+                margin-top: 28px !important;
+            }
             </style>
-            
             <div class="filter-title">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -586,10 +583,9 @@ try:
                 </svg>
                 Tell Us About Your Travel Preferences
             </div>
-            """, unsafe_allow_html=True)
-            
+        """, unsafe_allow_html=True)
+
         with st.container():
-            # Setup helper functions and lists
             def get_default_index(opts, target="Ignore"):
                 return opts.index(target) if target in opts else len(opts)-1
 
@@ -603,7 +599,6 @@ try:
             season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
             season_values = avail_seasons + ["Ignore"]
 
-            # ROW 1 (5 Columns)
             r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
             with r1_col1:
                 selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
@@ -621,7 +616,6 @@ try:
                     min_spend, max_spend = 0, 1000
                 spend_range = st.slider("Budget (¥)", min_spend, max_spend, (min_spend, max_spend))
 
-            # ROW 2 (4 Columns with unequal spacing for the button)
             r2_col1, r2_col2, r2_col3, r2_col4 = st.columns([1, 1, 1.5, 1.5])
             with r2_col1:
                 selected_duration = st.selectbox("Trip Duration", dur_options, index=get_default_index(dur_options))
@@ -632,59 +626,49 @@ try:
             with r2_col3:
                 top_n = st.slider("Number of Recommendations", 1, 12, 8)
             with r2_col4:
-                # Trigger button to lock in state
                 generate_clicked = st.button("🔍 Get Recommendations", use_container_width=True)
 
         st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
         
-        # Only process if button is clicked or we already have active recommendations
-        if generate_clicked or "recommendations" not in st.session_state:
-            # ========== Persona Matching & Recommendation Generation ==========
-            # (Insert your existing logic here starting from: persona_df = df_raw.copy())
+        # Only process if button is clicked or we have no recommendations yet
+        if generate_clicked or not st.session_state.recommendations:
+            persona_df = df_raw.copy()
+            all_filters_ignored = (
+                selected_age == "Ignore" and
+                selected_province == "Ignore" and
+                selected_category == "Ignore" and
+                selected_duration == "Ignore" and
+                selected_season == "Ignore"
+            )
         
-        # ========== Persona Matching & Recommendation Generation ==========
-        persona_df = df_raw.copy()
-        all_filters_ignored = (
-            selected_age == "Ignore" and
-            selected_province == "Ignore" and
-            selected_category == "Ignore" and
-            selected_duration == "Ignore" and
-            selected_season == "Ignore"
-        )
-    
-        # Clear previous sidebar messages (optional – you can use st.sidebar.empty())
-        # We'll just overwrite the info box each time.
-        if all_filters_ignored:
-            active_tourist_id = None
-            st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
-        else:
-            if selected_age != "Ignore":
-                persona_df = persona_df[persona_df['age_group'] == selected_age]
-            # If you ever re-add gender, filter here as well.
-            if not persona_df.empty and selected_age != "Ignore":
-                active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-                st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
+            if all_filters_ignored:
+                active_tourist_id = None
+                st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
             else:
-                active_tourist_id = 605
-                st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
-    
-        recommendations, is_personalized = generate_recommendations(
-            active_tourist_id, selected_model, selected_age, selected_province, 
-            selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
-        )
-        # Save to session state so the Map tab can access it
-        st.session_state.recommendations = recommendations
+                if selected_age != "Ignore":
+                    persona_df = persona_df[persona_df['age_group'] == selected_age]
+                if not persona_df.empty and selected_age != "Ignore":
+                    active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
+                    st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
+                else:
+                    active_tourist_id = 605
+                    st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
+        
+            recommendations, is_personalized = generate_recommendations(
+                active_tourist_id, selected_model, selected_age, selected_province, 
+                selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
+            )
+            st.session_state.recommendations = recommendations
             
-        # ========== Display Itinerary ==========
         st.subheader("Your Personalized Itinerary")
     
         if is_personalized and not df_raw.empty:
             user_history = df_raw[(df_raw['tourist_id'] == active_tourist_id) & (df_raw['rating'] >= 4.0)]
-            if not user_history.empty:
+            if len(user_history) > 0:
                 top_past = user_history['attraction_name'].iloc[0]
                 st.info(f"**Traveler Context:** Based on your high ratings for places like **{top_past}**, here is what our {selected_model} suggests next:")
     
-        if not recommendations:
+        if not st.session_state.recommendations:
             st.warning("⚠️ No attractions found matching all your criteria. Try setting some filters to 'Ignore'.")
         elif not ml_ready:
             st.warning("⚠️ ML Model files not found. Running in Fallback Popularity Mode.")
@@ -693,10 +677,10 @@ try:
         else:
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
     
-        if recommendations:
+        if st.session_state.recommendations:
             num_cols = 4
-            for row_idx in range(0, len(recommendations), num_cols):
-                row_items = recommendations[row_idx : row_idx + num_cols]
+            for row_idx in range(0, len(st.session_state.recommendations), num_cols):
+                row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
                 cols = st.columns(num_cols)
                 
                 for i, (name, score) in enumerate(row_items):
@@ -706,14 +690,14 @@ try:
                         img_url = get_attraction_photo(name)
                         
                         st.markdown(
-                            f"""
+                            f'''
                             <div style="height: 200px; width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                                 <img src="{img_url}" style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
-                            """, unsafe_allow_html=True
+                            ''', unsafe_allow_html=True
                         )
                         if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
-                        elif "Content" in selected_model: reason = f"🏷️ Matches your preferred categories"
+                        elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
                         elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
                         else: reason = "🧠 Deep Learning Match"
                             
