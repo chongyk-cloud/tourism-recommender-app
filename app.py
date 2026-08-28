@@ -733,7 +733,7 @@ try:
                         else: reason = "🧠 Deep Learning Match"
                             
                         st.markdown(f"*{reason}*")
-                        st.markdown(f"**{name}**")
+                        
                         
                         item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
                         real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
