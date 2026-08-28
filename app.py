@@ -7,6 +7,8 @@ import requests
 import pickle
 import os
 import streamlit.components.v1 as components
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 selected_age = "Ignore"
 selected_category = "Ignore"
@@ -1338,6 +1340,72 @@ try:
                 .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
                 use_container_width=True
             )
+            st.markdown("### 📊 Ranking Metrics Dashboard")
+            
+            # Set the dataframe index to Model for easy plotting
+            # Make sure 'comparison_df' is defined or replace it with 'eval_metrics_df'
+            metrics_to_plot = eval_metrics_df.set_index('Algorithm')
+
+            sns.set_theme(style="whitegrid")
+            fig = plt.figure(figsize=(16, 12))
+
+            # Plot A: Precision & Recall @5 
+            ax1 = plt.subplot2grid((2, 2), (0, 0))
+            metrics_to_plot[['Precision@5', 'Recall@5']].plot(kind='barh', ax=ax1, colormap='Blues_r', edgecolor='black')
+            ax1.set_title('A. Precision & Recall @ 5', fontsize=14, fontweight='bold')
+            ax1.set_xlabel('Score', fontsize=12)
+            ax1.set_ylabel('') 
+            ax1.invert_yaxis() 
+            ax1.legend(loc='lower right')
+            ax1.set_xlim(left=0)
+            ax1.margins(x=0.15) 
+            for container in ax1.containers:
+                ax1.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            # Plot B: F1-Score @5
+            ax2 = plt.subplot2grid((2, 2), (0, 1))
+            metrics_to_plot[['F1@5']].plot(kind='barh', ax=ax2, color='mediumseagreen', edgecolor='black', legend=False)
+            ax2.set_title('B. F1-Score @5', fontsize=14, fontweight='bold')
+            ax2.set_xlabel('Score', fontsize=12)
+            ax2.set_ylabel('')
+            ax2.invert_yaxis()
+            ax2.set_xlim(left=0)
+            ax2.margins(x=0.15)
+            for container in ax2.containers:
+                ax2.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            # Plot C: Hit Rate (HR) @5 
+            ax3 = plt.subplot2grid((2, 2), (1, 0))
+            metrics_to_plot[['HR@5']].plot(kind='barh', ax=ax3, color='coral', edgecolor='black', legend=False)
+            ax3.set_title('C. Hit Rate @5 (Users with ≥1 relevant item)', fontsize=14, fontweight='bold')
+            ax3.set_xlabel('Score', fontsize=12)
+            ax3.set_ylabel('')
+            ax3.invert_yaxis()
+            ax3.set_xlim(left=0)
+            ax3.margins(x=0.15)
+            for container in ax3.containers:
+                ax3.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            # Plot D: NDCG @5 
+            ax4 = plt.subplot2grid((2, 2), (1, 1))
+            metrics_to_plot[['NDCG@5']].plot(kind='barh', ax=ax4, color='mediumpurple', edgecolor='black', legend=False)
+            ax4.set_title('D. NDCG @5 (Ranking Quality)', fontsize=14, fontweight='bold')
+            ax4.set_xlabel('Score', fontsize=12)
+            ax4.set_ylabel('')
+            ax4.invert_yaxis()
+            ax4.set_xlim(left=0)
+            ax4.margins(x=0.15)
+            for container in ax4.containers:
+                ax4.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            plt.suptitle('Final Model Ranking Evaluation (Top-5 Recommendations)', fontsize=18, fontweight='bold', y=0.98)
+            plt.tight_layout(pad=3.0)
+            
+            # Replace plt.show() with st.pyplot()
+            st.pyplot(fig)
+            
+            # Clear the figure from memory to prevent overlap on reruns
+            plt.close(fig)
 
         # 4. Conditionally display Rating Prediction Metrics
         if st.session_state.show_rating_pred:
