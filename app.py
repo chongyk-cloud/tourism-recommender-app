@@ -551,51 +551,96 @@ try:
         """, unsafe_allow_html=True)
     
         # ========== Filters ==========
-        st.markdown("#### 🔍 Filter your recommendations")
-        
-        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
-        col_f5, col_f6, col_f7, col_f8 = st.columns(4)
+        st.markdown("""
+            <style>
+            /* Header Styling */
+            .filter-title {
+                color: #000000;
+                font-size: 1.4rem;
+                font-weight: 800;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            /* Button Styling to match the blue gradient in the image */
+            div[data-testid="column"]:last-child div[data-testid="stButton"] button {
+                background: linear-gradient(to right, #0078D4, #004A87) !important;
+                color: white !important;
+                border: none !important;
+                border-radius: 8px !important;
+                font-weight: bold !important;
+                width: 100% !important;
+                height: 42px !important;
+                margin-top: 28px !important; /* Aligns button with dropdowns */
+            }
+            </style>
+            
+            <div class="filter-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                Tell Us About Your Travel Preferences
+            </div>
+            """, unsafe_allow_html=True)
     
-        def get_default_index(opts, target="Ignore"):
-            return opts.index(target) if target in opts else len(opts)-1
+            with st.container():
+                # Setup helper functions and lists
+                def get_default_index(opts, target="Ignore"):
+                    return opts.index(target) if target in opts else len(opts)-1
     
-        avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-        avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-        avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-        dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-        
-        season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
-        avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
-        season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
-        season_values = avail_seasons + ["Ignore"]
+                avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+                avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+                avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+                dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+                
+                season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
+                avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
+                season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
+                season_values = avail_seasons + ["Ignore"]
     
-        with col_f1:
-            selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
-        with col_f2:
-            selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
-        with col_f3:
-            selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
-        with col_f4:
-            selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
-        with col_f5:
-            idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
-            selected_season_display = st.selectbox("Season", season_display, index=idx_season)
-            if selected_season_display == "Ignore":
-                selected_season = "Ignore"
-            else:
-                reverse_map = {v: k for k, v in season_mapping.items()}
-                selected_season = reverse_map.get(selected_season_display, selected_season_display)
-        with col_f6:
-            if not df_raw.empty:
-                min_spend = int(df_raw['spend_amount'].min())
-                max_spend = int(df_raw['spend_amount'].max())
-                spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
-            else:
-                spend_range = (0, 1000)
-        with col_f7:
-            min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
-        with col_f8:
-            top_n = st.slider("Number of Recommendations", 1, 12, 8)
+                # ROW 1 (5 Columns)
+                r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
+                with r1_col1:
+                    selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
+                with r1_col2:
+                    selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
+                with r1_col3:
+                    selected_province = st.selectbox("Location", avail_provinces, index=get_default_index(avail_provinces))
+                with r1_col4:
+                    min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
+                with r1_col5:
+                    if not df_raw.empty:
+                        min_spend = int(df_raw['spend_amount'].min())
+                        max_spend = int(df_raw['spend_amount'].max())
+                    else:
+                        min_spend, max_spend = 0, 1000
+                    spend_range = st.slider("Budget (¥)", min_spend, max_spend, (min_spend, max_spend))
+    
+                # ROW 2 (4 Columns with unequal spacing for the button)
+                r2_col1, r2_col2, r2_col3, r2_col4 = st.columns([1, 1, 1.5, 1.5])
+                with r2_col1:
+                    selected_duration = st.selectbox("Trip Duration", dur_options, index=get_default_index(dur_options))
+                with r2_col2:
+                    idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
+                    selected_season_display = st.selectbox("Preferred Season", season_display, index=idx_season)
+                    selected_season = {v: k for k, v in season_mapping.items()}.get(selected_season_display, selected_season_display)
+                with r2_col3:
+                    top_n = st.slider("Number of Recommendations", 1, 12, 8)
+                with r2_col4:
+                    # Trigger button to lock in state
+                    generate_clicked = st.button("🔍 Get Recommendations", use_container_width=True)
+    
+            st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
+            
+            # Only process if button is clicked or we already have active recommendations
+            if generate_clicked or "recommendations" not in st.session_state:
+                # ========== Persona Matching & Recommendation Generation ==========
+                # (Insert your existing logic here starting from: persona_df = df_raw.copy())
     
         # ========== Persona Matching & Recommendation Generation ==========
         persona_df = df_raw.copy()
