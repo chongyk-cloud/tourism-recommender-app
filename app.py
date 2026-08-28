@@ -11,6 +11,9 @@ import streamlit.components.v1 as components
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
+if "active_page" not in st.session_state:
+    st.session_state.active_page = "Home"
+
 st.markdown("""
     <div style="position: fixed; top: 15px; left: 80px; font-weight: bold; color: black; font-size: 5rem; z-index: 9999999;">
         Duolingo
@@ -342,11 +345,29 @@ try:
     )
             
     # --- 6. TABS STRUCTURE ---
-    tab_home, tab_recs, tab_map, tab_diag = st.tabs(["🏠 Home", "🎯 Top Recommendations", "📍 3D Spatial Map", "⚙️ Diagnostics"])
+    nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
+    with nav_col1:
+        if st.button("🏠 Home", use_container_width=True):
+            st.session_state.active_page = "Home"
+            st.rerun()
+    with nav_col2:
+        if st.button("🎯 Top Recommendations", use_container_width=True):
+            st.session_state.active_page = "Recommendations"
+            st.rerun()
+    with nav_col3:
+        if st.button("📍 3D Spatial Map", use_container_width=True):
+            st.session_state.active_page = "Map"
+            st.rerun()
+    with nav_col4:
+        if st.button("⚙️ Diagnostics", use_container_width=True):
+            st.session_state.active_page = "Diagnostics"
+            st.rerun()
+    
+    st.divider()
   
     # ========================== TAB 1: HOME PAGE ==========================
-    with tab_home:
-        # Note: The JS onclick parameter automatically forces Streamlit to switch to the Recommendation Tab [Index 1].
+    if st.session_state.active_page == "Home":
+        # 1. Render the HTML Hero Banner (WITHOUT the HTML <button> tag inside it)
         st.markdown("""
         <div class="hero-banner">
             <div class="hero-top">
@@ -368,34 +389,17 @@ try:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        components.html(
-    """
-    <script>
-    // Access the main Streamlit page outside this iframe
-    const parentDoc = window.parent.document;
     
-    // Find our custom HTML button
-    const btn = parentDoc.getElementById('start-explore-btn');
+        # 2. Add your Python button directly underneath
+        cta_col, _ = st.columns([1, 4])
+        with cta_col:
+            # Using type="primary" gives it a blue background to match the old button
+            if st.button("🚀 Start Exploring", use_container_width=True, type="primary"):
+                st.session_state.active_page = "Recommendations"
+                st.rerun()
     
-    if (btn) {
-        btn.addEventListener('click', function() {
-            // Find all Streamlit tabs and click the second one (index 1)
-            const tabs = parentDoc.querySelectorAll('[data-baseweb="tab"]');
-            if (tabs.length > 1) {
-                tabs[1].click();
-            }
-        });
-    }
-    </script>
-    """,
-    height=0, 
-    width=0
-)
-
-    
-        
     # ========================== TAB 2: TRAVELER VIEW ==========================
-    with tab_recs:
+    elif st.session_state.active_page == "Recommendations":
         st.subheader("Your Personalized Itinerary")
 
         if is_personalized and not df_raw.empty:
@@ -446,7 +450,7 @@ try:
                         st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
 
     # ========================== TAB 3: SPATIAL MAP ==========================
-    with tab_map:
+    elif st.session_state.active_page == "Map":
         st.subheader("📍 3D Journey & Spatial Layout")
         st.info("Interactive routing from your origin point to recommended destinations.")
 
@@ -533,7 +537,7 @@ try:
                 st.warning("Coordinate data not found for these specific recommendations.")
 
     # ========================== TAB 4: DIAGNOSTICS ==========================
-    with tab_diag:
+    elif st.session_state.active_page == "Diagnostics":
         st.subheader("📊 Recommendation Engine Diagnostics & Evaluation")
         st.markdown("Quantitative performance assessment dynamically tracking changes across models.")
 
