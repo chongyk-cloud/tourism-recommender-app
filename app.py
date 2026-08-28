@@ -1088,7 +1088,202 @@ try:
             curr_short = "Model"
 
         st.divider()  
-        st.divider()
+        st.markdown("""
+        <style>
+        .model-card {
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 24px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #111;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .model-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .model-sub {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        .card-pill {
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 20px 0 12px 0;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: #4b5563;
+        }
+        .metric-val {
+            font-weight: 600;
+            color: #111;
+        }
+        .progress-track {
+            background: #f3f4f6;
+            height: 3px;
+            width: 100%;
+            margin-bottom: 12px;
+            border-radius: 2px;
+        }
+        .progress-fill {
+            background: #111;
+            height: 100%;
+            border-radius: 2px;
+        }
+        .capabilities-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+        .capabilities-list li {
+            font-size: 0.85rem;
+            color: #4b5563;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-footer {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 20px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Define model data mapped to your evaluation metrics
+        models_data = [
+            {
+                "name": "Collaborative Filtering",
+                "sub": "Matrix Factorization (SVD)",
+                "pill": "baseline / popular",
+                "metrics": [
+                    ("Accuracy", "89.55%", 89.5), 
+                    ("RMSE", "0.2872", 75),  # Shorter bar for higher error
+                    ("Precision@5", "0.45%", 85), 
+                    ("Recall@5", "1.21%", 87)
+                ],
+                "capabilities": [
+                    "✓ Learns from user similarities",
+                    "✓ High baseline accuracy",
+                    "✓ Captures hidden rating patterns"
+                ],
+                "date": "Aug 2026"
+            },
+            {
+                "name": "Content-Based",
+                "sub": "Attribute Matching",
+                "pill": "metadata / categories",
+                "metrics": [
+                    ("Accuracy", "88.95%", 88.9), 
+                    ("RMSE", "0.3939", 55), 
+                    ("Precision@5", "0.43%", 81), 
+                    ("Recall@5", "1.17%", 84)
+                ],
+                "capabilities": [
+                    "✓ Solves cold-start problems",
+                    "✓ Recommends niche categories",
+                    "✓ Independent of other users"
+                ],
+                "date": "Aug 2026"
+            },
+            {
+                "name": "Neural Network",
+                "sub": "Deep Learning Model",
+                "pill": "deep-reasoning / complex",
+                "metrics": [
+                    ("Accuracy", "88.95%", 88.9), 
+                    ("RMSE", "0.3090", 69), 
+                    ("Precision@5", "0.53%", 100), 
+                    ("Recall@5", "1.39%", 100)
+                ],
+                "capabilities": [
+                    "✓ Non-linear feature extraction",
+                    "✓ Highest top-N precision",
+                    "✓ Deep behavioral mapping"
+                ],
+                "date": "Aug 2026"
+            },
+            {
+                "name": "Hybrid Ensemble",
+                "sub": "Multi-Model Architecture",
+                "pill": "flagship / comprehensive",
+                "metrics": [
+                    ("Accuracy", "89.63%", 89.6), 
+                    ("RMSE", "0.3312", 65), 
+                    ("Precision@5", "0.49%", 92), 
+                    ("Recall@5", "1.38%", 99)
+                ],
+                "capabilities": [
+                    "✓ Maximum overall accuracy",
+                    "✓ Robust edge-case handling",
+                    "✓ Balances novelty & popularity"
+                ],
+                "date": "Aug 2026"
+            }
+        ]
+        
+        # Render the cards in 4 columns
+        cols = st.columns(4)
+        for i, model in enumerate(models_data):
+            with cols[i]:
+                metrics_html = ""
+                for label, val, bar_width in model["metrics"]:
+                    metrics_html += f"""
+                        <div class="metric-row"><span>{label}</span><span class="metric-val">{val}</span></div>
+                        <div class="progress-track"><div class="progress-fill" style="width: {bar_width}%;"></div></div>
+                    """
+                    
+                caps_html = "".join([f"<li><span style='color:#a1a1aa;'>✓</span> {cap.replace('✓ ', '')}</li>" for cap in model["capabilities"]])
+                
+                st.markdown(f"""
+                <div class="model-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="model-title">{model["name"]}</h3>
+                            <div class="model-sub">{model["sub"]}</div>
+                        </div>
+                        <div class="card-pill">{model["pill"]}</div>
+                    </div>
+                    
+                    <div class="section-title">Performance</div>
+                    {metrics_html}
+                    
+                    <div class="section-title">Capabilities</div>
+                    <ul class="capabilities-list">
+                        {caps_html}
+                    </ul>
+                    
+                    <div class="card-footer">{model["date"]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.divider()
         
         # 1. Initialize states for both buttons
         if "show_top_n" not in st.session_state:
