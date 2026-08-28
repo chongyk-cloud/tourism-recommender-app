@@ -461,6 +461,9 @@ try:
         if st.button("Diagnostics", use_container_width=True):
             st.session_state.active_page = "Diagnostics"
             st.rerun()
+            
+    # --- SEPARATOR LINE ---
+    st.divider()
   
     # ========================== TAB 1: HOME PAGE ==========================
     if st.session_state.active_page == "Home":
