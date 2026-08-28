@@ -625,8 +625,8 @@ try:
                 selected_season = {v: k for k, v in season_mapping.items()}.get(selected_season_display, selected_season_display)
             with r2_col3:
                 top_n = st.slider("Number of Recommendations", 1, 12, 8)
-            with r2_col4:
-                generate_clicked = st.button("🔍 Get Recommendations", use_container_width=True)
+           
+            
 
         st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
         
