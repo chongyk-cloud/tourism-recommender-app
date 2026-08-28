@@ -1340,7 +1340,7 @@ try:
                 .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
                 use_container_width=True
             )
-            st.markdown("### 📊 Ranking Metrics Dashboard")
+            st.markdown("### Ranking Metrics Dashboard")
             
             # Set the dataframe index to Model for easy plotting
             # Make sure 'comparison_df' is defined or replace it with 'eval_metrics_df'
@@ -1422,7 +1422,7 @@ try:
                 .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
                 use_container_width=True
             )
-            st.markdown("### 📊 Rating Prediction Dashboard")
+            st.markdown("### Rating Prediction Dashboard")
             
             # Map your existing Streamlit dataframe for plotting
             rating_metrics_plot = eval_metrics_df.set_index('Algorithm')
