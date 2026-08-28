@@ -616,7 +616,8 @@ try:
                     min_spend, max_spend = 0, 1000
                 spend_range = st.slider("Budget (¥)", min_spend, max_spend, (min_spend, max_spend))
 
-            r2_col1, r2_col2, r2_col3, r2_col4 = st.columns([1, 1, 1.5, 1.5])
+            # ROW 2 
+            r2_col1, r2_col2, r2_col3 = st.columns(3)
             with r2_col1:
                 selected_duration = st.selectbox("Trip Duration", dur_options, index=get_default_index(dur_options))
             with r2_col2:
@@ -625,40 +626,43 @@ try:
                 selected_season = {v: k for k, v in season_mapping.items()}.get(selected_season_display, selected_season_display)
             with r2_col3:
                 top_n = st.slider("Number of Recommendations", 1, 12, 8)
-           
-            
 
         st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
         
-        # Only process if button is clicked or we have no recommendations yet
-        if not st.session_state.recommendations:
-            persona_df = df_raw.copy()
-            all_filters_ignored = (
-                selected_age == "Ignore" and
-                selected_province == "Ignore" and
-                selected_category == "Ignore" and
-                selected_duration == "Ignore" and
-                selected_season == "Ignore"
-            )
-        
-            if all_filters_ignored:
-                active_tourist_id = None
-                st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
+        # ========== Persona Matching & Recommendation Generation ==========
+        # This now runs automatically every time a filter is changed
+        persona_df = df_raw.copy()
+        all_filters_ignored = (
+            selected_age == "Ignore" and selected_province == "Ignore" and
+            selected_category == "Ignore" and selected_duration == "Ignore" and
+            selected_season == "Ignore"
+        )
+    
+        if all_filters_ignored:
+            active_id = None
+            st.sidebar.info("🔥 **General Popularity Mode**\n\nNo filters applied. Showing trending destinations.")
+        else:
+            if selected_age != "Ignore":
+                persona_df = persona_df[persona_df['age_group'] == selected_age]
+            if not persona_df.empty and selected_age != "Ignore":
+                active_id = persona_df['tourist_id'].value_counts().index[0]
+                st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_id}")
             else:
-                if selected_age != "Ignore":
-                    persona_df = persona_df[persona_df['age_group'] == selected_age]
-                if not persona_df.empty and selected_age != "Ignore":
-                    active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
-                    st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
-                else:
-                    active_tourist_id = 605
-                    st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
+                active_id = 605
+                st.sidebar.info("🧊 **Cold Start Mode**\n\nUsing Default Highly-Active Profile (ID: 605).")
+    
+        recs, personalized = generate_recommendations(
+            active_id, selected_model, selected_age, selected_province, 
+            selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
+        )
         
-            recommendations, is_personalized = generate_recommendations(
-                active_tourist_id, selected_model, selected_age, selected_province, 
-                selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
-            )
-            st.session_state.recommendations = recommendations
+        # Save to session state so the Map tab can access it
+        st.session_state.recommendations = recs
+        st.session_state.is_personalized = personalized
+        st.session_state.active_tourist_id = active_id
+        
+        # ========== Display Itinerary ==========
+        st.subheader("Your Personalized Itinerary")
             
         st.subheader("Your Personalized Itinerary")
     
