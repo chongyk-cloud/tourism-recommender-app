@@ -478,6 +478,11 @@ try:
         
         # --- TRENDING DESTINATIONS SECTION ---
         st.markdown("### Trending Destinations China")
+        st.markdown("""
+            <div style="right: 80px;color: black; font-size: 1rem; z-index: 9999999;">
+                See all
+            </div>
+        """, unsafe_allow_html=True)
         
         try:
             if 'rating' in df_raw.columns:
