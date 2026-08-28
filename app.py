@@ -704,92 +704,92 @@ try:
                         
                         st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
     
-        # ========================== TAB 3: SPATIAL MAP ==========================
-        elif st.session_state.active_page == "Map":
-            st.subheader("📍 3D Journey & Spatial Layout")
-            st.info("Interactive routing from your origin point to recommended destinations.")
-    
-            PROVINCE_COORDS = {
-                "Beijing": [116.4074, 39.9042], "Shanghai": [121.4737, 31.2304],
-                "Guangdong": [113.2644, 23.1291], "Shandong": [117.1201, 36.6512],
-                "Zhejiang": [120.1551, 30.2741], "Jiangsu": [118.7969, 32.0603],
-                "Sichuan": [104.0648, 30.6586], "Henan": [113.6253, 34.7466],
-                "Default": [108.9398, 34.3416]
-            }
-            
-            origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
-            origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
-    
-            if recommendations and not attr_meta.empty:
-                map_data = []
-                for name, score in recommendations:
-                    meta_row = attr_meta[attr_meta['attraction_name'] == name]
-                    if not meta_row.empty:
-                        raw_lat, raw_lon = meta_row['latitude'].iloc[0], meta_row['longitude'].iloc[0]
-                        if pd.isna(raw_lat) or pd.isna(raw_lon): continue
-                            
-                        lat, lon = float(raw_lat), float(raw_lon)
-                        color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
+    # ========================== TAB 3: SPATIAL MAP ==========================
+    elif st.session_state.active_page == "Map":
+        st.subheader("📍 3D Journey & Spatial Layout")
+        st.info("Interactive routing from your origin point to recommended destinations.")
+
+        PROVINCE_COORDS = {
+            "Beijing": [116.4074, 39.9042], "Shanghai": [121.4737, 31.2304],
+            "Guangdong": [113.2644, 23.1291], "Shandong": [117.1201, 36.6512],
+            "Zhejiang": [120.1551, 30.2741], "Jiangsu": [118.7969, 32.0603],
+            "Sichuan": [104.0648, 30.6586], "Henan": [113.6253, 34.7466],
+            "Default": [108.9398, 34.3416]
+        }
+        
+        origin_lon, origin_lat = PROVINCE_COORDS.get(selected_province, PROVINCE_COORDS["Default"])
+        origin_name = selected_province if selected_province != "Ignore" else "Default Hub"
+
+        if recommendations and not attr_meta.empty:
+            map_data = []
+            for name, score in recommendations:
+                meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                if not meta_row.empty:
+                    raw_lat, raw_lon = meta_row['latitude'].iloc[0], meta_row['longitude'].iloc[0]
+                    if pd.isna(raw_lat) or pd.isna(raw_lon): continue
                         
-                        R = 6371.0
-                        lat1, lon1, lat2, lon2 = map(np.radians, [origin_lat, origin_lon, lat, lon])
-                        dlon = lon2 - lon1
-                        dlat = lat2 - lat1
-                        a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
-                        distance_km = R * 2 * np.arcsin(np.sqrt(a))
-                        safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
-                        
-                        map_data.append({
-                            "name": name, "lat": lat, "lon": lon, "score": float(score),
-                            "color": color, "origin_lat": origin_lat, "origin_lon": origin_lon,
-                            "distance": safe_distance
-                        })
-    
-                if map_data:
-                    map_df = pd.DataFrame(map_data)
-                    avg_lat = (map_df["lat"].mean() + origin_lat) / 2
-                    avg_lon = (map_df["lon"].mean() + origin_lon) / 2
+                    lat, lon = float(raw_lat), float(raw_lon)
+                    color = [46, 204, 113, 220] if score > 90 else [241, 196, 15, 220]
                     
-                    view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=4.5, pitch=50, bearing=-10)
+                    R = 6371.0
+                    lat1, lon1, lat2, lon2 = map(np.radians, [origin_lat, origin_lon, lat, lon])
+                    dlon = lon2 - lon1
+                    dlat = lat2 - lat1
+                    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+                    distance_km = R * 2 * np.arcsin(np.sqrt(a))
+                    safe_distance = int(distance_km) if not np.isnan(distance_km) else 0
                     
-                    scatter_layer = pdk.Layer(
-                        "ScatterplotLayer", data=map_df, get_position=["lon", "lat"],
-                        get_radius=8000, get_fill_color="color", pickable=False, 
-                    )
-                    
-                    column_layer = pdk.Layer(
-                        "ColumnLayer", data=map_df, get_position=["lon", "lat"],
-                        get_elevation="score * 1200", elevation_scale=10, radius=3500,
-                        get_fill_color="color", pickable=True, auto_highlight=True,
-                    )
-                    
-                    arc_layer = pdk.Layer(
-                        "ArcLayer", data=map_df,
-                        get_source_position=["origin_lon", "origin_lat"],
-                        get_target_position=["lon", "lat"],
-                        get_source_color=[33, 150, 243, 160], 
-                        get_target_color="color", get_width=3, tilt=15
-                    )
-                    
-                    custom_tooltip = {
-                        "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/>📏 Distance: {distance} km from " + origin_name,
-                        "style": {"backgroundColor": "#1E1E1E", "color": "white", "border": "1px solid #4682B4", "borderRadius": "5px"}
-                    }
-                    
-                    st.pydeck_chart(pdk.Deck(
-                        map_provider="carto", map_style="dark",
-                        layers=[scatter_layer, arc_layer, column_layer], 
-                        initial_view_state=view_state, tooltip=custom_tooltip
-                    ))
-                    
-                    st.markdown("### 🚗 Start Your Journey")
-                    nav_cols = st.columns(4)
-                    for i, row in enumerate(map_data):
-                        with nav_cols[i % 4]:
-                            nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
-                            st.markdown(f"**[{row['name']}]({nav_link})** <br> <span style='font-size:0.8em; color:gray;'>({row['distance']} km away)</span>", unsafe_allow_html=True)
-                else:
-                    st.warning("Coordinate data not found for these specific recommendations.")
+                    map_data.append({
+                        "name": name, "lat": lat, "lon": lon, "score": float(score),
+                        "color": color, "origin_lat": origin_lat, "origin_lon": origin_lon,
+                        "distance": safe_distance
+                    })
+
+            if map_data:
+                map_df = pd.DataFrame(map_data)
+                avg_lat = (map_df["lat"].mean() + origin_lat) / 2
+                avg_lon = (map_df["lon"].mean() + origin_lon) / 2
+                
+                view_state = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=4.5, pitch=50, bearing=-10)
+                
+                scatter_layer = pdk.Layer(
+                    "ScatterplotLayer", data=map_df, get_position=["lon", "lat"],
+                    get_radius=8000, get_fill_color="color", pickable=False, 
+                )
+                
+                column_layer = pdk.Layer(
+                    "ColumnLayer", data=map_df, get_position=["lon", "lat"],
+                    get_elevation="score * 1200", elevation_scale=10, radius=3500,
+                    get_fill_color="color", pickable=True, auto_highlight=True,
+                )
+                
+                arc_layer = pdk.Layer(
+                    "ArcLayer", data=map_df,
+                    get_source_position=["origin_lon", "origin_lat"],
+                    get_target_position=["lon", "lat"],
+                    get_source_color=[33, 150, 243, 160], 
+                    get_target_color="color", get_width=3, tilt=15
+                )
+                
+                custom_tooltip = {
+                    "html": "<b>{name}</b><br/>🎯 AI Match: {score}%<br/>📏 Distance: {distance} km from " + origin_name,
+                    "style": {"backgroundColor": "#1E1E1E", "color": "white", "border": "1px solid #4682B4", "borderRadius": "5px"}
+                }
+                
+                st.pydeck_chart(pdk.Deck(
+                    map_provider="carto", map_style="dark",
+                    layers=[scatter_layer, arc_layer, column_layer], 
+                    initial_view_state=view_state, tooltip=custom_tooltip
+                ))
+                
+                st.markdown("### 🚗 Start Your Journey")
+                nav_cols = st.columns(4)
+                for i, row in enumerate(map_data):
+                    with nav_cols[i % 4]:
+                        nav_link = f"https://www.google.com/maps/dir/?api=1&destination={row['lat']},{row['lon']}"
+                        st.markdown(f"**[{row['name']}]({nav_link})** <br> <span style='font-size:0.8em; color:gray;'>({row['distance']} km away)</span>", unsafe_allow_html=True)
+            else:
+                st.warning("Coordinate data not found for these specific recommendations.")
 
     # ========================== TAB 4: DIAGNOSTICS ==========================
     elif st.session_state.active_page == "Diagnostics":
