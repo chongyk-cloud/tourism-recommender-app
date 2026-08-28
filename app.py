@@ -1422,6 +1422,43 @@ try:
                 .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
                 use_container_width=True
             )
+            st.markdown("### 📊 Rating Prediction Dashboard")
+            
+            # Map your existing Streamlit dataframe for plotting
+            rating_metrics_plot = eval_metrics_df.set_index('Algorithm')
+
+            sns.set_theme(style="whitegrid")
+            # Adjusted figsize and grid layout so it doesn't leave huge empty spaces
+            fig = plt.figure(figsize=(15, 8))
+
+            # Plot A: Error Metrics (Lower is better)
+            ax1 = plt.subplot2grid((1, 2), (0, 0))
+            rating_metrics_plot[['RMSE', 'MAE']].plot(kind='bar', ax=ax1, colormap='Reds_r', edgecolor='black')
+            ax1.set_title('A. Prediction Error (Lower is Better)', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Error Score', fontsize=12)
+            ax1.set_xticklabels(ax1.get_xticklabels(), rotation=15, ha='right')
+            ax1.legend(loc='lower right')
+            ax1.margins(y=0.15) 
+            for container in ax1.containers:
+                ax1.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            # Plot B: Classification Metrics (Higher is better)
+            ax2 = plt.subplot2grid((1, 2), (0, 1))
+            # Mapped 'F1-Score' to 'Class F1-Score' to match your dataframe schema
+            rating_metrics_plot[['Accuracy', 'Class F1-Score']].plot(kind='bar', ax=ax2, colormap='Greens_r', edgecolor='black')
+            ax2.set_title('B. Classification Performance (Higher is Better)', fontsize=14, fontweight='bold')
+            ax2.set_ylabel('Score', fontsize=12)
+            ax2.set_xticklabels(ax2.get_xticklabels(), rotation=15, ha='right')
+            ax2.legend(loc='lower right')
+            ax2.set_ylim(0, 1.15) 
+            for container in ax2.containers:
+                ax2.bar_label(container, fmt='%.4f', padding=3, fontsize=10)
+
+            plt.tight_layout()
+            
+            # Render the plot in Streamlit and clear memory
+            st.pyplot(fig)
+            plt.close(fig)
         
 except Exception as e:
     st.error(f"Application error: {e}")
