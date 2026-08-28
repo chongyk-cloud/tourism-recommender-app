@@ -422,90 +422,7 @@ try:
             st.rerun()
             
     st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
-    # =========================================================================
-    # ============== HERO BANNER (above filters) ===============================
-    # =========================================================================
-    st.markdown("""
-        <div style="
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                        url('https://2021-2025.state.gov/wp-content/uploads/2023/07/shutterstock_245773270v2-768x512.jpg');
-            background-size: cover;
-            background-position: center;
-            border-radius: 16px;
-            padding: 60px 40px;
-            margin-bottom: 30px;
-            color: white;
-            text-align: center;
-        ">
-            <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 10px;">
-                Find Your Perfect Travel Destinations
-            </h1>
-            <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">
-                Personalized recommendations based on your preferences, budget and travel style.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # =========================================================================
-    # ============== FILTERS (moved to main area, below navigation) ===========
-    # =========================================================================
-    st.markdown("#### 🔍 Filter your recommendations")
     
-    # First row: Age, Category, Province, Duration
-    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
-    # Second row: Season, Spend Amount (range), Min Rating, Top N
-    col_f5, col_f6, col_f7, col_f8 = st.columns(4)
-
-    # Helper to get default index (prefer "Ignore")
-    def get_default_index(opts, target="Ignore"):
-        return opts.index(target) if target in opts else len(opts)-1
-
-    # Define options
-    avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
-    dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
-    # Season options: map to English for display, but keep original values
-    season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
-    avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
-    # We'll display English names but store original values
-    season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
-    season_values = avail_seasons + ["Ignore"]
-
-    with col_f1:
-        selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
-    with col_f2:
-        selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
-    with col_f3:
-        selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
-    with col_f4:
-        selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
-    with col_f5:
-        # Season dropdown – display English names
-        idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
-        selected_season_display = st.selectbox("Season", season_display, index=idx_season)
-        # Map back to original value
-        if selected_season_display == "Ignore":
-            selected_season = "Ignore"
-        else:
-            # reverse mapping
-            reverse_map = {v: k for k, v in season_mapping.items()}
-            selected_season = reverse_map.get(selected_season_display, selected_season_display)
-    with col_f6:
-        # Spend amount range slider
-        if not df_raw.empty:
-            min_spend = int(df_raw['spend_amount'].min())
-            max_spend = int(df_raw['spend_amount'].max())
-            # Set default to full range
-            spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
-        else:
-            spend_range = (0, 1000)
-    with col_f7:
-        # Minimum rating slider (3.0 to 5.0)
-        min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
-    with col_f8:
-        top_n = st.slider("Number of Recommendations", 1, 12, 8)
-
     # =========================================================================
     # ============== PERSONA MATCHING (now uses the widgets above) ============
     # =========================================================================
@@ -626,6 +543,90 @@ try:
 
     # ========================== TAB 2: RECOMMENDATIONS ======================
     elif st.session_state.active_page == "Recommendations":
+        # =========================================================================
+        # ============== HERO BANNER (above filters) ===============================
+        # =========================================================================
+        st.markdown("""
+            <div style="
+                background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                            url('https://2021-2025.state.gov/wp-content/uploads/2023/07/shutterstock_245773270v2-768x512.jpg');
+                background-size: cover;
+                background-position: center;
+                border-radius: 16px;
+                padding: 60px 40px;
+                margin-bottom: 30px;
+                color: white;
+                text-align: center;
+            ">
+                <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 10px;">
+                    Find Your Perfect Travel Destinations
+                </h1>
+                <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">
+                    Personalized recommendations based on your preferences, budget and travel style.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+    
+        # =========================================================================
+        # ============== FILTERS (moved to main area, below navigation) ===========
+        # =========================================================================
+        st.markdown("#### 🔍 Filter your recommendations")
+        
+        # First row: Age, Category, Province, Duration
+        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+        # Second row: Season, Spend Amount (range), Min Rating, Top N
+        col_f5, col_f6, col_f7, col_f8 = st.columns(4)
+    
+        # Helper to get default index (prefer "Ignore")
+        def get_default_index(opts, target="Ignore"):
+            return opts.index(target) if target in opts else len(opts)-1
+    
+        # Define options
+        avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
+        dur_options = ["Short (1-3 hours)", "Medium (3-5 hours)", "Long (5+ hours)", "Ignore"]
+        # Season options: map to English for display, but keep original values
+        season_mapping = {"Chun Ji": "Spring", "Summer": "Summer", "Autumn": "Autumn", "Winter": "Winter"}
+        avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
+        # We'll display English names but store original values
+        season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
+        season_values = avail_seasons + ["Ignore"]
+    
+        with col_f1:
+            selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
+        with col_f2:
+            selected_category = st.selectbox("Attraction Category", avail_categories, index=get_default_index(avail_categories))
+        with col_f3:
+            selected_province = st.selectbox("Province", avail_provinces, index=get_default_index(avail_provinces))
+        with col_f4:
+            selected_duration = st.selectbox("Visit Duration", dur_options, index=get_default_index(dur_options))
+        with col_f5:
+            # Season dropdown – display English names
+            idx_season = season_values.index("Ignore") if "Ignore" in season_values else len(season_values)-1
+            selected_season_display = st.selectbox("Season", season_display, index=idx_season)
+            # Map back to original value
+            if selected_season_display == "Ignore":
+                selected_season = "Ignore"
+            else:
+                # reverse mapping
+                reverse_map = {v: k for k, v in season_mapping.items()}
+                selected_season = reverse_map.get(selected_season_display, selected_season_display)
+        with col_f6:
+            # Spend amount range slider
+            if not df_raw.empty:
+                min_spend = int(df_raw['spend_amount'].min())
+                max_spend = int(df_raw['spend_amount'].max())
+                # Set default to full range
+                spend_range = st.slider("Estimated Spend (¥)", min_spend, max_spend, (min_spend, max_spend))
+            else:
+                spend_range = (0, 1000)
+        with col_f7:
+            # Minimum rating slider (3.0 to 5.0)
+            min_rating = st.slider("Minimum Rating", 3.0, 5.0, 3.0, 0.1)
+        with col_f8:
+            top_n = st.slider("Number of Recommendations", 1, 12, 8)
+
         st.subheader("Your Personalized Itinerary")
 
         if is_personalized and not df_raw.empty:
