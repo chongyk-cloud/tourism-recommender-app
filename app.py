@@ -369,26 +369,54 @@ try:
     if st.session_state.active_page == "Home":
         # 1. Render the HTML Hero Banner (WITHOUT the HTML <button> tag inside it)
         st.markdown("""
-        <div class="hero-banner">
-            <div class="hero-top">
-                <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-              <button id="start-explore-btn" class="hero-btn">
-                    Start Explore &nbsp; ➔
-              </button>
-            </div>
-            <div class="hero-bottom">
-                <div class="hero-pills">
-                    <span class="pill">Mountain</span>
-                    <span class="pill">History</span>
-                    <span class="pill">Nature</span>
-                    <span class="pill">Culture</span>
+            <div class="hero-banner">
+                <div class="hero-top">
+                    <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
+                    <!-- The HTML button is back inside -->
+                    <button id="start-explore-btn" class="hero-btn">
+                        Start Explore &nbsp; ➔
+                    </button>
                 </div>
-                <p class="hero-desc">
-                    Unforgettable experiences are just a click away, waiting for you to discover. Whether you're dreaming of vibrant cities, rich historical landmarks, or serene mountain retreats across China, we've got the perfect escape tailored just for you.
-                </p>
+                <div class="hero-bottom">
+                    <div class="hero-pills">
+                        <span class="pill">Mountain</span>
+                        <span class="pill">History</span>
+                        <span class="pill">Nature</span>
+                        <span class="pill">Culture</span>
+                    </div>
+                    <p class="hero-desc">
+                        Unforgettable experiences are just a click away, waiting for you to discover. Whether you're dreaming of vibrant cities, rich historical landmarks, or serene mountain retreats across China, we've got the perfect escape tailored just for you.
+                    </p>
+                </div>
             </div>
-        </div>
         """, unsafe_allow_html=True)
+
+        # Invisible bridge connecting the HTML button to Streamlit's Session State Navigation
+        components.html(
+            """
+            <script>
+            const parentDoc = window.parent.document;
+            
+            // 1. Target the HTML button inside the hero banner
+            const heroBtn = parentDoc.getElementById('start-explore-btn');
+            
+            if (heroBtn) {
+                heroBtn.addEventListener('click', function() {
+                    // 2. Find all native Streamlit buttons on the page
+                    const allButtons = Array.from(parentDoc.querySelectorAll('button'));
+                    
+                    // 3. Find the navigation button we created and click it
+                    const targetTab = allButtons.find(btn => btn.innerText.includes('Top Recommendations'));
+                    if (targetTab) {
+                        targetTab.click();
+                    }
+                });
+            }
+            </script>
+            """,
+            height=0, 
+            width=0
+        )
     
         # 2. Add your Python button directly underneath
         cta_col, _ = st.columns([1, 4])
