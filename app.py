@@ -688,7 +688,6 @@ try:
                 
                 for i, (name, score) in enumerate(row_items):
                     with cols[i]:
-                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
                         category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
                         level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
                         
@@ -711,7 +710,6 @@ try:
                                     <a href="{nav_link}" target="_blank">{name} ↗</a>
                                 </div>
                                 <div class="dest-details">
-                                    🎯 Match: {score:.0f}% AI Match<br>
                                     ⭐ Rating: {real_avg_rating:.1f} / 5.0<br>
                                     📂 Category: {category}<br>
                                     💰 Est. Spend: {est_spend}
