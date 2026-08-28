@@ -710,7 +710,6 @@ try:
                                     <a href="{nav_link}" target="_blank">{name} ↗</a>
                                 </div>
                                 <div class="dest-details">
-                                    🎯 Match: {score:.0f}% AI Match<br>
                                     ⭐ Rating: {real_avg_rating:.1f} / 5.0<br>
                                     📂 Category: {category}<br>
                                     💰 Est. Spend: {est_spend}
