@@ -528,9 +528,8 @@ try:
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
     # Tab 2
-    # ========================== TAB 2: RECOMMENDATIONS ==========================
     elif st.session_state.active_page == "Recommendations":
-        # ---------- Banner ----------
+        # ========== Banner ==========
         st.markdown("""
             <div style="
                 background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
@@ -551,8 +550,8 @@ try:
                 </p>
             </div>
         """, unsafe_allow_html=True)
-    
-        # ---------- Filters ----------
+
+        # ========== Filters ==========
         st.markdown("""
             <style>
             .filter-title {
@@ -586,11 +585,11 @@ try:
                 Tell Us About Your Travel Preferences
             </div>
         """, unsafe_allow_html=True)
-    
+
         with st.container():
             def get_default_index(opts, target="Ignore"):
                 return opts.index(target) if target in opts else len(opts)-1
-    
+
             avail_ages = sorted(df_raw['age_group'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
             avail_categories = sorted(df_raw['attraction_category'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
             avail_provinces = sorted(df_raw['province'].dropna().unique().tolist()) + ["Ignore"] if not df_raw.empty else ["Ignore"]
@@ -600,7 +599,7 @@ try:
             avail_seasons = sorted(df_raw['season'].dropna().unique().tolist()) if not df_raw.empty else []
             season_display = [season_mapping.get(s, s) for s in avail_seasons] + ["Ignore"]
             season_values = avail_seasons + ["Ignore"]
-    
+
             r1_col1, r1_col2, r1_col3, r1_col4, r1_col5 = st.columns(5)
             with r1_col1:
                 selected_age = st.selectbox("Age Group", avail_ages, index=get_default_index(avail_ages))
@@ -617,7 +616,8 @@ try:
                 else:
                     min_spend, max_spend = 0, 1000
                 spend_range = st.slider("Budget (¥)", min_spend, max_spend, (min_spend, max_spend))
-    
+
+            # ROW 2 
             r2_col1, r2_col2, r2_col3 = st.columns(3)
             with r2_col1:
                 selected_duration = st.selectbox("Trip Duration", dur_options, index=get_default_index(dur_options))
@@ -627,10 +627,11 @@ try:
                 selected_season = {v: k for k, v in season_mapping.items()}.get(selected_season_display, selected_season_display)
             with r2_col3:
                 top_n = st.slider("Number of Recommendations", 1, 12, 8)
-    
+
         st.markdown("<br><hr style='border: none; border-bottom: 1px solid #eaeaea;'><br>", unsafe_allow_html=True)
         
-        # ---------- Persona Matching & Recommendation Generation ----------
+        # ========== Persona Matching & Recommendation Generation ==========
+        # This now runs automatically every time a filter is changed
         persona_df = df_raw.copy()
         all_filters_ignored = (
             selected_age == "Ignore" and selected_province == "Ignore" and
@@ -656,12 +657,12 @@ try:
             selected_category, selected_duration, spend_range, min_rating, selected_season, top_n
         )
         
-        # Save to session state
+        # Save to session state so the Map tab can access it
         st.session_state.recommendations = recs
         st.session_state.is_personalized = personalized
         st.session_state.active_tourist_id = active_id
-    
-        # ---------- Display: Two-column layout (Left: cards, Right: itinerary panel) ----------
+        
+        # ========== Display Itinerary ==========
         st.subheader("Your Personalized Itinerary")
     
         if st.session_state.is_personalized and not df_raw.empty:
@@ -679,207 +680,55 @@ try:
         else:
             st.info("🔥 **Trending Destinations** | Showing highest-rated attractions across all demographics.")
     
-        # ---- Split into two columns ----
         if st.session_state.recommendations:
-            left_col, right_col = st.columns([2, 1], gap="large")
-    
-            # ===== LEFT COLUMN: Recommendation Cards =====
-            with left_col:
-                num_cols = 4
-                for row_idx in range(0, len(st.session_state.recommendations), num_cols):
-                    row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
-                    cols = st.columns(num_cols)
-                    
-                    for i, (name, score) in enumerate(row_items):
-                        with cols[i]:
-                            meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
-                            category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
-                            level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
-                            
-                            lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
-                            lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
-                            
-                            img_url = get_attraction_photo(name)
-                            seed = sum(ord(c) for c in name)
-                            est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
-                            nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
-                            
-                            item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
-                            real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
-                            
-                            if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
-                            elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
-                            elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
-                            else: reason = "🧠 Deep Learning Match"
-                            
-                            card_html = f"""
-                            <div class="dest-card">
-                                <img src="{img_url}" alt="{name}">
-                                <div class="dest-overlay">
-                                    <div class="dest-title">
-                                        <a href="{nav_link}" target="_blank">{name} ↗</a>
-                                    </div>
-                                    <div class="dest-details">
-                                        ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
-                                        📂 Category: {category}<br>
-                                        💰 Est. Spend: {est_spend}
-                                    </div>
+            num_cols = 4
+            for row_idx in range(0, len(st.session_state.recommendations), num_cols):
+                row_items = st.session_state.recommendations[row_idx : row_idx + num_cols]
+                cols = st.columns(num_cols)
+                
+                for i, (name, score) in enumerate(row_items):
+                    with cols[i]:
+                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
+                        category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+                        level = meta_row['attraction_level'].iloc[0] if not meta_row.empty else "5A"
+                        
+                        lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+                        lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+                        
+                        img_url = get_attraction_photo(name)
+                        seed = sum(ord(c) for c in name)
+                        est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                        nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+                        
+                        item_data = df_raw[df_raw['attraction_name'] == name] if not df_raw.empty else pd.DataFrame()
+                        real_avg_rating = item_data['rating'].mean() if not item_data.empty else 4.5
+                        
+                        if "Collaborative" in selected_model: reason = "🧑‍🤝‍🧑 Popular with similar travelers"
+                        elif "Content" in selected_model: reason = "🏷️ Matches your preferred categories"
+                        elif "Hybrid" in selected_model: reason = "✨ Top Ensemble Pick"
+                        else: reason = "🧠 Deep Learning Match"
+                        
+                        # 1. The Hover Card (Image with name and details inside)
+                        card_html = f"""
+                        <div class="dest-card">
+                            <img src="{img_url}" alt="{name}">
+                            <div class="dest-overlay">
+                                <div class="dest-title">
+                                    <a href="{nav_link}" target="_blank">{name} ↗</a>
+                                </div>
+                                <div class="dest-details">
+                                    ⭐ Rating: {real_avg_rating:.1f} / 5.0 ({level})<br>
+                                    📂 Category: {category}<br>
+                                    💰 Est. Spend: {est_spend}
                                 </div>
                             </div>
-                            """
-                            st.markdown(card_html, unsafe_allow_html=True)
-                            st.markdown(f"*{reason}*")
-                            st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
-    
-            # ===== RIGHT COLUMN: Itinerary Panel =====
-            with right_col:
-                st.markdown("""
-                    <style>
-                    .itinerary-panel {
-                        background: #f8f9fa;
-                        padding: 20px 18px;
-                        border-radius: 16px;
-                        border: 1px solid #e9ecef;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                    }
-                    .itinerary-panel h4 {
-                        margin-top: 0;
-                        margin-bottom: 10px;
-                        font-size: 1.2rem;
-                    }
-                    .itinerary-panel .cost {
-                        font-size: 1.8rem;
-                        font-weight: 700;
-                        color: #2d6a4f;
-                    }
-                    .itinerary-panel .sub {
-                        color: #6c757d;
-                        font-size: 0.9rem;
-                    }
-                    .day-block {
-                        margin-top: 16px;
-                        border-top: 1px solid #dee2e6;
-                        padding-top: 12px;
-                    }
-                    .day-block .day-title {
-                        font-weight: 600;
-                        font-size: 1.05rem;
-                    }
-                    .day-block .attraction-list {
-                        list-style: none;
-                        padding: 0;
-                        margin: 6px 0 0 0;
-                    }
-                    .day-block .attraction-list li {
-                        font-size: 0.95rem;
-                        padding: 2px 0;
-                    }
-                    .view-full-btn {
-                        margin-top: 18px;
-                        text-align: center;
-                    }
-                    </style>
-                """, unsafe_allow_html=True)
-    
-                with st.container():
-                    st.markdown('<div class="itinerary-panel">', unsafe_allow_html=True)
-    
-                    # --- How We Recommend ---
-                    st.markdown("""
-                        <h4>How We Recommend</h4>
-                        <p style="font-size:0.95rem; color:#333;">
-                            Our AI system uses a hybrid recommendation approach to find the best attractions for you, based on:
-                            <br>• Your personal preferences<br>
-                            • Your budget<br>
-                            • Trip duration<br>
-                            • Popular user reviews
-                        </p>
-                    """, unsafe_allow_html=True)
-    
-                    # --- Estimated Trip Cost ---
-                    # Compute total estimated spend from recommendations
-                    total_cost = 0
-                    for name, _ in st.session_state.recommendations:
-                        seed = sum(ord(c) for c in name)
-                        total_cost += 150 + (seed % 200)   # same logic as in card
-                    # Convert to RM for display (roughly 1 CNY = 0.65 MYR)
-                    total_cost_rm = total_cost * 0.65
-                    days = 3  # fixed for now
-                    st.markdown(f"""
-                        <h4 style="margin-top:20px;">Estimated Trip Cost</h4>
-                        <div class="cost">RM {total_cost_rm:.0f}</div>
-                        <div class="sub">({days} Days)</div>
-                        <div style="color:#2d6a4f; font-weight:500; margin-top:4px;">Within Your Budget ⬇️</div>
-                    """, unsafe_allow_html=True)
-    
-                    # --- Suggested Itinerary ---
-                    st.markdown(f"<h4 style='margin-top:20px;'>Suggested Itinerary<br><span style='font-size:0.9rem; font-weight:400; color:#6c757d;'>{days} Days</span></h4>", unsafe_allow_html=True)
-    
-                    # Group recommendations by category for days
-                    # Create a mapping from attraction name to category
-                    name_to_cat = {}
-                    for name, _ in st.session_state.recommendations:
-                        meta_row = attr_meta[attr_meta['attraction_name'] == name] if not attr_meta.empty else pd.DataFrame()
-                        cat = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Unknown"
-                        name_to_cat[name] = cat
-    
-                    # Define day categories
-                    day_categories = {
-                        "Day 1 – Cultural & Historical": ["History", "Cultural", "Religious", "Heritage", "Temple", "Museum"],
-                        "Day 2 – Adventure": ["Amusement", "Theme", "Adventure", "Entertainment", "Park"],
-                        "Day 3 – Nature & Relaxation": ["Nature", "Scenic", "Garden", "Lake", "Mountain", "Forest"]
-                    }
-    
-                    # Assign each attraction to a day based on keyword matching
-                    assigned = {day: [] for day in day_categories}
-                    remaining = []
-                    for name, cat in name_to_cat.items():
-                        placed = False
-                        for day, keywords in day_categories.items():
-                            if any(kw.lower() in cat.lower() for kw in keywords):
-                                if len(assigned[day]) < 3:  # max 3 per day
-                                    assigned[day].append(name)
-                                    placed = True
-                                    break
-                        if not placed:
-                            remaining.append(name)
-    
-                    # Fill remaining spots
-                    for day in day_categories:
-                        if len(assigned[day]) < 3 and remaining:
-                            assigned[day].append(remaining.pop(0))
-    
-                    # Display each day
-                    for day, attractions in assigned.items():
-                        if attractions:
-                            st.markdown(f"""
-                                <div class="day-block">
-                                    <div class="day-title">{day}</div>
-                                    <ul class="attraction-list">
-                                        {"".join(f"<li>• {a}</li>" for a in attractions)}
-                                    </ul>
-                                </div>
-                            """, unsafe_allow_html=True)
-    
-                    # --- View Full Itinerary button ---
-                    st.markdown("""
-                        <div class="view-full-btn">
-                            <a href="#" style="
-                                display: inline-block;
-                                background: #0078D4;
-                                color: white;
-                                padding: 10px 24px;
-                                border-radius: 30px;
-                                text-decoration: none;
-                                font-weight: 600;
-                                transition: background 0.2s;
-                            " onmouseover="this.style.background='#005A9E'" onmouseout="this.style.background='#0078D4'">
-                                View Full Itinerary →
-                            </a>
                         </div>
-                    """, unsafe_allow_html=True)
-    
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        """
+                        st.markdown(card_html, unsafe_allow_html=True)
+                        
+                        # 2. The Text Below (Reason and Caption kept, Name removed)
+                        st.markdown(f"*{reason}*")
+                        st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
                         
     # ========================== TAB 3: SPATIAL MAP ==========================
     elif st.session_state.active_page == "Map":
