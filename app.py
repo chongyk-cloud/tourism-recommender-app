@@ -449,8 +449,6 @@ try:
     else:
         if selected_age != "Ignore": 
             persona_df = persona_df[persona_df['age_group'] == selected_age]
-        # No gender filter anymore, so we don't filter by gender.
-        # But we can still pick a tourist from the filtered set if age is selected.
         if not persona_df.empty and selected_age != "Ignore":
             active_tourist_id = persona_df['tourist_id'].value_counts().index[0]
             st.sidebar.success(f"🎯 **Demographic Twin Found!**\n\nMatching to Tourist ID: {active_tourist_id}")
