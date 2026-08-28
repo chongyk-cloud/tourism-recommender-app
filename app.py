@@ -15,7 +15,7 @@ if "active_page" not in st.session_state:
     st.session_state.active_page = "Home"
 
 st.markdown("""
-    <div style="position: fixed; top: 15px; left: 80px; font-weight: bold; color: black; font-size: 5rem; z-index: 9999999;">
+    <div style="top: 15px; left: 80px; font-weight: bold; color: black; font-size: 5rem; z-index: 9999999;">
         Duolingo
     </div>
 """, unsafe_allow_html=True)
