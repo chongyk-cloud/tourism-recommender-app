@@ -39,19 +39,22 @@ div[data-baseweb="tab"] {
 /* Hero Banner Styling */
 .hero-banner {
     position: relative;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1529982412347-195982845c26?auto=format&fit=crop&w=1600&q=80');
+    /* Your new background gradient and Unsplash image */
+    background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=1600&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
-    border-radius: 24px;
+    border-radius: 16px;
+    padding: 80px 50px;
+    margin-bottom: 25px;
+    color: white;
+    
+    /* Layout properties preserved to keep the button and text in the right place */
     height: 65vh;
     min-height: 550px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 3rem 4rem;
-    color: white;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    margin-bottom: 2rem;
 }
 
 .hero-top {
