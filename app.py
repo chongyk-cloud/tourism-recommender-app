@@ -8,6 +8,9 @@ import pickle
 import os
 
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
+# --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
+st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
+
 st.markdown("""
     <div style="position: fixed; top: 15px; right: 30px; font-weight: bold; color: black; font-size: 1.5rem; z-index: 99999;">
         Duolingo
