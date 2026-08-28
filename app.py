@@ -463,7 +463,7 @@ try:
             st.rerun()
             
     # --- SEPARATOR LINE ---
-    st.divider()
+    st.markdown('<hr style="border: none; border-bottom: 1px solid #eaeaea; margin-top: 5px; margin-bottom: 25px;">', unsafe_allow_html=True)
   
     # ========================== TAB 1: HOME PAGE ==========================
     if st.session_state.active_page == "Home":
