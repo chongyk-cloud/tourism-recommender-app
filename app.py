@@ -8,14 +8,19 @@ import pickle
 import os
 
 # --- 1. PAGE CONFIGURATION & CUSTOM CSS ---
-st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
+st.markdown("""
+    <div style="position: fixed; top: 15px; right: 30px; font-weight: bold; color: black; font-size: 1.5rem; z-index: 99999;">
+        Duolingo
+    </div>
+""", unsafe_allow_html=True)
 
 # Custom CSS to match the image aesthetics and center the tabs
 st.markdown("""
 <style>
-/* Center top navigation tabs and make text bold */
-div[data-baseweb="tab-list"] {
+/* Center top navigation tabs */
+div[data-testid="stTabs"] > div[data-baseweb="tab-list"] {
     justify-content: center;
+    width: 100%;
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -343,8 +348,8 @@ try:
         <div class="hero-banner">
             <div class="hero-top">
                 <h1 class="hero-title">Discover your next<br>adventure in China.</h1>
-                <button class="hero-btn" onclick="window.parent.document.querySelectorAll('[data-baseweb=\\'tab\\']')[1].click()">
-                    Book Now &nbsp; ➔
+                <button class="hero-btn">
+                    Start Explore &nbsp; ➔
                 </button>
             </div>
             <div class="hero-bottom">
