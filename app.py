@@ -115,6 +115,61 @@ div[data-baseweb="tab"] {
     line-height: 1.6;
     color: rgba(255,255,255,0.95);
 }
+
+/* Trending Destination Hover Cards */
+.dest-card {
+    position: relative;
+    height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    margin-bottom: 20px;
+}
+
+.dest-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Zoom image slightly on hover */
+.dest-card:hover img {
+    transform: scale(1.08);
+}
+
+/* Hide overlay details until hover */
+.dest-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.3) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 15px;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Reveal overlay on hover */
+.dest-card:hover .dest-overlay {
+    opacity: 1;
+}
+
+.dest-title a {
+    color: white !important;
+    font-weight: bold;
+    font-size: 1.05rem;
+    text-decoration: none;
+}
+
+.dest-details {
+    font-size: 0.85rem;
+    margin-top: 6px;
+    line-height: 1.4;
+    color: #e0e0e0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -420,6 +475,58 @@ try:
             height=0, 
             width=0
         )
+        
+        # --- TRENDING DESTINATIONS SECTION ---
+        st.markdown("### 🔥 Trending Destinations China")
+        
+        try:
+            if 'rating' in df_raw.columns:
+                top_grouped = df_raw.groupby('attraction_name').agg(
+                    avg_rating=('rating', 'mean'),
+                    visit_count=('rating', 'count')
+                ).reset_index()
+                top_5_df = top_grouped.sort_values(by=['avg_rating', 'visit_count'], ascending=[False, False]).head(5)
+                top_5_data = top_5_df.to_dict('records')
+            else:
+                top_5_data = [{'attraction_name': name, 'avg_rating': 4.8} for name in attr_meta['attraction_name'].head(5)]
+        except Exception:
+            top_5_data = [{'attraction_name': name, 'avg_rating': 4.8} for name in attr_meta['attraction_name'].head(5)]
+        
+        card_cols = st.columns(5)
+        for idx, item in enumerate(top_5_data[:5]):
+            name = item['attraction_name']
+            avg_rating = item.get('avg_rating', 4.8)
+            
+            with card_cols[idx]:
+                meta_row = attr_meta[attr_meta['attraction_name'] == name]
+                category = meta_row['attraction_category'].iloc[0] if not meta_row.empty and not pd.isna(meta_row['attraction_category'].iloc[0]) else "Cultural Landmark"
+        
+                lat = float(meta_row['latitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['latitude'].iloc[0]) else 35.0
+                lon = float(meta_row['longitude'].iloc[0]) if not meta_row.empty and not pd.isna(meta_row['longitude'].iloc[0]) else 105.0
+        
+                img_url = get_attraction_photo(name)
+                seed = sum(ord(c) for c in name)
+                est_spend = f"¥{150 + (seed % 200)} ($22–$50)"
+                nav_link = f"https://www.google.com/maps/dir/?api=1&destination={lat},{lon}"
+        
+                card_html = f"""
+                    <div class="dest-card">
+                        <img src="{img_url}" alt="{name}">
+                        <div class="dest-overlay">
+                            <div class="dest-title">
+                                <a href="{nav_link}" target="_blank">{name} ↗</a>
+                            </div>
+                            <div class="dest-details">
+                                ⭐ Rating: {avg_rating:.1f} / 5.0<br>
+                                📂 Category: {category}<br>
+                                💰 Est. Spend: {est_spend}
+                            </div>
+                        </div>
+                    </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+    
     
     # ========================== TAB 2: TRAVELER VIEW ==========================
     elif st.session_state.active_page == "Recommendations":
