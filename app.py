@@ -1182,7 +1182,7 @@ try:
             {
                 "name": "Collaborative Filtering",
                 "sub": "Matrix Factorization (SVD)",
-                "pill": "baseline / popular",
+                "pill": "popular",
                 "metrics": [
                     ("Accuracy", "89.55%", 89.5), 
                     ("RMSE", "0.2872", 75),  # Shorter bar for higher error
@@ -1233,7 +1233,7 @@ try:
             {
                 "name": "Hybrid Ensemble",
                 "sub": "Multi-Model Architecture",
-                "pill": "flagship / comprehensive",
+                "pill": "comprehensive",
                 "metrics": [
                     ("Accuracy", "89.63%", 89.6), 
                     ("RMSE", "0.3312", 65), 
