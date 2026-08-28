@@ -1088,16 +1088,29 @@ try:
             curr_short = "Model"
 
         st.divider()  
-        # Initialize the toggle state if it doesn't exist
-        if "show_metrics" not in st.session_state:
-            st.session_state.show_metrics = False
+        st.divider()
+        
+        # 1. Initialize states for both buttons
+        if "show_top_n" not in st.session_state:
+            st.session_state.show_top_n = False
+        if "show_rating_pred" not in st.session_state:
+            st.session_state.show_rating_pred = False
 
-        # Create the button to toggle visibility
-        if st.button("🏆 Visualize Top-N Ranking Performance"):
-            st.session_state.show_metrics = not st.session_state.show_metrics
+        # 2. Place buttons side-by-side using columns
+        btn_col1, btn_col2 = st.columns(2)
 
-        # Only display the content if the state is True
-        if st.session_state.show_metrics:
+        with btn_col1:
+            if st.button("🏆 Visualize Top-N Ranking", use_container_width=True):
+                st.session_state.show_top_n = not st.session_state.show_top_n
+
+        with btn_col2:
+            if st.button("🎯 Visualize Rating Prediction", use_container_width=True):
+                st.session_state.show_rating_pred = not st.session_state.show_rating_pred
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # 3. Conditionally display Top-N Metrics
+        if st.session_state.show_top_n:
             st.markdown("### 🏆 Top-N Ranking Performance")
             r1_col1, r1_col2, r1_col3, r1_col4 = st.columns(4)
             r1_col1.metric(f"{curr_short} Precision@5", prec_val, delta=prec_delta, delta_color="normal")
@@ -1110,20 +1123,22 @@ try:
                 .style.highlight_max(subset=["Precision@5", "Recall@5", "F1@5", "HR@5", "NDCG@5"], color="#1565C0"),
                 use_container_width=True
             )
-            
-        st.markdown("### 🎯 Rating Prediction & Classification")
-        r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
-        r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
-        r2_col2.metric(f"{curr_short} MAE", mae_val, delta=mae_delta, delta_color="inverse")
-        r2_col3.metric(f"{curr_short} Accuracy", acc_val, delta=acc_delta, delta_color="normal")
-        r2_col4.metric(f"{curr_short} Class F1-Score", clf_f1_val, delta=clf_f1_delta, delta_color="normal")
 
-        st.dataframe(
-            eval_metrics_df[["Algorithm", "RMSE", "MAE", "Accuracy", "Class F1-Score"]]
-            .style.highlight_min(subset=["RMSE", "MAE"], color="#2E7D32")
-            .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
-            use_container_width=True
-        )
+        # 4. Conditionally display Rating Prediction Metrics
+        if st.session_state.show_rating_pred:
+            st.markdown("### 🎯 Rating Prediction & Classification")
+            r2_col1, r2_col2, r2_col3, r2_col4 = st.columns(4)
+            r2_col1.metric(f"{curr_short} RMSE", rmse_val, delta=rmse_delta, delta_color="inverse")
+            r2_col2.metric(f"{curr_short} MAE", mae_val, delta=mae_delta, delta_color="inverse")
+            r2_col3.metric(f"{curr_short} Accuracy", acc_val, delta=acc_delta, delta_color="normal")
+            r2_col4.metric(f"{curr_short} Class F1-Score", clf_f1_val, delta=clf_f1_delta, delta_color="normal")
+
+            st.dataframe(
+                eval_metrics_df[["Algorithm", "RMSE", "MAE", "Accuracy", "Class F1-Score"]]
+                .style.highlight_min(subset=["RMSE", "MAE"], color="#2E7D32")
+                .highlight_max(subset=["Accuracy", "Class F1-Score"], color="#1565C0"),
+                use_container_width=True
+            )
         
 except Exception as e:
     st.error(f"Application error: {e}")
