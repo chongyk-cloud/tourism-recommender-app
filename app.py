@@ -730,7 +730,7 @@ try:
                             # 2. The Text Below (Reason and Caption kept, Name removed)
                             st.markdown(f"*{reason}*")
                             st.caption(f"🎯 {score:.0f}% AI Match | Avg Rating: {real_avg_rating:.2f} ⭐ | {level}")
-                                pass
+                            pass
         
         with side_col:
             render_info_panel(st.session_state.recommendations, spend_range, top_n)
