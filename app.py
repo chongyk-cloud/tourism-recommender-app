@@ -882,9 +882,6 @@ try:
         with side_col:
             render_info_panel(st.session_state.recommendations, spend_range, top_n, attraction_spend_map, selected_model)
 
-                with side_col:
-            render_info_panel(st.session_state.recommendations, spend_range, top_n, attraction_spend_map, selected_model)
-
         # ========== Spatial Map (moved here from its own tab) ==========
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("📍 3D Journey & Spatial Layout")
