@@ -825,13 +825,13 @@ try:
             """, unsafe_allow_html=True)
         
             # --- Card 2: Estimated Trip Cost ---
-           if recommendations:
-              est_total = sum(
-                  attraction_spend_map.get(name, 150 + (sum(ord(c) for c in name) % 200))
-                  for name, _ in recommendations
-                )
-           else:
-             est_total = 0
+            if recommendations:
+               est_total = sum(
+                   attraction_spend_map.get(name, 150 + (sum(ord(c) for c in name) % 200))
+                   for name, _ in recommendations
+               )
+            else:
+              est_total = 0
         
             st.markdown(f"""
                 <div class="info-card">
