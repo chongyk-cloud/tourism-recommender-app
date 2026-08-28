@@ -507,7 +507,7 @@ try:
                         const allButtons = Array.from(parentDoc.querySelectorAll('button'));
                         
                         // Find the navigation button we created and click it
-                        const targetTab = allButtons.find(btn => btn.innerText.includes('Top Recommendations'));
+                        const targetTab = allButtons.find(btn => btn.innerText.includes("Recommendations"));
                         if (targetTab) {
                             targetTab.click();
                         }
