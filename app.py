@@ -405,19 +405,19 @@ try:
     # --- 6. TABS STRUCTURE ---
     nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
     with nav_col1:
-        if st.button("🏠 Home", use_container_width=True):
+        if st.button("Home", use_container_width=True):
             st.session_state.active_page = "Home"
             st.rerun()
     with nav_col2:
-        if st.button("🎯 Top Recommendations", use_container_width=True):
+        if st.button("Top Recommendations", use_container_width=True):
             st.session_state.active_page = "Recommendations"
             st.rerun()
     with nav_col3:
-        if st.button("📍 3D Spatial Map", use_container_width=True):
+        if st.button("3D Spatial Map", use_container_width=True):
             st.session_state.active_page = "Map"
             st.rerun()
     with nav_col4:
-        if st.button("⚙️ Diagnostics", use_container_width=True):
+        if st.button("Diagnostics", use_container_width=True):
             st.session_state.active_page = "Diagnostics"
             st.rerun()
     
@@ -477,7 +477,7 @@ try:
         )
         
         # --- TRENDING DESTINATIONS SECTION ---
-        st.markdown("### 🔥 Trending Destinations China")
+        st.markdown("### Trending Destinations China")
         
         try:
             if 'rating' in df_raw.columns:
