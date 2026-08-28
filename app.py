@@ -11,7 +11,7 @@ import os
 st.set_page_config(page_title="Personalized Tourism Recommender", layout="wide", page_icon="🗺️")
 
 st.markdown("""
-    <div style="position: fixed; top: 15px; right: 120px; font-weight: bold; color: black; font-size: 1.5rem; z-index: 9999999;">
+    <div style="position: fixed; top: 15px; right: 12px; font-weight: bold; color: black; font-size: 1.5rem; z-index: 9999999;">
         Duolingo
     </div>
 """, unsafe_allow_html=True)
